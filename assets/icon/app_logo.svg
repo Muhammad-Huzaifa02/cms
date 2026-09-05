@@ -1,0 +1,49 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F8A70"/>
+      <stop offset="55%" stop-color="#0A6B57"/>
+      <stop offset="100%" stop-color="#033D33"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#D7D2C0"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DBB876"/>
+      <stop offset="100%" stop-color="#96762F"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="30%" cy="20%" r="70%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#02150F" flood-opacity="0.55"/>
+    </filter>
+    <filter id="badgeShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#02150F" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- App icon background (rounded square, 3D depth via shadow + inner glow) -->
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bg)" filter="url(#softShadow)"/>
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#glow)"/>
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="2"/>
+
+  <!-- Gold accent ring, echoes the login-screen badge -->
+  <circle cx="256" cy="256" r="150" fill="none" stroke="url(#gold)" stroke-width="6" opacity="0.55"/>
+
+  <!-- Raised badge -->
+  <g filter="url(#badgeShadow)">
+    <rect x="146" y="146" width="220" height="220" rx="52" fill="url(#badge)"/>
+  </g>
+  <rect x="146" y="146" width="220" height="220" rx="52" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="2"/>
+
+  <!-- CMS lettering, embossed look -->
+  <text x="256" y="292" text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif" font-weight="700"
+        font-size="92" fill="#033D33">CMS</text>
+
+  <!-- Small gold underline accent -->
+  <rect x="196" y="308" width="120" height="6" rx="3" fill="url(#gold)"/>
+</svg>

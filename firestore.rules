@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isAdmin() { return request.auth != null && userDoc().isAdmin == true; }
+    function isActive() { return request.auth != null && userDoc().active == true; }
+    function can(perm) {
+      return isActive() && (isAdmin() || userDoc().permissions[perm] == true);
+    }
+
+    match /customers/{accountNumber} {
+      allow read:   if can('view');
+      allow create: if can('add');
+      allow update: if can('edit');
+      allow delete: if can('delete');
+    }
+
+    match /users/{uid} {
+      allow read: if request.auth.uid == uid || isAdmin();
+      // Bootstrap: the very first Admin creates their OWN account, once,
+      // before any Admin exists yet — this is what lets a branch manager
+      // set themselves up from inside the app instead of a console script.
+      // Guarded by /system/bootstrap.adminExists so it can only fire once.
+      allow create: if request.auth.uid == uid
+        && request.resource.data.isAdmin == true
+        && get(/databases/$(database)/documents/system/bootstrap).data.adminExists == false;
+      allow write: if isAdmin();
+    }
+
+    match /system/bootstrap {
+      allow read: if true;
+      // Anyone can create the flag doc itself, but only ever as "false" —
+      // this just lets the app auto-create it on first run with no manual
+      // Firebase Console step required.
+      allow create: if request.resource.data.adminExists == false;
+      // Flipping it to true only happens as part of the bootstrap admin
+      // being created (see AuthService.bootstrapFirstAdmin), and only
+      // ever false -> true, never back.
+      allow update: if request.auth != null
+        && resource.data.adminExists == false
+        && request.resource.data.adminExists == true;
+    }
+
+    match /activityLog/{logId} {
+      allow read: if isAdmin();
+      allow create: if isActive();
+      allow update, delete: if false;
+    }
+
+    match /phoneIndex/{phone} {
+      // Public read is required: resolving a phone number to its real
+      // email has to happen BEFORE the person is authenticated (that's
+      // the whole point — it's how phone-number sign-in works). The doc
+      // only ever contains an email + uid, nothing sensitive like a
+      // password or CNIC.
+      allow read: if true;
+      // Only the account itself can register its own phone -> email
+      // mapping, at creation time (bootstrap admin or Admin-created staff
+      // — in both cases request.auth is the new account at the moment
+      // this write happens).
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+  }
+}
