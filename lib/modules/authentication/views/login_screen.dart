@@ -1,4 +1,4 @@
-git --versionimport 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/biometric_service.dart';
 import '../../../core/theme/app_theme.dart';
