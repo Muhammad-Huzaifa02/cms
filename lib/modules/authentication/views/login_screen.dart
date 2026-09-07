@@ -32,8 +32,58 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _checkBio() async {
     final available = await _biometricService.isBiometricAvailable();
-    final hasCreds = await _biometricService.getStoredCredentials() != null;
-    if (mounted) setState(() => _bioAvailable = available && hasCreds);
+    final enabled = await _biometricService.isBiometricEnabled();
+    if (mounted) setState(() => _bioAvailable = available && enabled);
+
+    // Auto-trigger if enabled and not already loading
+    if (available && enabled && !_loading) {
+      // Small delay for better UX transition
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted && _bioAvailable && !_loading) _biometricSignIn();
+      });
+    }
+  }
+
+  Future<void> _offerBiometrics(AppUser user, String password) async {
+    final available = await _biometricService.isBiometricAvailable();
+    final enabled = await _biometricService.isBiometricEnabled();
+
+    if (!available || enabled) return;
+
+    if (!mounted) return;
+    final bool? shouldEnable = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Enable Biometric Login?'),
+        content: const Text('Would you like to use your device\'s biometric authentication for future logins?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No thanks')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(fontWeight: FontWeight.bold),
+            child: const Text('Enable'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldEnable == true) {
+      final authenticated = await _biometricService.authenticate(
+        reason: 'Confirm your biometric to enable biometric login',
+      );
+      if (authenticated) {
+        if (user.email != null) {
+          await _biometricService.saveCredentials(user.email!, password);
+          await _biometricService.setBiometricEnabled(true);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Biometric login enabled successfully.')),
+            );
+          }
+        }
+      }
+    }
   }
 
   Future<void> _signIn() async {
@@ -42,15 +92,14 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
     try {
+      final password = _passwordCtrl.text;
       final user = await _auth.signIn(
         identifier: _identifierCtrl.text.trim(),
-        password: _passwordCtrl.text,
+        password: password,
       );
 
-      // Save credentials for biometrics on first successful login if email was used
-      if (_identifierCtrl.text.contains('@')) {
-        await _biometricService.saveCredentials(_identifierCtrl.text.trim(), _passwordCtrl.text);
-      }
+      if (!mounted) return;
+      await _offerBiometrics(user, password);
 
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
@@ -64,6 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _biometricSignIn() async {
+    if (_loading) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -75,9 +125,12 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.of(context).pushReplacement(
           Perspective3DRoute(page: DashboardScreen(currentUser: user)),
         );
+      } else {
+        // Fallback or cancel - clear loading so user can try manual login
+        if (mounted) setState(() => _loading = false);
       }
     } catch (e) {
-      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

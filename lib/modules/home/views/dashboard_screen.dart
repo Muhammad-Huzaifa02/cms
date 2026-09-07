@@ -189,7 +189,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
-            expandedHeight: 240,
+            expandedHeight: 200,
             floating: false,
             pinned: true,
             stretch: true,
@@ -270,47 +270,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           SliverToBoxAdapter(
-            child: Transform.translate(
-              offset: const Offset(0, -35),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 1000),
-                  curve: Curves.easeOutBack,
-                  builder: (context, value, child) {
-                    return Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.identity()
-                        ..setEntry(3, 2, 0.0015)
-                        ..rotateX(0.25 * (1 - value))
-                        // ignore: deprecated_member_use
-                        ..scale(0.9 + (0.1 * value), 0.9 + (0.1 * value), 1.0),
-                      child: child,
-                    );
-                  },
-                  child: Material(
-                    elevation: 16,
-                    shadowColor: Colors.black45,
-                    borderRadius: BorderRadius.circular(16),
-                    child: TextField(
-                      controller: _searchCtrl,
-                      onSubmitted: _runSearch,
-                      style: const TextStyle(fontSize: 15),
-                      decoration: InputDecoration(
-                        hintText: 'Search name, CNIC, phone, account…',
-                        hintStyle: const TextStyle(fontSize: 14, color: AppColors.muted),
-                        prefixIcon: const Icon(Icons.search, size: 24, color: AppColors.brand),
-                        suffixIcon: IconButton(icon: const Icon(Icons.arrow_forward, size: 22), onPressed: () => _runSearch(_searchCtrl.text)),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 18),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 30,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [AppColors.brand, AppColors.brand],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 1000),
+                    curve: Curves.easeOutBack,
+                    builder: (context, value, child) {
+                      return Transform(
+                        alignment: Alignment.center,
+                        transform: Matrix4.identity()
+                          ..setEntry(3, 2, 0.0015)
+                          ..rotateX(0.25 * (1 - value))
+                          // ignore: deprecated_member_use
+                          ..scale(0.9 + (0.1 * value), 0.9 + (0.1 * value), 1.0),
+                        child: child,
+                      );
+                    },
+                    child: Material(
+                      elevation: 16,
+                      shadowColor: Colors.black45,
+                      borderRadius: BorderRadius.circular(16),
+                      child: TextField(
+                        controller: _searchCtrl,
+                        onSubmitted: _runSearch,
+                        style: const TextStyle(fontSize: 15),
+                        decoration: InputDecoration(
+                          hintText: 'Search name, CNIC, phone, account…',
+                          hintStyle: const TextStyle(fontSize: 14, color: AppColors.muted),
+                          prefixIcon: const Icon(Icons.search, size: 24, color: AppColors.brand),
+                          suffixIcon: IconButton(icon: const Icon(Icons.arrow_forward, size: 22), onPressed: () => _runSearch(_searchCtrl.text)),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 18),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
           StreamBuilder<List<Customer>>(

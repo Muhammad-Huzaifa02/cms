@@ -52,7 +52,10 @@ class ActivityLogEntry {
   });
 
   factory ActivityLogEntry.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data()!;
+    final data = doc.data();
+    if (data == null) {
+      throw Exception('Activity log document is empty (ID: ${doc.id})');
+    }
     final wire = data['action'] as String? ?? '';
     final action = ActivityAction.values.firstWhere(
       (a) => a.wire == wire,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/services/auth_service.dart';
+import '../../../data/services/biometric_service.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// Lets the signed-in user edit their OWN name and phone number, and
@@ -17,12 +18,15 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _auth = AuthService();
+  final _biometricService = BiometricService();
   late final TextEditingController _nameCtrl;
   late final TextEditingController _phoneCtrl;
   final _newPasswordCtrl = TextEditingController();
 
   bool _savingDetails = false;
   bool _savingPassword = false;
+  bool _biometricAvailable = false;
+  bool _biometricEnabled = false;
   String? _detailsError;
   String? _detailsSuccess;
   String? _passwordError;
@@ -33,6 +37,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.currentUser.name);
     _phoneCtrl = TextEditingController(text: widget.currentUser.phone ?? '');
+    _loadBiometricStatus();
+  }
+
+  Future<void> _loadBiometricStatus() async {
+    final available = await _biometricService.isBiometricAvailable();
+    final enabled = await _biometricService.isBiometricEnabled();
+    if (mounted) {
+      setState(() {
+        _biometricAvailable = available;
+        _biometricEnabled = enabled;
+      });
+    }
   }
 
   bool get _phoneLooksValid => _auth.normalizePhone(_phoneCtrl.text).length >= 7;
@@ -85,6 +101,74 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() => _passwordError = e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _savingPassword = false);
+    }
+  }
+
+  Future<void> _toggleBiometrics(bool enabled) async {
+    if (enabled) {
+      final password = await showDialog<String>(
+        context: context,
+        builder: (context) {
+          final ctrl = TextEditingController();
+          return AlertDialog(
+            title: const Text('Enable Biometrics'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Enter your password to enable biometric login.'),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: ctrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              TextButton(
+                onPressed: () => Navigator.pop(context, ctrl.text),
+                style: TextButton.styleFrom(fontWeight: FontWeight.bold),
+                child: const Text('Verify'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (password == null || password.isEmpty) return;
+
+      final authenticated = await _biometricService.authenticate(
+        reason: 'Confirm your biometric to enable biometric login',
+      );
+
+      if (authenticated) {
+        final email = widget.currentUser.email;
+        if (email != null) {
+          await _biometricService.saveCredentials(email, password);
+          await _biometricService.setBiometricEnabled(true);
+          if (mounted) {
+            setState(() => _biometricEnabled = true);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Biometric login enabled successfully.')),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Cannot enable biometric login: No email associated with this account.')),
+            );
+          }
+        }
+      }
+    } else {
+      await _biometricService.clearCredentials();
+      setState(() => _biometricEnabled = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Biometric login disabled.')),
+        );
+      }
     }
   }
 
@@ -144,6 +228,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           ),
           const SizedBox(height: 14),
+          if (_biometricAvailable) ...[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: SwitchListTile(
+                  title: const Text('Biometric Login', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  subtitle: Text(
+                    _biometricEnabled ? 'Enabled' : 'Disabled',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  value: _biometricEnabled,
+                  activeColor: AppColors.brand,
+                  onChanged: _toggleBiometrics,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),

@@ -84,7 +84,10 @@ class AppUser {
   }
 
   factory AppUser.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data()!;
+    final data = doc.data();
+    if (data == null) {
+      throw Exception('User document is empty (ID: ${doc.id})');
+    }
     return AppUser(
       uid: doc.id,
       name: data['name'] ?? '',

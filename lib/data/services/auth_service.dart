@@ -73,7 +73,10 @@ class AuthService {
 
     try {
       final cred = await _auth.signInWithEmailAndPassword(email: loginEmail, password: password);
-      final uid = cred.user!.uid;
+      final user = cred.user;
+      if (user == null) throw Exception('Authentication failed — no user returned.');
+      
+      final uid = user.uid;
       final doc = await _db.collection('users').doc(uid).get();
       if (!doc.exists) {
         await _auth.signOut();
@@ -91,20 +94,27 @@ class AuthService {
   }
 
   /// Attempts to sign in using stored biometric credentials.
-  /// Returns null if no credentials or authentication fails.
+  /// Returns null if no credentials, biometrics not enabled, or authentication fails.
   Future<AppUser?> signInWithBiometrics() async {
     final available = await _biometrics.isBiometricAvailable();
-    if (!available) return null;
+    final enabled = await _biometrics.isBiometricEnabled();
+    if (!available || !enabled) return null;
 
-    final authenticated = await _biometrics.authenticate();
+    final authenticated = await _biometrics.authenticate(
+      reason: 'Authenticate to continue',
+    );
     if (!authenticated) return null;
 
     final creds = await _biometrics.getStoredCredentials();
     if (creds == null) return null;
 
+    final email = creds['email'];
+    final password = creds['password'];
+    if (email == null || password == null) return null;
+
     return await signIn(
-      identifier: creds['email']!,
-      password: creds['password']!,
+      identifier: email,
+      password: password,
     );
   }
 
@@ -136,7 +146,10 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw Exception(_friendlyAuthError(e));
     }
-    final uid = cred.user!.uid;
+    
+    final user = cred.user;
+    if (user == null) throw Exception('Account creation failed — no user returned.');
+    final uid = user.uid;
 
     try {
       final batch = _db.batch();
@@ -244,7 +257,10 @@ class AuthService {
         throw Exception(_friendlyAuthError(e));
       }
     }
-    final uid = cred.user!.uid;
+    
+    final user = cred.user;
+    if (user == null) throw Exception('Bootstrap failed — no user returned.');
+    final uid = user.uid;
 
     try {
       await _db.runTransaction((tx) async {

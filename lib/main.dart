@@ -89,9 +89,13 @@ class _AuthGate extends StatelessWidget {
               );
             }
 
-            final appUser = userSnap.data!;
-            if (!appUser.active) {
-              authService.signOut();
+            final appUser = userSnap.data;
+            if (appUser == null || !appUser.active) {
+              if (appUser != null && !appUser.active) {
+                // Deactivated user: sign them out AFTER the current build frame
+                // to avoid side-effects during build.
+                WidgetsBinding.instance.addPostFrameCallback((_) => authService.signOut());
+              }
               return _SignedOutGate(authService: authService);
             }
             return DashboardScreen(currentUser: appUser);

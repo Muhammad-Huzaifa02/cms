@@ -70,7 +70,7 @@ class _CreateAdminScreenState extends State<CreateAdminScreen> {
         MaterialPageRoute(builder: (_) => DashboardScreen(currentUser: admin)),
       );
     } catch (e) {
-      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

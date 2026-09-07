@@ -85,7 +85,10 @@ class Customer {
   }
 
   factory Customer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data()!;
+    final data = doc.data();
+    if (data == null) {
+      throw Exception('Customer document is empty (ID: ${doc.id})');
+    }
     return Customer(
       accountNumber: doc.id,
       name: data['name'] ?? '',
@@ -103,13 +106,14 @@ class Customer {
   }
 
   Map<String, dynamic> toMap({required String actingUid, required bool isNew}) {
+    final openedDate = dateOpened;
     final map = {
       'accountNumber': accountNumber,
       'name': name,
       'phone': phone,
       'cnic': cnic,
       'accountType': accountType,
-      'dateOpened': dateOpened != null ? Timestamp.fromDate(dateOpened!) : null,
+      'dateOpened': openedDate != null ? Timestamp.fromDate(openedDate) : null,
       'address': address,
       'notes': notes,
       'searchKeywords': buildSearchKeywords(),

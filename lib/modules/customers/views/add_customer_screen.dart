@@ -49,7 +49,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (e) {
-      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -80,7 +80,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   items: const ['Current', 'Savings', 'Current Plus', 'Business']
                       .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                       .toList(),
-                  onChanged: (v) => setState(() => _accountType = v!),
+                  onChanged: (v) {
+                    if (v != null) setState(() => _accountType = v);
+                  },
                 ),
               ),
             ),
