@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../data/models/user_model.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/biometric_service.dart';
 import '../../../core/theme/app_theme.dart';
@@ -61,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No thanks')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(fontWeight: FontWeight.bold),
+            style: TextButton.styleFrom(textStyle: const TextStyle(fontWeight: FontWeight.bold)),
             child: const Text('Enable'),
           ),
         ],

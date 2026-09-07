@@ -128,7 +128,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
               TextButton(
                 onPressed: () => Navigator.pop(context, ctrl.text),
-                style: TextButton.styleFrom(fontWeight: FontWeight.bold),
+                style: TextButton.styleFrom(textStyle: const TextStyle(fontWeight: FontWeight.bold)),
                 child: const Text('Verify'),
               ),
             ],
