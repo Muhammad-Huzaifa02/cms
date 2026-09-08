@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../models/user_model.dart';
 import 'biometric_service.dart';
 
@@ -123,6 +124,16 @@ class AuthService {
   /// Used by Admin's "add staff" flow (FR-1.2/1.3) — creates the Auth
   /// account, the matching `users` document, and the `phoneIndex` entry
   /// that makes phone-number sign-in work for this account.
+  /// Used by Admin's "add staff" flow (FR-1.2/1.3). Calls the
+  /// `createStaffAccount` Cloud Function (functions/index.js) instead of
+  /// creating the Auth user directly from the client — the client-SDK
+  /// approach used to sign the Admin OUT of their own session and INTO the
+  /// brand-new staff account as a side effect of
+  /// `createUserWithEmailAndPassword`. Running it server-side via the
+  /// Admin SDK avoids that entirely; the Admin's session is untouched.
+  ///
+  /// Requires `firebase deploy --only functions` to have been run — see
+  /// functions/README or the main README's deployment steps.
   Future<void> createStaffAccount({
     required String name,
     required String email,
@@ -134,43 +145,17 @@ class AuthService {
     if (email.trim().isEmpty || phone.trim().isEmpty) {
       throw ArgumentError('Email and phone number are both required.');
     }
-
-    // NOTE: creating another user signs the Admin's session out on pure
-    // client SDK usage. In production this call should go through a Cloud
-    // Function (Admin SDK) so the Admin's own session is undisturbed.
-    // Kept as a client call here for scaffold simplicity — flagged as a
-    // TODO for the real build.
-    late final UserCredential cred;
     try {
-      cred = await _auth.createUserWithEmailAndPassword(email: email.trim(), password: password);
-    } on FirebaseAuthException catch (e) {
-      throw Exception(_friendlyAuthError(e));
-    }
-    
-    final user = cred.user;
-    if (user == null) throw Exception('Account creation failed — no user returned.');
-    final uid = user.uid;
-
-    try {
-      final batch = _db.batch();
-      batch.set(_db.collection('users').doc(uid), {
-        'name': name,
+      final callable = FirebaseFunctions.instance.httpsCallable('createStaffAccount');
+      await callable.call({
+        'name': name.trim(),
         'email': email.trim(),
         'phone': phone.trim(),
-        'isAdmin': false,
+        'password': password,
         'permissions': permissions.toMap(),
-        'active': true,
-        'createdBy': createdByUid,
-        'createdAt': FieldValue.serverTimestamp(),
       });
-      batch.set(_db.collection('phoneIndex').doc(normalizePhone(phone)), {
-        'email': email.trim(),
-        'uid': uid,
-      });
-      await batch.commit();
-    } catch (e) {
-      await cred.user!.delete().catchError((_) => cred.user!);
-      rethrow;
+    } on FirebaseFunctionsException catch (e) {
+      throw Exception(e.message ?? 'Could not create the staff account (${e.code}).');
     }
   }
 
@@ -350,6 +335,10 @@ class AuthService {
   /// "recent" login for this — if it's been a while since they signed in,
   /// this throws `requires-recent-login`, which the caller should turn
   /// into "please sign out and back in, then try again."
+  ///
+  /// If biometric login was enabled, its stored password is updated to
+  /// match — otherwise biometric sign-in would silently start failing
+  /// with the old password until the user manually re-enabled it.
   Future<void> changeOwnPassword(String newPassword) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('You are not signed in.');
@@ -360,6 +349,21 @@ class AuthService {
       if (e.code == 'requires-recent-login') {
         throw Exception('For security, please sign out and sign back in before changing your password.');
       }
+      throw Exception(_friendlyAuthError(e));
+    }
+
+    if (await _biometrics.isBiometricEnabled() && user.email != null) {
+      await _biometrics.saveCredentials(user.email!, newPassword);
+    }
+  }
+
+  /// Sends a password-reset email via Firebase Auth. Works for any account
+  /// since every account has a real, mandatory email — even ones that
+  /// normally sign in by phone number.
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (e) {
       throw Exception(_friendlyAuthError(e));
     }
   }

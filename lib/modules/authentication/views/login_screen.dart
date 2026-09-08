@@ -35,14 +35,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final available = await _biometricService.isBiometricAvailable();
     final enabled = await _biometricService.isBiometricEnabled();
     if (mounted) setState(() => _bioAvailable = available && enabled);
-
-    // Auto-trigger if enabled and not already loading
-    if (available && enabled && !_loading) {
-      // Small delay for better UX transition
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted && _bioAvailable && !_loading) _biometricSignIn();
-      });
-    }
+    // Deliberately NOT auto-triggering biometric sign-in here. It used to
+    // fire automatically ~500ms after this screen mounted whenever
+    // biometrics were enabled — which meant tapping "Sign out" led
+    // straight back into the app via an unprompted fingerprint dialog,
+    // making sign-out look broken. Biometric login is now always a
+    // deliberate tap on the fingerprint button below.
   }
 
   Future<void> _offerBiometrics(AppUser user, String password) async {
@@ -134,6 +132,64 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _showForgotPasswordDialog() async {
+    final emailCtrl = TextEditingController(
+      text: _identifierCtrl.text.contains('@') ? _identifierCtrl.text.trim() : '',
+    );
+    String? dialogError;
+    final sent = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Reset password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Enter your account's email — we'll send a link to reset your password.",
+                style: TextStyle(fontSize: 12.5, color: AppColors.muted),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(hintText: 'Email address'),
+              ),
+              if (dialogError != null) ...[
+                const SizedBox(height: 8),
+                Text(dialogError!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () async {
+                final email = emailCtrl.text.trim();
+                if (!email.contains('@')) {
+                  setDialogState(() => dialogError = 'Enter a valid email address.');
+                  return;
+                }
+                try {
+                  await _auth.sendPasswordReset(email);
+                  if (context.mounted) Navigator.pop(context, true);
+                } catch (e) {
+                  setDialogState(() => dialogError = e.toString().replaceFirst('Exception: ', ''));
+                }
+              },
+              child: const Text('Send reset link'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (sent == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Check your email for a link to reset your password.")),
+      );
     }
   }
 
@@ -236,11 +292,19 @@ class _LoginScreenState extends State<LoginScreen> {
                               obscureText: true,
                               decoration: const InputDecoration(hintText: 'Password', prefixIcon: Icon(Icons.lock_outline, size: 19)),
                             ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: _loading ? null : _showForgotPasswordDialog,
+                                style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 30)),
+                                child: const Text('Forgot password?', style: TextStyle(fontSize: 11.5, color: AppColors.muted)),
+                              ),
+                            ),
                             if (_error != null) ...[
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 4),
                               Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
                             ],
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
                             Row(
                               children: [
                                 Expanded(

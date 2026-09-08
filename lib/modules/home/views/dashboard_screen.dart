@@ -189,7 +189,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
-            expandedHeight: 200,
+            expandedHeight: 138,
             floating: false,
             pinned: true,
             stretch: true,
@@ -211,18 +211,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Stack(
                   children: [
                     Positioned(
-                      right: -30,
-                      top: -30,
+                      right: -10,
+                      top: -10,
                       child: Opacity(
-                        opacity: 0.15,
+                        opacity: 0.14,
                         child: Transform.rotate(
                           angle: -0.2,
-                          child: Image.asset('assets/icon/app_logo.png', width: 220, height: 220, fit: BoxFit.contain),
+                          child: Image.asset('assets/icon/app_logo.png', width: 90, height: 90, fit: BoxFit.contain),
                         ),
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(22, 105, 22, 0),
+                      padding: const EdgeInsets.fromLTRB(22, 50, 22, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -241,9 +241,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Welcome back', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
-                                const SizedBox(height: 4),
-                                Text(user.name, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                                Text('Welcome back', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11.5)),
+                                const SizedBox(height: 2),
+                                Text(user.name, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 0.3)),
                               ],
                             ),
                           ),

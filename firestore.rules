@@ -20,14 +20,23 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if request.auth.uid == uid || isAdmin();
-      // Bootstrap: the very first Admin creates their OWN account, once,
-      // before any Admin exists yet — this is what lets a branch manager
-      // set themselves up from inside the app instead of a console script.
-      // Guarded by /system/bootstrap.adminExists so it can only fire once.
+      // Self-bootstrap only (the very first Admin). Staff accounts are
+      // created by the `createStaffAccount` Cloud Function using the
+      // Admin SDK, which bypasses these rules entirely (that's what lets
+      // it create a new user's doc without ever being "signed in" as
+      // that user client-side) — see functions/index.js.
       allow create: if request.auth.uid == uid
         && request.resource.data.isAdmin == true
         && get(/databases/$(database)/documents/system/bootstrap).data.adminExists == false;
-      allow write: if isAdmin();
+
+      // Allow Admins to manage all users, and users to update their own basic info
+      allow update: if isAdmin() || (
+        request.auth.uid == uid
+        && request.resource.data.isAdmin == resource.data.isAdmin
+        && request.resource.data.permissions == resource.data.permissions
+        && request.resource.data.active == resource.data.active
+      );
+      allow delete: if isAdmin();
     }
 
     match /system/bootstrap {
@@ -51,18 +60,16 @@ service cloud.firestore {
     }
 
     match /phoneIndex/{phone} {
-      // Public read is required: resolving a phone number to its real
-      // email has to happen BEFORE the person is authenticated (that's
-      // the whole point — it's how phone-number sign-in works). The doc
-      // only ever contains an email + uid, nothing sensitive like a
-      // password or CNIC.
       allow read: if true;
-      // Only the account itself can register its own phone -> email
-      // mapping, at creation time (bootstrap admin or Admin-created staff
-      // — in both cases request.auth is the new account at the moment
-      // this write happens).
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
-      allow update, delete: if isAdmin();
+      // Allow creation if the user is registering themselves, or if an Admin is doing it
+      allow create: if request.auth != null && (
+        request.resource.data.uid == request.auth.uid || isAdmin()
+      );
+      // Allow deletion if it's the user's own entry (for phone changes) or if Admin
+      allow delete: if isAdmin() || (
+        request.auth != null && resource.data.uid == request.auth.uid
+      );
+      allow update: if isAdmin();
     }
   }
 }
