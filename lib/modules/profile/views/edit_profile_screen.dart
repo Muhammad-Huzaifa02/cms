@@ -239,7 +239,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     style: const TextStyle(fontSize: 12),
                   ),
                   value: _biometricEnabled,
-                  activeColor: AppColors.brand,
+                  activeTrackColor: AppColors.brand,
                   onChanged: _toggleBiometrics,
                 ),
               ),

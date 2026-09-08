@@ -6,6 +6,7 @@ import 'package:cms/core/theme/app_theme.dart';
 import 'package:cms/data/services/auth_service.dart';
 import 'package:cms/data/models/user_model.dart';
 import 'package:cms/modules/authentication/views/login_screen.dart';
+import 'package:cms/modules/authentication/views/create_admin_screen.dart';
 import 'package:cms/modules/home/views/dashboard_screen.dart';
 import 'package:cms/routes/app_routes.dart';
 
@@ -64,7 +65,7 @@ class _AuthGate extends StatelessWidget {
           );
         }
         final firebaseUser = snap.data;
-        if (firebaseUser == null) return LoginScreen(authService: authService);
+        if (firebaseUser == null) return _SignedOutGate(authService: authService);
 
         return StreamBuilder<AppUser?>(
           stream: authService.appUserStream(firebaseUser.uid),
@@ -95,11 +96,43 @@ class _AuthGate extends StatelessWidget {
                 // to avoid side-effects during build.
                 WidgetsBinding.instance.addPostFrameCallback((_) => authService.signOut());
               }
-              return LoginScreen(authService: authService);
+              return _SignedOutGate(authService: authService);
             }
             return DashboardScreen(currentUser: appUser);
           },
         );
+      },
+    );
+  }
+}
+
+class _SignedOutGate extends StatelessWidget {
+  final AuthService authService;
+  const _SignedOutGate({required this.authService});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: authService.adminAlreadyExists(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset('assets/icon/app_logo.png', width: 80, height: 80),
+                  const SizedBox(height: 24),
+                  const CircularProgressIndicator(color: AppColors.brand),
+                ],
+              ),
+            ),
+          );
+        }
+        final adminExists = snap.data ?? false;
+        return adminExists
+            ? LoginScreen(authService: authService)
+            : CreateAdminScreen(authService: authService);
       },
     );
   }
