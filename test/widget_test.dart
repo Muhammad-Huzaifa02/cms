@@ -16,7 +16,7 @@ void main() {
     await tester.pumpWidget(CmsApp(authService: authService));
 
     // _AuthGate has a StreamBuilder, so we need to pump to let it emit the initial null user
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     // 3. Verify that LoginScreen components are visible.
     // Note: the login field is unified (one "Email or phone number" input,
@@ -25,7 +25,7 @@ void main() {
     // target the button specifically rather than asserting findsOneWidget
     // on plain text.
     expect(find.text('Customer Management System'), findsOneWidget);
-    expect(find.widgetWithText(ElevatedButton, 'Sign in'), findsOneWidget);
+    expect(find.widgetWithText(ElevatedButton, 'Login'), findsOneWidget);
     expect(find.textContaining('Email or phone number'), findsWidgets);
   });
 }

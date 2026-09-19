@@ -311,9 +311,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
+                      child: const Text(
                         'Changing your email requires verifying the new address first.',
-                        style: const TextStyle(fontSize: 11.5, color: AppColors.muted, height: 1.3),
+                        style: TextStyle(fontSize: 11.5, color: AppColors.muted, height: 1.3),
                       ),
                     ),
                     TextButton(
@@ -370,7 +370,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       const SizedBox(width: 12),
                       Switch(
                         value: _biometricEnabled,
-                        activeColor: AppColors.brand,
+                        activeThumbColor: AppColors.brand,
                         onChanged: _toggleBiometrics,
                       ),
                     ],
