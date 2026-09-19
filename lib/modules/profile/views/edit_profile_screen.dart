@@ -3,11 +3,16 @@ import '../../../data/models/user_model.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/biometric_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/section_card.dart';
+import '../../../core/widgets/account_field.dart';
+import '../../../core/widgets/primary_button.dart';
+import '../../../core/widgets/feedback_text.dart';
 
-/// Lets the signed-in user edit their OWN name and phone number, and
-/// optionally change their password. Email is shown read-only — it's the
-/// real Firebase Auth login identity, and safely changing it needs a
-/// verification flow that's out of scope here (see AuthService docs).
+/// Lets the signed-in user edit their OWN name, phone number, and email,
+/// and optionally change their password. Email uses a verify-then-sync
+/// flow (see AuthService.requestEmailChange/confirmEmailChangeIfVerified)
+/// since Firebase only actually swaps the login email once the person
+/// clicks a verification link sent to the new address.
 class EditProfileScreen extends StatefulWidget {
   final AppUser currentUser;
   const EditProfileScreen({super.key, required this.currentUser});
@@ -21,28 +26,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _biometricService = BiometricService();
   late final TextEditingController _nameCtrl;
   late final TextEditingController _phoneCtrl;
+  late final TextEditingController _emailDisplayCtrl;
   final _newPasswordCtrl = TextEditingController();
 
   bool _savingDetails = false;
   bool _savingPassword = false;
+  bool _syncingEmail = false;
   bool _biometricAvailable = false;
   bool _biometricEnabled = false;
+  bool _obscurePassword = true;
   String? _detailsError;
   String? _detailsSuccess;
   String? _passwordError;
   String? _passwordSuccess;
+  String? _emailStatus;
+  bool _emailStatusIsError = false;
 
   @override
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.currentUser.name);
     _phoneCtrl = TextEditingController(text: widget.currentUser.phone ?? '');
+    _emailDisplayCtrl = TextEditingController(text: widget.currentUser.email ?? '');
     _loadBiometricStatus();
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emailDisplayCtrl.dispose();
+    _newPasswordCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _loadBiometricStatus() async {
     final available = await _biometricService.isBiometricAvailable();
-    final enabled = await _biometricService.isBiometricEnabled();
+    final enabled = await _biometricService.isLockEnabled();
     if (mounted) {
       setState(() {
         _biometricAvailable = available;
@@ -55,11 +75,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _saveDetails() async {
     if (_nameCtrl.text.trim().isEmpty) {
-      setState(() => _detailsError = 'Name is required.');
+      setState(() {
+        _detailsError = 'Name is required.';
+        _detailsSuccess = null;
+      });
       return;
     }
     if (!_phoneLooksValid) {
-      setState(() => _detailsError = 'Enter a valid phone number.');
+      setState(() {
+        _detailsError = 'Enter a valid phone number.';
+        _detailsSuccess = null;
+      });
       return;
     }
     setState(() {
@@ -74,7 +100,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         previousPhone: widget.currentUser.phone ?? '',
       );
       if (!mounted) return;
-      setState(() => _detailsSuccess = 'Saved.');
+      setState(() => _detailsSuccess = 'Details saved.');
     } catch (e) {
       setState(() => _detailsError = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -82,9 +108,123 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<void> _showChangeEmailDialog() async {
+    final newEmailCtrl = TextEditingController();
+    final passwordCtrl = TextEditingController();
+    bool obscure = true;
+    String? dialogError;
+    bool sending = false;
+
+    final requested = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Change email'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "We'll send a verification link to the new address. Your login email only actually changes once you click that link.",
+                style: TextStyle(fontSize: 12.5, color: AppColors.muted),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: newEmailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(hintText: 'New email address'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: passwordCtrl,
+                obscureText: obscure,
+                decoration: InputDecoration(
+                  hintText: 'Current password',
+                  suffixIcon: IconButton(
+                    icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 19),
+                    onPressed: () => setDialogState(() => obscure = !obscure),
+                  ),
+                ),
+              ),
+              if (dialogError != null) ...[
+                const SizedBox(height: 8),
+                Text(dialogError!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: sending ? null : () => Navigator.pop(context, false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: sending
+                  ? null
+                  : () async {
+                      setDialogState(() => sending = true);
+                      try {
+                        await _auth.requestEmailChange(
+                          newEmail: newEmailCtrl.text.trim(),
+                          currentPassword: passwordCtrl.text,
+                        );
+                        if (context.mounted) Navigator.pop(context, true);
+                      } catch (e) {
+                        setDialogState(() {
+                          dialogError = e.toString().replaceFirst('Exception: ', '');
+                          sending = false;
+                        });
+                      }
+                    },
+              child: sending
+                  ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Send verification link'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (requested == true && mounted) {
+      setState(() {
+        _emailStatus = "Verification link sent to ${newEmailCtrl.text.trim()}. Click it, then tap \"Sync now\" below.";
+        _emailStatusIsError = false;
+      });
+    }
+  }
+
+  Future<void> _syncEmailIfVerified() async {
+    setState(() {
+      _syncingEmail = true;
+      _emailStatus = null;
+    });
+    try {
+      final synced = await _auth.confirmEmailChangeIfVerified(phone: _phoneCtrl.text.trim());
+      if (!mounted) return;
+      if (synced) {
+        final freshEmail = _auth.currentUser?.email ?? '';
+        setState(() {
+          _emailDisplayCtrl.text = freshEmail;
+          _emailStatus = 'Email updated.';
+          _emailStatusIsError = false;
+        });
+      } else {
+        setState(() {
+          _emailStatus = "Not verified yet — click the link in your new inbox first.";
+          _emailStatusIsError = true;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _emailStatus = e.toString().replaceFirst('Exception: ', '');
+        _emailStatusIsError = true;
+      });
+    } finally {
+      if (mounted) setState(() => _syncingEmail = false);
+    }
+  }
+
   Future<void> _changePassword() async {
     if (_newPasswordCtrl.text.length < 6) {
-      setState(() => _passwordError = 'Password must be at least 6 characters.');
+      setState(() {
+        _passwordError = 'Password must be at least 6 characters.';
+        _passwordSuccess = null;
+      });
       return;
     }
     setState(() {
@@ -106,67 +246,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _toggleBiometrics(bool enabled) async {
     if (enabled) {
-      final password = await showDialog<String>(
-        context: context,
-        builder: (context) {
-          final ctrl = TextEditingController();
-          return AlertDialog(
-            title: const Text('Enable Biometrics'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Enter your password to enable biometric login.'),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: ctrl,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-              TextButton(
-                onPressed: () => Navigator.pop(context, ctrl.text),
-                style: TextButton.styleFrom(textStyle: const TextStyle(fontWeight: FontWeight.bold)),
-                child: const Text('Verify'),
-              ),
-            ],
-          );
-        },
-      );
-
-      if (password == null || password.isEmpty) return;
-
       final authenticated = await _biometricService.authenticate(
-        reason: 'Confirm your biometric to enable biometric login',
+        reason: 'Confirm your fingerprint/Face ID to enable app lock',
       );
-
       if (authenticated) {
-        final email = widget.currentUser.email;
-        if (email != null) {
-          await _biometricService.saveCredentials(email, password);
-          await _biometricService.setBiometricEnabled(true);
-          if (mounted) {
-            setState(() => _biometricEnabled = true);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Biometric login enabled successfully.')),
-            );
-          }
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Cannot enable biometric login: No email associated with this account.')),
-            );
-          }
+        await _biometricService.setLockEnabled(true);
+        if (mounted) {
+          setState(() => _biometricEnabled = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("App lock enabled — you'll need to confirm biometrics each time you open CMS.")),
+          );
         }
       }
     } else {
-      await _biometricService.clearCredentials();
-      setState(() => _biometricEnabled = false);
+      await _biometricService.setLockEnabled(false);
       if (mounted) {
+        setState(() => _biometricEnabled = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Biometric login disabled.')),
+          const SnackBar(content: Text('App lock disabled.')),
         );
       }
     }
@@ -174,114 +271,139 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = widget.currentUser;
     return Scaffold(
-      appBar: AppBar(title: const Text('My account')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('DETAILS', style: TextStyle(fontSize: 10.5, letterSpacing: 1, color: AppColors.muted, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 12),
-                  TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Full name')),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _phoneCtrl,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(labelText: 'Phone number'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    enabled: false,
-                    controller: TextEditingController(text: user.email ?? ''),
-                    decoration: const InputDecoration(
-                      labelText: 'Email (login)',
-                      helperText: "Email can't be changed here — contact support if needed.",
-                      helperMaxLines: 2,
-                    ),
-                  ),
-                  if (_detailsError != null) ...[
-                    const SizedBox(height: 8),
-                    Text(_detailsError!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
-                  ],
-                  if (_detailsSuccess != null) ...[
-                    const SizedBox(height: 8),
-                    Text(_detailsSuccess!, style: const TextStyle(color: AppColors.brand, fontSize: 12)),
-                  ],
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _savingDetails ? null : _saveDetails,
-                      child: _savingDetails
-                          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Save details'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          if (_biometricAvailable) ...[
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: SwitchListTile(
-                  title: const Text('Biometric Login', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                  subtitle: Text(
-                    _biometricEnabled ? 'Enabled' : 'Disabled',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  value: _biometricEnabled,
-                  activeTrackColor: AppColors.brand,
-                  onChanged: _toggleBiometrics,
+      backgroundColor: AppColors.bg,
+      appBar: AppBar(
+        title: const Text('My Account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        centerTitle: false,
+        titleSpacing: 0,
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          children: [
+            SectionCard(
+              title: 'Details',
+              children: [
+                AccountField(label: 'Full Name', controller: _nameCtrl),
+                const SizedBox(height: 16),
+                AccountField(
+                  label: 'Phone Number',
+                  controller: _phoneCtrl,
+                  keyboardType: TextInputType.phone,
                 ),
-              ),
+                if (_detailsError != null) FeedbackText(_detailsError!, isError: true),
+                if (_detailsSuccess != null) FeedbackText(_detailsSuccess!),
+                const SizedBox(height: 20),
+                PrimaryButton(
+                  label: 'Save Details',
+                  loading: _savingDetails,
+                  onPressed: _saveDetails,
+                ),
+              ],
             ),
-            const SizedBox(height: 14),
-          ],
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('CHANGE PASSWORD', style: TextStyle(fontSize: 10.5, letterSpacing: 1, color: AppColors.muted, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _newPasswordCtrl,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'New password (6+ characters)'),
-                  ),
-                  if (_passwordError != null) ...[
-                    const SizedBox(height: 8),
-                    Text(_passwordError!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
-                  ],
-                  if (_passwordSuccess != null) ...[
-                    const SizedBox(height: 8),
-                    Text(_passwordSuccess!, style: const TextStyle(color: AppColors.brand, fontSize: 12)),
-                  ],
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _savingPassword ? null : _changePassword,
-                      child: _savingPassword
-                          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Change password'),
+            const SizedBox(height: 16),
+            SectionCard(
+              title: 'Email Address',
+              children: [
+                AccountField(label: 'Email (Login)', controller: _emailDisplayCtrl, readOnly: true),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Changing your email requires verifying the new address first.',
+                        style: const TextStyle(fontSize: 11.5, color: AppColors.muted, height: 1.3),
+                      ),
                     ),
+                    TextButton(
+                      onPressed: _showChangeEmailDialog,
+                      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8)),
+                      child: const Text('Change'),
+                    ),
+                  ],
+                ),
+                if (_emailStatus != null) FeedbackText(_emailStatus!, isError: _emailStatusIsError),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: _syncingEmail ? null : _syncEmailIfVerified,
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 30)),
+                    child: _syncingEmail
+                        ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Already verified a new email? Sync now', style: TextStyle(fontSize: 11.5)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_biometricAvailable) ...[
+              SectionCard(
+                title: 'Biometric Login',
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _biometricEnabled ? 'Enabled' : 'Disabled',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: _biometricEnabled ? AppColors.brand : AppColors.muted,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              _biometricEnabled
+                                  ? "Fingerprint/Face ID required to open the app"
+                                  : 'Require fingerprint or Face ID to open CMS',
+                              style: const TextStyle(fontSize: 11.5, color: AppColors.muted, height: 1.3),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Switch(
+                        value: _biometricEnabled,
+                        activeColor: AppColors.brand,
+                        onChanged: _toggleBiometrics,
+                      ),
+                    ],
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+            ],
+            SectionCard(
+              title: 'Change Password',
+              children: [
+                AccountField(
+                  label: 'New Password',
+                  controller: _newPasswordCtrl,
+                  obscureText: _obscurePassword,
+                  helperText: 'Minimum 6 characters.',
+                  suffixIcon: IconButton(
+                    icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 19, color: AppColors.muted),
+                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  ),
+                ),
+                if (_passwordError != null) FeedbackText(_passwordError!, isError: true),
+                if (_passwordSuccess != null) FeedbackText(_passwordSuccess!),
+                const SizedBox(height: 20),
+                PrimaryButton(
+                  label: 'Change Password',
+                  loading: _savingPassword,
+                  onPressed: _changePassword,
+                ),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -19,7 +19,7 @@ lib/
     customers/views/          # Add/Edit customer, Search results
     profile/views/            # Edit own account
   routes/app_routes.dart
-functions/                   # Cloud Function: server-side staff account creation
+  routes/app_routes.dart
 firestore.rules
 assets/icon/                 # App logo (source + rasterized)
 ```
@@ -42,36 +42,38 @@ assets/icon/                 # App logo (source + rasterized)
    ```
    firebase deploy --only firestore:rules
    ```
-5. **Deploy the Cloud Function** (this is what lets Admin create staff
-   accounts without getting logged out of their own session):
-   ```
-   cd functions
-   npm install
-   cd ..
-   firebase deploy --only functions
-   ```
-   Without this deployed, "Add staff account" will fail — it calls the
-   `createStaffAccount` callable function.
-6. **Create the first Admin account** — open the app, tap **"First time?
+   That's the only deployment step — no Cloud Functions, no Blaze
+   (pay-as-you-go) plan required. Everything runs on Firebase's free
+   Spark plan.
+5. **Create the first Admin account** — open the app, tap **"First time?
    Create the Admin account"** on the Sign In screen. No console step
    needed; this is a one-time, self-closing path (see `/system/bootstrap`
    in `firestore.rules`).
-7. **Run it:**
+6. **Run it:**
    ```
    flutter run
    ```
 
-## Why a Cloud Function for staff creation?
+## Why staff creation uses a second Firebase app instance
 
 Firebase's client SDK has a well-known quirk: calling
 `createUserWithEmailAndPassword` signs you in as the account you just
 created. That meant every time Admin added a staff member, Admin's own
 session got silently swapped for the new staff member's — a real bug,
-not just an inconvenience. `functions/index.js` creates the account
-server-side via the Admin SDK instead, which never touches the caller's
-client session. The function itself re-checks that the caller is an
-active Admin before doing anything — client-side checks are a UX nicety,
-this is the actual enforcement.
+not just an inconvenience.
+
+The clean fix is normally a Cloud Function (Admin SDK never touches
+client sessions) — but that requires Firebase's Blaze plan, which needs a
+billing card on file even to stay within the free quota. Since this
+project intentionally stays on the free Spark plan, `AuthService.
+createStaffAccount` instead creates the new Auth account on a temporary,
+throwaway SECOND Firebase app instance (same project, just a second
+client-side handle to it). That secondary instance is the one that gets
+signed in as the new staff member — Admin's session, on the default app
+instance, is never touched. The instance is torn down immediately after.
+The Firestore writes (the new user's doc, phoneIndex entry, activity log)
+still happen on the default app, under Admin's own session, authorized
+by the normal `isAdmin()` check in `firestore.rules`.
 
 ## Known design choices worth knowing
 

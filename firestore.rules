@@ -20,14 +20,21 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if request.auth.uid == uid || isAdmin();
-      // Self-bootstrap only (the very first Admin). Staff accounts are
-      // created by the `createStaffAccount` Cloud Function using the
-      // Admin SDK, which bypasses these rules entirely (that's what lets
-      // it create a new user's doc without ever being "signed in" as
-      // that user client-side) — see functions/index.js.
-      allow create: if request.auth.uid == uid
+      // Two ways a `users/{uid}` doc gets created:
+      // 1. Self-bootstrap — the very first Admin, once, before any Admin
+      //    exists (guarded by /system/bootstrap).
+      // 2. An existing Admin creating a STAFF account. This runs entirely
+      //    client-side: the new Auth account is created on a temporary
+      //    SECOND Firebase app instance (so Admin's own session on the
+      //    default app is never disturbed — see
+      //    AuthService.createStaffAccount), then this Firestore write
+      //    happens on the default app under Admin's own still-valid
+      //    session, authorized by isAdmin() below.
+      allow create: if isAdmin() || (
+        request.auth.uid == uid
         && request.resource.data.isAdmin == true
-        && get(/databases/$(database)/documents/system/bootstrap).data.adminExists == false;
+        && get(/databases/$(database)/documents/system/bootstrap).data.adminExists == false
+      );
 
       // Allow Admins to manage all users, and users to update their own basic info
       allow update: if isAdmin() || (

@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import '../../firebase_options.dart';
 import '../models/user_model.dart';
-import 'biometric_service.dart';
 
 /// Handles login by EITHER email or phone number, both with password
 /// (FR-1.1). Every account has a REAL email as its Firebase Auth identity
@@ -20,7 +20,6 @@ import 'biometric_service.dart';
 class AuthService {
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
-  final BiometricService _biometrics = BiometricService();
 
   AuthService({FirebaseAuth? auth, FirebaseFirestore? db})
       : _auth = auth ?? FirebaseAuth.instance,
@@ -94,46 +93,21 @@ class AuthService {
     }
   }
 
-  /// Attempts to sign in using stored biometric credentials.
-  /// Returns null if no credentials, biometrics not enabled, or authentication fails.
-  Future<AppUser?> signInWithBiometrics() async {
-    final available = await _biometrics.isBiometricAvailable();
-    final enabled = await _biometrics.isBiometricEnabled();
-    if (!available || !enabled) return null;
-
-    final authenticated = await _biometrics.authenticate(
-      reason: 'Authenticate to continue',
-    );
-    if (!authenticated) return null;
-
-    final creds = await _biometrics.getStoredCredentials();
-    if (creds == null) return null;
-
-    final email = creds['email'];
-    final password = creds['password'];
-    if (email == null || password == null) return null;
-
-    return await signIn(
-      identifier: email,
-      password: password,
-    );
-  }
-
   Future<void> signOut() => _auth.signOut();
 
-  /// Used by Admin's "add staff" flow (FR-1.2/1.3) — creates the Auth
-  /// account, the matching `users` document, and the `phoneIndex` entry
-  /// that makes phone-number sign-in work for this account.
-  /// Used by Admin's "add staff" flow (FR-1.2/1.3). Calls the
-  /// `createStaffAccount` Cloud Function (functions/index.js) instead of
-  /// creating the Auth user directly from the client — the client-SDK
-  /// approach used to sign the Admin OUT of their own session and INTO the
-  /// brand-new staff account as a side effect of
-  /// `createUserWithEmailAndPassword`. Running it server-side via the
-  /// Admin SDK avoids that entirely; the Admin's session is untouched.
+  /// Used by Admin's "add staff" flow (FR-1.2/1.3). Creates the new Auth
+  /// account on a SECOND, temporary Firebase app instance rather than the
+  /// default one — this is the key trick. `createUserWithEmailAndPassword`
+  /// always signs you in as the account you just created; running it on a
+  /// throwaway secondary app means that sign-in happens there, not on the
+  /// default app, so Admin's own session (on the default app) is never
+  /// touched. No Cloud Function, no Blaze plan required — this all runs
+  /// on Firebase's free Spark plan.
   ///
-  /// Requires `firebase deploy --only functions` to have been run — see
-  /// functions/README or the main README's deployment steps.
+  /// The Firestore writes (users doc, phoneIndex, activityLog) still run
+  /// on the DEFAULT app/Firestore instance, under Admin's own still-valid
+  /// session — that's what lets `isAdmin()` in firestore.rules authorize
+  /// them normally, same as any other Admin action.
   Future<void> createStaffAccount({
     required String name,
     required String email,
@@ -145,17 +119,68 @@ class AuthService {
     if (email.trim().isEmpty || phone.trim().isEmpty) {
       throw ArgumentError('Email and phone number are both required.');
     }
+
+    final secondaryAppName = 'staffCreation_${DateTime.now().microsecondsSinceEpoch}';
+    FirebaseApp? secondaryApp;
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('createStaffAccount');
-      await callable.call({
-        'name': name.trim(),
-        'email': email.trim(),
-        'phone': phone.trim(),
-        'password': password,
-        'permissions': permissions.toMap(),
-      });
-    } on FirebaseFunctionsException catch (e) {
-      throw Exception(e.message ?? 'Could not create the staff account (${e.code}).');
+      secondaryApp = await Firebase.initializeApp(
+        name: secondaryAppName,
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
+
+      final UserCredential cred;
+      try {
+        cred = await secondaryAuth.createUserWithEmailAndPassword(
+          email: email.trim(),
+          password: password,
+        );
+      } on FirebaseAuthException catch (e) {
+        throw Exception(_friendlyAuthError(e));
+      }
+      final uid = cred.user!.uid;
+
+      // Done with the secondary app immediately — sign it out and tear it
+      // down so no lingering session sticks around on-device for it.
+      await secondaryAuth.signOut();
+
+      try {
+        final batch = _db.batch();
+        batch.set(_db.collection('users').doc(uid), {
+          'name': name.trim(),
+          'email': email.trim(),
+          'phone': phone.trim(),
+          'isAdmin': false,
+          'permissions': permissions.toMap(),
+          'active': true,
+          'createdBy': createdByUid,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        batch.set(_db.collection('phoneIndex').doc(normalizePhone(phone)), {
+          'email': email.trim(),
+          'uid': uid,
+        });
+        batch.set(_db.collection('activityLog').doc(), {
+          'action': 'staff_created',
+          'targetId': uid,
+          'performedBy': createdByUid,
+          'performedByName': (await loadAppUser(createdByUid))?.name ?? 'Admin',
+          'timestamp': FieldValue.serverTimestamp(),
+          'details': null,
+        });
+        await batch.commit();
+      } catch (e) {
+        // Firestore writes failed — clean up the orphaned Auth account via
+        // the secondary app (which is still holding that user's session)
+        // before it's torn down, so a partial failure doesn't leave an
+        // unusable, undocumented login behind.
+        await cred.user!.delete().catchError((_) => cred.user!);
+        rethrow;
+      }
+    } finally {
+      if (secondaryApp != null) {
+        await secondaryApp.delete().catchError((_) {});
+      }
     }
   }
 
@@ -351,10 +376,78 @@ class AuthService {
       }
       throw Exception(_friendlyAuthError(e));
     }
+    // Note: no biometric credential to sync anymore — biometric lock no
+    // longer stores a password (see BiometricService's doc comment).
+  }
 
-    if (await _biometrics.isBiometricEnabled() && user.email != null) {
-      await _biometrics.saveCredentials(user.email!, newPassword);
+  /// Step 1 of changing your own login email. Firebase deprecated direct
+  /// `updateEmail()` in favor of this: it sends a verification link to the
+  /// NEW address, and the Auth email only actually changes once that link
+  /// is clicked. Deliberately does NOT touch Firestore yet — doing so
+  /// immediately would desync `users.email` / `phoneIndex` from what
+  /// Firebase Auth actually has until the person verifies, which would
+  /// break their own login. Requires a recent sign-in; re-authenticates
+  /// with the CURRENT password first so that's handled up front rather
+  /// than surfacing a confusing `requires-recent-login` mid-flow.
+  Future<void> requestEmailChange({
+    required String newEmail,
+    required String currentPassword,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null || user.email == null) throw Exception('You are not signed in.');
+    final trimmed = newEmail.trim();
+    if (!trimmed.contains('@')) throw ArgumentError('Enter a valid email address.');
+    if (trimmed.toLowerCase() == user.email!.toLowerCase()) {
+      throw ArgumentError('That\'s already your current email.');
     }
+
+    try {
+      final cred = EmailAuthProvider.credential(email: user.email!, password: currentPassword);
+      await user.reauthenticateWithCredential(cred);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        throw Exception('Current password is incorrect.');
+      }
+      throw Exception(_friendlyAuthError(e));
+    }
+
+    try {
+      await user.verifyBeforeUpdateEmail(trimmed);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_friendlyAuthError(e));
+    }
+  }
+
+  /// Step 2 — call this any time after requesting a change (e.g. a "I've
+  /// verified my email" button). Reloads the Auth user; if the email has
+  /// actually changed (meaning the link was clicked), syncs Firestore's
+  /// `users.email` and the matching `phoneIndex` entry to match, and
+  /// returns true. Returns false if it hasn't been verified yet — that's
+  /// an expected, normal outcome, not an error.
+  Future<bool> confirmEmailChangeIfVerified({required String phone}) async {
+    var user = _auth.currentUser;
+    if (user == null) throw Exception('You are not signed in.');
+    await user.reload();
+    user = _auth.currentUser;
+    if (user == null || user.email == null) return false;
+
+    final doc = await _db.collection('users').doc(user.uid).get();
+    final storedEmail = doc.data()?['email'] as String?;
+    if (storedEmail != null && storedEmail.toLowerCase() == user.email!.toLowerCase()) {
+      return false; // Firestore already matches — nothing changed yet.
+    }
+
+    final batch = _db.batch();
+    batch.update(_db.collection('users').doc(user.uid), {'email': user.email});
+    final normalizedPhone = normalizePhone(phone);
+    if (normalizedPhone.isNotEmpty) {
+      batch.set(_db.collection('phoneIndex').doc(normalizedPhone), {
+        'email': user.email,
+        'uid': user.uid,
+      });
+    }
+    await batch.commit();
+    return true;
   }
 
   /// Sends a password-reset email via Firebase Auth. Works for any account

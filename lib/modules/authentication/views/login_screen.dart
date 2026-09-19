@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../data/models/user_model.dart';
 import '../../../data/services/auth_service.dart';
-import '../../../data/services/biometric_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/perspective_page_route.dart';
 import '../../../core/widgets/fade_in_slide.dart';
@@ -18,72 +16,10 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   late final AuthService _auth = widget.authService ?? AuthService();
-  final BiometricService _biometricService = BiometricService();
   final _identifierCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _loading = false;
-  bool _bioAvailable = false;
   String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkBio();
-  }
-
-  Future<void> _checkBio() async {
-    final available = await _biometricService.isBiometricAvailable();
-    final enabled = await _biometricService.isBiometricEnabled();
-    if (mounted) setState(() => _bioAvailable = available && enabled);
-    // Deliberately NOT auto-triggering biometric sign-in here. It used to
-    // fire automatically ~500ms after this screen mounted whenever
-    // biometrics were enabled — which meant tapping "Sign out" led
-    // straight back into the app via an unprompted fingerprint dialog,
-    // making sign-out look broken. Biometric login is now always a
-    // deliberate tap on the fingerprint button below.
-  }
-
-  Future<void> _offerBiometrics(AppUser user, String password) async {
-    final available = await _biometricService.isBiometricAvailable();
-    final enabled = await _biometricService.isBiometricEnabled();
-
-    if (!available || enabled) return;
-
-    if (!mounted) return;
-    final bool? shouldEnable = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Enable Biometric Login?'),
-        content: const Text('Would you like to use your device\'s biometric authentication for future logins?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No thanks')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(textStyle: const TextStyle(fontWeight: FontWeight.bold)),
-            child: const Text('Enable'),
-          ),
-        ],
-      ),
-    );
-
-    if (shouldEnable == true) {
-      final authenticated = await _biometricService.authenticate(
-        reason: 'Confirm your biometric to enable biometric login',
-      );
-      if (authenticated) {
-        if (user.email != null) {
-          await _biometricService.saveCredentials(user.email!, password);
-          await _biometricService.setBiometricEnabled(true);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Biometric login enabled successfully.')),
-            );
-          }
-        }
-      }
-    }
-  }
 
   Future<void> _signIn() async {
     setState(() {
@@ -91,45 +27,16 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
     try {
-      final password = _passwordCtrl.text;
       final user = await _auth.signIn(
         identifier: _identifierCtrl.text.trim(),
-        password: password,
+        password: _passwordCtrl.text,
       );
-
-      if (!mounted) return;
-      await _offerBiometrics(user, password);
-
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         Perspective3DRoute(page: DashboardScreen(currentUser: user)),
       );
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _biometricSignIn() async {
-    if (_loading) return;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final user = await _auth.signInWithBiometrics();
-      if (user != null) {
-        if (!mounted) return;
-        Navigator.of(context).pushReplacement(
-          Perspective3DRoute(page: DashboardScreen(currentUser: user)),
-        );
-      } else {
-        // Fallback or cancel - clear loading so user can try manual login
-        if (mounted) setState(() => _loading = false);
-      }
-    } catch (e) {
-      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -305,33 +212,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
                             ],
                             const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: _loading ? null : _signIn,
-                                    child: _loading
-                                        ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                        : const Text('Login'),
-                                  ),
-                                ),
-                                if (_bioAvailable) ...[
-                                  const SizedBox(width: 12),
-                                  Material(
-                                    color: AppColors.gold,
-                                    borderRadius: BorderRadius.circular(13),
-                                    elevation: 6,
-                                    child: InkWell(
-                                      onTap: _loading ? null : _biometricSignIn,
-                                      borderRadius: BorderRadius.circular(13),
-                                      child: const Padding(
-                                        padding: EdgeInsets.all(12),
-                                        child: Icon(Icons.fingerprint, color: Colors.white, size: 28),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _loading ? null : _signIn,
+                                child: _loading
+                                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                    : const Text('Login'),
+                              ),
                             ),
                           ],
                         ),

@@ -196,6 +196,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             backgroundColor: AppColors.brandDeep,
             leading: IconButton(
               icon: const Icon(Icons.menu, color: Colors.white),
+              tooltip: 'Menu',
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
             ),
             flexibleSpace: FlexibleSpaceBar(
@@ -221,8 +222,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                     ),
+                    // Content sits below the top row (hamburger/logout, which
+                    // the SliverAppBar itself lays out at
+                    // kToolbarHeight + status-bar-height) — computed from
+                    // MediaQuery rather than a fixed number, so it lands
+                    // correctly on every device instead of guessing a value
+                    // that happens to work on one screen size.
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(22, 50, 22, 0),
+                      padding: EdgeInsets.fromLTRB(22, MediaQuery.of(context).padding.top + kToolbarHeight - 6, 60, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -241,9 +248,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Welcome back', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11.5)),
-                                const SizedBox(height: 2),
-                                Text(user.name, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 0.3)),
+                                const Text('Welcome back', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                                const SizedBox(height: 3),
+                                Text(
+                                  user.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold, letterSpacing: 0.2),
+                                ),
                               ],
                             ),
                           ),
@@ -441,17 +453,60 @@ class _CustomerTile extends StatelessWidget {
           elevation: 4,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           margin: EdgeInsets.zero,
-          child: ListTile(
-            leading: Hero(
-              tag: 'avatar-${customer.accountNumber}',
-              child: CircleAvatar(
-                backgroundColor: AppColors.brand,
-                child: Text(initials, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Hero(
+                  tag: 'avatar-${customer.accountNumber}',
+                  child: CircleAvatar(
+                    backgroundColor: AppColors.brand,
+                    child: Text(initials, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        customer.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              customer.maskedAccountNumber,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 11.5, color: AppColors.muted),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.brand.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              customer.accountType,
+                              style: const TextStyle(fontSize: 10, color: AppColors.brand, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(Icons.chevron_right, color: AppColors.muted),
+              ],
             ),
-            title: Text(customer.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            subtitle: Text('${customer.maskedAccountNumber} · ${customer.accountType}', style: const TextStyle(fontSize: 11.5, color: AppColors.muted)),
-            trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
           ),
         ),
       ),
