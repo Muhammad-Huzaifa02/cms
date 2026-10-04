@@ -52,7 +52,7 @@ class _FadeInSlideState extends State<FadeInSlide> with SingleTickerProviderStat
       animation: _animation,
       builder: (context, child) {
         return Opacity(
-          opacity: _animation.value,
+          opacity: _animation.value.clamp(0.0, 1.0),
           child: Transform.translate(
             offset: widget.offset * (1 - _animation.value),
             child: child,

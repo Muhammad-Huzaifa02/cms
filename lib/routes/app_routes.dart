@@ -4,7 +4,7 @@ import '../data/models/user_model.dart';
 import '../data/models/customer_model.dart';
 import '../modules/authentication/views/login_screen.dart';
 import '../modules/authentication/views/create_admin_screen.dart';
-import '../modules/home/views/dashboard_screen.dart';
+import '../modules/home/views/main_navigation_scaffold.dart';
 import '../modules/home/views/activity_log_screen.dart';
 import '../modules/home/views/staff_management_screen.dart';
 import '../modules/home/views/add_staff_screen.dart';
@@ -30,7 +30,7 @@ class AppRoutes {
       case createAdmin:
         return Perspective3DRoute(page: CreateAdminScreen(authService: settings.arguments as dynamic));
       case dashboard:
-        return Perspective3DRoute(page: DashboardScreen(currentUser: settings.arguments as AppUser));
+        return Perspective3DRoute(page: MainNavigationScaffold(currentUser: settings.arguments as AppUser));
       case activityLog:
         return Perspective3DRoute(page: ActivityLogScreen(currentUser: settings.arguments as AppUser));
       case staffManagement:
@@ -51,6 +51,7 @@ class AppRoutes {
         final args = settings.arguments as Map<String, dynamic>;
         return Perspective3DRoute(
           page: SearchResultsScreen(
+            searchField: (args['searchField'] as String?) ?? 'All',
             query: args['query'] as String,
             currentUser: args['currentUser'] as AppUser,
           ),

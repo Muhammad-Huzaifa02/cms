@@ -62,7 +62,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _loadBiometricStatus() async {
     final available = await _biometricService.isBiometricAvailable();
-    final enabled = await _biometricService.isLockEnabled();
+    final enabled = await _biometricService.isLockEnabled(widget.currentUser.uid);
     if (mounted) {
       setState(() {
         _biometricAvailable = available;
@@ -246,24 +246,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _toggleBiometrics(bool enabled) async {
     if (enabled) {
-      final authenticated = await _biometricService.authenticate(
-        reason: 'Confirm your fingerprint/Face ID to enable app lock',
+      final result = await _biometricService.authenticate(
+        reason: 'Confirm your fingerprint/Face ID to enable biometric login',
       );
-      if (authenticated) {
-        await _biometricService.setLockEnabled(true);
+      if (result == BiometricResult.success) {
+        await _biometricService.setLockEnabled(widget.currentUser.uid, true);
         if (mounted) {
           setState(() => _biometricEnabled = true);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("App lock enabled — you'll need to confirm biometrics each time you open CMS.")),
+            const SnackBar(content: Text('Biometric login enabled successfully.')),
           );
         }
+      } else if (result != BiometricResult.cancelled && mounted) {
+        // Cancellation is silent — a real failure gets a message, and the
+        // toggle stays off either way (never enable on failure/cancel).
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message)),
+        );
       }
     } else {
-      await _biometricService.setLockEnabled(false);
+      await _biometricService.setLockEnabled(widget.currentUser.uid, false);
       if (mounted) {
         setState(() => _biometricEnabled = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('App lock disabled.')),
+          const SnackBar(content: Text('Biometric login disabled.')),
         );
       }
     }
@@ -339,6 +345,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             const SizedBox(height: 16),
             if (_biometricAvailable) ...[
+              const Padding(
+                padding: EdgeInsets.only(left: 4, bottom: 8),
+                child: SectionHeader('Security'),
+              ),
               SectionCard(
                 title: 'Biometric Login',
                 children: [
@@ -360,8 +370,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             const SizedBox(height: 3),
                             Text(
                               _biometricEnabled
-                                  ? "Fingerprint/Face ID required to open the app"
-                                  : 'Require fingerprint or Face ID to open CMS',
+                                  ? 'You can log in with your fingerprint next time'
+                                  : 'Log in with your fingerprint instead of typing your password',
                               style: const TextStyle(fontSize: 11.5, color: AppColors.muted, height: 1.3),
                             ),
                           ],

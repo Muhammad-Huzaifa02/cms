@@ -10,8 +10,15 @@ import 'customer_detail_screen.dart';
 
 class SearchResultsScreen extends StatefulWidget {
   final String query;
+  final String searchField;
   final AppUser currentUser;
-  const SearchResultsScreen({super.key, required this.query, required this.currentUser});
+
+  const SearchResultsScreen({
+    super.key,
+    required this.query,
+    this.searchField = 'All',
+    required this.currentUser,
+  });
 
   @override
   State<SearchResultsScreen> createState() => _SearchResultsScreenState();
@@ -24,13 +31,25 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   @override
   void initState() {
     super.initState();
-    _future = _service.search(widget.query);
+    if (widget.query.trim().isEmpty) {
+      _future = _service.recentCustomers(limit: 500, shopId: widget.currentUser.shopId).first;
+    } else {
+      _future = _service.search(
+        widget.query,
+        searchField: widget.searchField,
+        shopId: widget.currentUser.shopId,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final titleText = widget.query.trim().isEmpty
+        ? 'All Customers'
+        : '"${widget.query}" (${widget.searchField})';
+
     return Scaffold(
-      appBar: AppBar(title: Text('"${widget.query}"')),
+      appBar: AppBar(title: Text(titleText)),
       body: FutureBuilder<List<Customer>>(
         future: _future,
         builder: (context, snap) {
@@ -46,7 +65,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                   Icon(Icons.search_off, size: 64, color: AppColors.muted.withValues(alpha: 0.3)),
                   const SizedBox(height: 16),
                   const Text(
-                    'No match found for that search.',
+                    'No customers found for this search.',
                     style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -54,7 +73,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             );
           }
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
             itemCount: results.length + 1,
             itemBuilder: (context, i) {
               if (i == 0) {
@@ -62,7 +81,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                   duration: const Duration(milliseconds: 400),
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: Text('${results.length} match${results.length == 1 ? '' : 'es'}', style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                    child: Text('${results.length} customer${results.length == 1 ? '' : 's'} found', style: const TextStyle(color: AppColors.muted, fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 );
               }
@@ -82,7 +101,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                         // ignore: deprecated_member_use
                         ..scale(0.9 + (0.1 * value), 0.9 + (0.1 * value), 1.0),
                       child: Opacity(
-                        opacity: value,
+                        opacity: value.clamp(0.0, 1.0),
                         child: child,
                       ),
                     );
@@ -93,17 +112,44 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                       margin: const EdgeInsets.only(bottom: 10),
                       elevation: 4,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      child: ListTile(
-                        leading: Hero(
-                          tag: 'avatar-${c.accountNumber}',
-                          child: CircleAvatar(
-                            backgroundColor: AppColors.brand,
-                            child: Text(c.name.isNotEmpty ? c.name[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          children: [
+                            Hero(
+                              tag: 'avatar-${c.accountNumber}',
+                              child: CircleAvatar(
+                                backgroundColor: AppColors.brand,
+                                child: Text(c.name.isNotEmpty ? c.name[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(c.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                  if (c.accountTitle.isNotEmpty && c.accountTitle != c.name) ...[
+                                    const SizedBox(height: 2),
+                                    Text(c.accountTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, color: AppColors.muted, fontStyle: FontStyle.italic)),
+                                  ],
+                                  const SizedBox(height: 5),
+                                  Wrap(
+                                    spacing: 10,
+                                    runSpacing: 2,
+                                    children: [
+                                      Text('Ph: ${c.maskedPhone}', style: const TextStyle(fontSize: 10.5, color: AppColors.muted)),
+                                      Text('CNIC: ${c.maskedCnic}', style: const TextStyle(fontSize: 10.5, color: AppColors.muted)),
+                                      Text('A/C: ${c.maskedAccountNumber}', style: const TextStyle(fontSize: 10.5, color: AppColors.muted)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(Icons.chevron_right, color: AppColors.muted),
+                          ],
                         ),
-                        title: Text(c.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                        subtitle: Text('${c.maskedAccountNumber} · ${c.accountType}', style: const TextStyle(fontSize: 11.5, color: AppColors.muted)),
-                        trailing: const Icon(Icons.chevron_right),
                       ),
                     ),
                   ),

@@ -25,6 +25,9 @@ dependencies:
   local_auth: ^2.3.0
   flutter_secure_storage: ^9.2.2
   shimmer: ^3.0.0
+  fl_chart: ^0.69.0 # Dashboard's Customer Growth chart — nothing in the
+                     # project already covers charting, and the spec asks
+                     # for a real chart, not a placeholder image.
 
   # Export (FR-2.6: Admin-only export to Excel/PDF)
   excel: ^4.0.6

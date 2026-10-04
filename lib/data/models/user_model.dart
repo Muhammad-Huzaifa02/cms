@@ -65,6 +65,10 @@ class AppUser {
     this.createdAt,
   });
 
+  /// The shop ID this user belongs to. Admin is the shop owner (uid),
+  /// while staff users belong to the shop of the Admin who created them.
+  String get shopId => isAdmin ? uid : (createdBy.isNotEmpty ? createdBy : uid);
+
   /// Admin implicitly has every permission — matches the security rules'
   /// `can(perm)` helper (isAdmin() short-circuits the permission map check).
   bool can(String perm) {

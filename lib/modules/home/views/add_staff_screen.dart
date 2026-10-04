@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/validators.dart';
 
 /// Name, email, phone, and password are all mandatory here too — matches
 /// CreateAdminScreen and AuthService.createStaffAccount's requirement that
@@ -26,7 +28,6 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
   String? _error;
 
   bool get _emailLooksValid => RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(_emailCtrl.text.trim());
-  bool get _phoneLooksValid => _auth.normalizePhone(_phoneCtrl.text).length >= 7;
 
   Future<void> _create() async {
     final missing = <String>[];
@@ -37,10 +38,14 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
       setState(() => _error = 'Enter a valid email address.');
       return;
     }
+    // Strict Pakistani mobile format (11 digits, starts with "03") — same
+    // rule as Customer phone numbers, kept in one place via Validators so
+    // Staff and Customer forms can't silently drift apart.
+    final phoneError = Validators.phone(_phoneCtrl.text);
     if (_phoneCtrl.text.trim().isEmpty) {
       missing.add('phone number');
-    } else if (!_phoneLooksValid) {
-      setState(() => _error = 'Enter a valid phone number.');
+    } else if (phoneError != null) {
+      setState(() => _error = phoneError);
       return;
     }
     if (_passwordCtrl.text.length < 6) missing.add('password (6+ characters)');
@@ -90,7 +95,8 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
           TextField(
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(labelText: 'Phone number *', prefixIcon: Icon(Icons.phone_outlined, size: 19)),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+            decoration: const InputDecoration(labelText: 'Phone number *', hintText: '03001234567', prefixIcon: Icon(Icons.phone_outlined, size: 19)),
           ),
           const SizedBox(height: 12),
           TextField(controller: _passwordCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Temporary password *')),

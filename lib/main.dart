@@ -123,7 +123,7 @@ class _LockGate extends StatefulWidget {
 }
 
 class _LockGateState extends State<_LockGate> {
-  late final Future<bool> _lockEnabledFuture = BiometricService().isLockEnabled();
+  late final Future<bool> _lockEnabledFuture = BiometricService().isLockEnabled(widget.currentUser.uid);
 
   @override
   Widget build(BuildContext context) {
@@ -139,6 +139,7 @@ class _LockGateState extends State<_LockGate> {
         }
         if (snap.data != true) return dashboard;
         return BiometricLockScreen(
+          uid: widget.currentUser.uid,
           onSignOut: widget.authService.signOut,
           child: dashboard,
         );
