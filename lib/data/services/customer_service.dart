@@ -168,7 +168,7 @@ class CustomerService {
         return GrowthPoint(label: label, count: count, date: dayDate);
       });
     } else if (period == GrowthPeriod.thisMonth || period == GrowthPeriod.lastMonth) {
-      final daysInMonth = DateUtils.getDaysInMonth(startDate.year, startDate.month);
+      final daysInMonth = DateTime(startDate.year, startDate.month + 1, 0).day;
       const intervals = 6;
       final step = (daysInMonth / intervals).ceil();
       final points = <GrowthPoint>[];
@@ -187,7 +187,7 @@ class CustomerService {
               c.createdAt!.day <= endDay;
         }).length;
 
-        points.add(GrowthPoint(label: label, count: count, date: DateTime(startDate.year, startDate.month, startDay)));
+        points.add(GrowthPoint(label: label, count: count, date: DateTime(startDate.year, startDate.month, startDay.toInt())));
       }
       return points;
     } else {
