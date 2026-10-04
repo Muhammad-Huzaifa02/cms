@@ -7,7 +7,7 @@ plugins {
 android {
     namespace = "com.example.cms"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "30.0.16138531"
+    ndkVersion = "30.0.16248370"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
