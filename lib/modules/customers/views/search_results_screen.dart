@@ -9,13 +9,13 @@ import '../../../core/widgets/fade_in_slide.dart';
 import 'customer_detail_screen.dart';
 
 class SearchResultsScreen extends StatefulWidget {
-  final String searchField;
+  final CustomerSearchField searchField;
   final String query;
   final AppUser currentUser;
 
   const SearchResultsScreen({
     super.key,
-    this.searchField = 'All',
+    required this.searchField,
     required this.query,
     required this.currentUser,
   });
@@ -32,12 +32,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   void initState() {
     super.initState();
     if (widget.query.trim().isEmpty) {
-      _future = _service.recentCustomers(limit: 500, shopId: widget.currentUser.shopId).first;
+      _future = _service.recentCustomers(limit: 500).first;
     } else {
       _future = _service.searchByField(
         widget.searchField,
         widget.query,
-        shopId: widget.currentUser.shopId,
       );
     }
   }
@@ -46,7 +45,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   Widget build(BuildContext context) {
     final titleText = widget.query.trim().isEmpty
         ? 'All Customers'
-        : '"${widget.query}" (${widget.searchField})';
+        : '${widget.searchField.label}: "${widget.query}"';
 
     return Scaffold(
       appBar: AppBar(title: Text(titleText)),

@@ -51,7 +51,7 @@ class AppRoutes {
         final args = settings.arguments as Map<String, dynamic>;
         return Perspective3DRoute(
           page: SearchResultsScreen(
-            searchField: args['searchField']?.toString() ?? 'All',
+            searchField: args['searchField'] as CustomerSearchField,
             query: args['query'] as String,
             currentUser: args['currentUser'] as AppUser,
           ),

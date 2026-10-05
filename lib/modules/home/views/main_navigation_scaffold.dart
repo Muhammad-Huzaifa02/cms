@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/user_model.dart';
+import '../../../data/models/customer_model.dart';
 import '../../../core/utils/perspective_page_route.dart';
 import '../../../core/widgets/floating_navigation_bar.dart';
 import 'dashboard_screen.dart';
@@ -40,7 +41,6 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
       context,
       AddCustomerScreen(currentUser: widget.currentUser),
     );
-    // Refresh current view state if on Dashboard or Customers tab
     setState(() {});
   }
 
@@ -51,7 +51,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
       case 1:
         return SearchResultsScreen(
           query: '',
-          searchField: 'All',
+          searchField: CustomerSearchField.accountTitle,
           currentUser: widget.currentUser,
         );
       case 2:
