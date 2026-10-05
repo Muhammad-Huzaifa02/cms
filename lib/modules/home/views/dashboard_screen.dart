@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '../../../data/models/user_model.dart';
 import '../../../data/models/customer_model.dart';
-import '../../../data/models/dashboard_stats_model.dart';
 import '../../../data/services/customer_service.dart';
 import '../../../data/services/export_service.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/perspective_page_route.dart';
+import '../../../core/widgets/tilt_tap_card.dart';
 import '../../../core/widgets/shimmer_loading.dart';
-import '../widgets/dashboard_stat_card.dart';
-import '../widgets/customer_growth_chart.dart';
-import '../widgets/quick_actions_section.dart';
-import '../widgets/recent_customers_section.dart';
-import '../widgets/search_field_selector.dart';
+import '../../../core/widgets/dashboard_stat_card.dart';
+import '../../../core/widgets/quick_action_card.dart';
+import '../../../core/widgets/growth_chart.dart';
+import '../../../core/widgets/error_state.dart';
 import '../../customers/views/customer_detail_screen.dart';
 import '../../customers/views/add_customer_screen.dart';
-import '../../customers/views/search_results_screen.dart';
+import '../../customers/views/search_customer_screen.dart';
 import 'staff_management_screen.dart';
 import 'activity_log_screen.dart';
 import '../../profile/views/edit_profile_screen.dart';
@@ -35,30 +33,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _customerService = CustomerService();
   final _exportService = ExportService();
   final _authService = AuthService();
-  final _searchCtrl = TextEditingController();
-
-  String _selectedSearchField = 'All';
-  GrowthPeriod _selectedPeriod = GrowthPeriod.thisMonth;
   bool _exporting = false;
 
-  late Future<DashboardStats> _statsFuture;
-  late Future<List<GrowthPoint>> _growthFuture;
+  // Fetched once per Dashboard visit (not per rebuild) — both use
+  // Firestore COUNT aggregation, so this is two small server-side counts,
+  // never a download of the whole customers collection.
+  late Future<List<int>> _statsFuture = _loadStats();
+  late Future<List<int>> _growthFuture = _customerService.getGrowthLast7Days();
 
-  @override
-  void initState() {
-    super.initState();
-    _refreshData();
-  }
-
-  void _refreshData() {
-    setState(() {
-      _statsFuture = _customerService.getDashboardStats(widget.currentUser.shopId);
-      _growthFuture = _customerService.getGrowthData(
-        widget.currentUser.shopId,
-        _selectedPeriod,
-      );
-    });
-  }
+  Future<List<int>> _loadStats() => Future.wait([
+        _customerService.getTotalCustomersCount(),
+        _customerService.getNewCustomersThisMonthCount(),
+      ]);
 
   Future<void> _confirmSignOut() async {
     final ok = await showDialog<bool>(
@@ -102,22 +88,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _runSearch(String query) {
-    if (query.trim().isEmpty) return;
-    push3D(
-      context,
-      SearchResultsScreen(
-        query: query.trim(),
-        searchField: _selectedSearchField,
-        currentUser: widget.currentUser,
-      ),
+  void _openSearch() {
+    push3D(context, SearchCustomerScreen(currentUser: widget.currentUser));
+  }
+
+  Future<void> _runBackfill() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
+    try {
+      final count = await _customerService.backfillSearchFields(widget.currentUser);
+      if (!mounted) return;
+      Navigator.of(context).pop(); // close spinner
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Search index synced for $count customer${count == 1 ? '' : 's'}.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   Future<void> _export(String format) async {
     setState(() => _exporting = true);
     try {
-      final customers = await _customerService.recentCustomers(limit: 5000, shopId: widget.currentUser.shopId).first;
+      final customers = await _customerService.recentCustomers(limit: 5000).first;
       final file = format == 'excel'
           ? await _exportService.exportToExcel(customers, widget.currentUser)
           : await _exportService.exportToPdf(customers, widget.currentUser);
@@ -135,7 +135,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final user = widget.currentUser;
-
     return Scaffold(
       key: _scaffoldKey,
       drawer: Drawer(
@@ -206,6 +205,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _export('pdf');
                 },
               ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.sync, size: 20),
+                title: const Text('Sync search index', style: TextStyle(fontSize: 13.5)),
+                subtitle: const Text(
+                  'Run once after updating the app — makes customers added before this update show up in the new field search.',
+                  style: TextStyle(fontSize: 10.5, color: AppColors.muted),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _runBackfill();
+                },
+              ),
             ],
             const Spacer(),
             const Divider(),
@@ -221,428 +233,446 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-      body: RefreshIndicator(
-        color: AppColors.brand,
-        onRefresh: () async => _refreshData(),
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 138,
-              floating: false,
-              pinned: true,
-              stretch: true,
-              backgroundColor: AppColors.brandDeep,
-              leading: IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
-                tooltip: 'Menu',
-                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 138,
+            floating: false,
+            pinned: true,
+            stretch: true,
+            backgroundColor: AppColors.brandDeep,
+            leading: IconButton(
+              icon: const Icon(Icons.menu, color: Colors.white),
+              tooltip: 'Menu',
+              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              stretchModes: const [StretchMode.zoomBackground, StretchMode.blurBackground],
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.brandDeep, AppColors.brand],
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -10,
+                      top: -10,
+                      child: Opacity(
+                        opacity: 0.14,
+                        child: Transform.rotate(
+                          angle: -0.2,
+                          child: Image.asset('assets/icon/app_logo.png', width: 90, height: 90, fit: BoxFit.contain),
+                        ),
+                      ),
+                    ),
+                    // Content sits below the top row (hamburger/logout, which
+                    // the SliverAppBar itself lays out at
+                    // kToolbarHeight + status-bar-height) — computed from
+                    // MediaQuery rather than a fixed number, so it lands
+                    // correctly on every device instead of guessing a value
+                    // that happens to work on one screen size.
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(22, MediaQuery.of(context).padding.top + kToolbarHeight - 6, 60, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: const Duration(milliseconds: 800),
+                            builder: (context, value, child) {
+                              return Opacity(
+                                opacity: value.clamp(0.0, 1.0),
+                                child: Transform.translate(
+                                  offset: Offset(0, 20 * (1 - value)),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Welcome back', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                                const SizedBox(height: 3),
+                                Text(
+                                  user.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold, letterSpacing: 0.2),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              flexibleSpace: FlexibleSpaceBar(
-                stretchModes: const [StretchMode.zoomBackground, StretchMode.blurBackground],
-                background: Container(
+            ),
+            actions: [
+              if (_exporting)
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.power_settings_new, color: Colors.white, size: 26),
+                  tooltip: 'Logout & Exit',
+                  onPressed: _logoutAndExit,
+                ),
+              const SizedBox(width: 8),
+            ],
+          ),
+          SliverToBoxAdapter(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 30,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.brandDeep, AppColors.brand],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [AppColors.brand, AppColors.brand],
                     ),
                   ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        right: -10,
-                        top: -10,
-                        child: Opacity(
-                          opacity: 0.14,
-                          child: Transform.rotate(
-                            angle: -0.2,
-                            child: Image.asset('assets/icon/app_logo.png', width: 90, height: 90, fit: BoxFit.contain),
-                          ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 1000),
+                    curve: Curves.easeOutBack,
+                    builder: (context, value, child) {
+                      return Transform(
+                        alignment: Alignment.center,
+                        transform: Matrix4.identity()
+                          ..setEntry(3, 2, 0.0015)
+                          ..rotateX(0.25 * (1 - value))
+                          // ignore: deprecated_member_use
+                          ..scale(0.9 + (0.1 * value), 0.9 + (0.1 * value), 1.0),
+                        child: child,
+                      );
+                    },
+                    child: Material(
+                      elevation: 16,
+                      shadowColor: Colors.black45,
+                      borderRadius: BorderRadius.circular(16),
+                      child: TextField(
+                        // Tap-only: the actual typing happens on the "Search
+                        // Customer By" screen, after the user has picked
+                        // exactly which field to search.
+                        readOnly: true,
+                        showCursor: false,
+                        onTap: _openSearch,
+                        style: const TextStyle(fontSize: 15),
+                        decoration: InputDecoration(
+                          hintText: 'Search customer…',
+                          hintStyle: const TextStyle(fontSize: 14, color: AppColors.muted),
+                          prefixIcon: const Icon(Icons.search, size: 24, color: AppColors.brand),
+                          suffixIcon: const Icon(Icons.arrow_forward, size: 22),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 18),
                         ),
                       ),
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(22, MediaQuery.of(context).padding.top + kToolbarHeight - 6, 60, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              duration: const Duration(milliseconds: 800),
-                              builder: (context, value, child) {
-                                return Opacity(
-                                  opacity: value.clamp(0.0, 1.0),
-                                  child: Transform.translate(
-                                    offset: Offset(0, 20 * (1 - value)),
-                                    child: child,
-                                  ),
-                                );
-                              },
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white24,
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          user.isAdmin ? 'ADMIN' : 'STAFF',
-                                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    user.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold, letterSpacing: 0.2),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.notifications_none, color: Colors.white, size: 24),
-                  tooltip: 'Notifications',
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('No new notifications.')),
-                    );
-                  },
-                ),
-                if (_exporting)
-                  const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-                  )
-                else
-                  IconButton(
-                    icon: const Icon(Icons.power_settings_new, color: Colors.white, size: 24),
-                    tooltip: 'Logout & Exit',
-                    onPressed: _logoutAndExit,
-                  ),
-                const SizedBox(width: 8),
               ],
             ),
-
-            // SEARCH BAR & FIELD SELECTOR
-            SliverToBoxAdapter(
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    height: 30,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [AppColors.brand, AppColors.brand],
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            sliver: SliverToBoxAdapter(
+              child: FutureBuilder<List<int>>(
+                future: _statsFuture,
+                builder: (context, snap) {
+                  final loading = snap.connectionState != ConnectionState.done;
+                  if (!loading && snap.hasError) {
+                    return ErrorStateWidget(
+                      message: 'Unable to load dashboard statistics.',
+                      onRetry: () => setState(() => _statsFuture = _loadStats()),
+                    );
+                  }
+                  final total = snap.data?[0] ?? 0;
+                  final newThisMonth = snap.data?[1] ?? 0;
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: loading
+                            ? const DashboardStatSkeleton()
+                            : DashboardStatCard(
+                                icon: Icons.people_alt_outlined,
+                                label: 'Total Customers',
+                                value: total,
+                                accent: AppColors.brand,
+                              ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: loading
+                            ? const DashboardStatSkeleton()
+                            : DashboardStatCard(
+                                icon: Icons.person_add_alt_1_outlined,
+                                label: 'New This Month',
+                                value: newThisMonth,
+                                accent: AppColors.success,
+                                caption: newThisMonth > 0 ? '+$newThisMonth added' : null,
+                                captionColor: AppColors.success,
+                              ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            sliver: SliverToBoxAdapter(
+              child: FutureBuilder<List<int>>(
+                future: _growthFuture,
+                builder: (context, snap) {
+                  if (snap.connectionState != ConnectionState.done) {
+                    return const GrowthChartSkeleton();
+                  }
+                  if (snap.hasError || !snap.hasData) {
+                    return ErrorStateWidget(
+                      message: 'Unable to load the growth chart.',
+                      onRetry: () => setState(() => _growthFuture = _customerService.getGrowthLast7Days()),
+                    );
+                  }
+                  return GrowthChart(dailyCounts: snap.data!);
+                },
+              ),
+            ),
+          ),
+          if (user.isAdmin)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+              sliver: SliverToBoxAdapter(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: QuickActionCard(
+                        icon: Icons.person_add_outlined,
+                        label: 'Add Customer',
+                        accent: AppColors.brand,
+                        onTap: () => push3D(context, AddCustomerScreen(currentUser: user)),
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: QuickActionCard(
+                        icon: Icons.people_outline,
+                        label: 'Manage Staff',
+                        accent: AppColors.indigo,
+                        onTap: () => push3D(context, StaffManagementScreen(currentUser: user)),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: QuickActionCard(
+                        icon: Icons.history,
+                        label: 'Activity Log',
+                        accent: AppColors.warning,
+                        onTap: () => push3D(context, ActivityLogScreen(currentUser: user)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          StreamBuilder<List<Customer>>(
+            stream: _customerService.recentCustomers(),
+            builder: (context, snap) {
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  sliver: ShimmerLoading(count: 6),
+                );
+              }
+              // A genuine failure (permission-denied, offline, etc.) must
+              // never be mistaken for "the list is just empty" — that was
+              // a real bug here: snap.data ?? [] silently turned any error
+              // into the friendly "No customers yet" empty state.
+              if (snap.hasError) {
+                return SliverErrorState(
+                  message: 'Unable to load customers. Check your connection and try again.',
+                  onRetry: () => setState(() {}),
+                );
+              }
+              final customers = snap.data ?? [];
+              if (customers.isEmpty) {
+                return SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Material(
-                          elevation: 12,
-                          shadowColor: Colors.black38,
-                          borderRadius: BorderRadius.circular(16),
-                          child: TextField(
-                            controller: _searchCtrl,
-                            onSubmitted: _runSearch,
-                            style: const TextStyle(fontSize: 15),
-                            decoration: InputDecoration(
-                              hintText: 'Search ${_selectedSearchField == 'All' ? 'customers' : _selectedSearchField}…',
-                              hintStyle: const TextStyle(fontSize: 14, color: AppColors.muted),
-                              prefixIcon: const Icon(Icons.search, size: 22, color: AppColors.brand),
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.arrow_forward, size: 22),
-                                onPressed: () => _runSearch(_searchCtrl.text),
-                              ),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                          ),
+                        Icon(Icons.people_outline, size: 64, color: AppColors.muted.withValues(alpha: 0.3)),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No customers yet.',
+                          style: TextStyle(color: AppColors.muted, fontSize: 16, fontWeight: FontWeight.bold),
                         ),
-                        const SizedBox(height: 12),
-                        SearchFieldSelector(
-                          selectedField: _selectedSearchField,
-                          onFieldSelected: (field) {
-                            setState(() => _selectedSearchField = field);
-                          },
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Tap the + button to add the first one.',
+                          style: TextStyle(color: AppColors.muted, fontSize: 13),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-
-            // SUMMARY STATS CARDS GRID
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: FutureBuilder<DashboardStats>(
-                  future: _statsFuture,
-                  builder: (context, snap) {
-                    if (snap.connectionState == ConnectionState.waiting) {
-                      return GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.25,
-                        children: List.generate(4, (_) => const ShimmerCard()),
-                      );
-                    }
-
-                    if (snap.hasError) {
-                      return Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
-                        ),
-                        child: Column(
-                          children: [
-                            const Text(
-                              'Unable to load dashboard data. Please try again.',
-                              style: TextStyle(color: AppColors.danger, fontSize: 13, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            ElevatedButton.icon(
-                              onPressed: _refreshData,
-                              icon: const Icon(Icons.refresh, size: 16),
-                              label: const Text('Retry'),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    final stats = snap.data ??
-                        const DashboardStats(
-                          totalCustomers: 0,
-                          newThisMonth: 0,
-                          activeCustomers: 0,
-                          inactiveCustomers: 0,
+                );
+              }
+              return SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (index == 0) {
+                        return const Padding(
+                          padding: EdgeInsets.only(bottom: 12, top: 10),
+                          child: Text('RECENT CUSTOMERS', style: TextStyle(fontSize: 11, letterSpacing: 1.2, color: AppColors.muted, fontWeight: FontWeight.bold)),
                         );
-
-                    final growthText = stats.monthlyGrowthPercentage != null
-                        ? '${stats.monthlyGrowthPercentage! >= 0 ? '↑' : '↓'} ${stats.monthlyGrowthPercentage!.abs().toStringAsFixed(0)}% vs last month'
-                        : '+${stats.newThisMonth} this month';
-
-                    return GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1.25,
-                      children: [
-                        DashboardStatCard(
-                          title: 'Total Customers',
-                          rawValue: stats.totalCustomers,
-                          subtitle: '+${stats.newThisMonth} this month',
-                          icon: Icons.people_alt_outlined,
-                          accentColor: AppColors.brand,
-                          onTap: () {
-                            push3D(
-                              context,
-                              SearchResultsScreen(
-                                query: '',
-                                searchField: 'All',
-                                currentUser: widget.currentUser,
-                              ),
-                            );
-                          },
-                        ),
-                        DashboardStatCard(
-                          title: 'New This Month',
-                          rawValue: stats.newThisMonth,
-                          subtitle: growthText,
-                          icon: Icons.person_add_alt_1_outlined,
-                          accentColor: const Color(0xFF10B981),
-                        ),
-                        DashboardStatCard(
-                          title: 'Active Customers',
-                          rawValue: stats.activeCustomers,
-                          subtitle: 'Primary account base',
-                          icon: Icons.check_circle_outline,
-                          accentColor: const Color(0xFF6366F1),
-                        ),
-                        DashboardStatCard(
-                          title: 'Inactive Customers',
-                          rawValue: stats.inactiveCustomers,
-                          subtitle: 'Requires follow-up',
-                          icon: Icons.pause_circle_outline,
-                          accentColor: const Color(0xFFF59E0B),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
-
-            // CUSTOMER GROWTH CHART
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: FutureBuilder<List<GrowthPoint>>(
-                  future: _growthFuture,
-                  builder: (context, snap) {
-                    final isLoading = snap.connectionState == ConnectionState.waiting;
-                    final points = snap.data ?? [];
-
-                    return CustomerGrowthChart(
-                      dataPoints: points,
-                      selectedPeriod: _selectedPeriod,
-                      isLoading: isLoading,
-                      onPeriodChanged: (period) {
-                        setState(() {
-                          _selectedPeriod = period;
-                          _growthFuture = _customerService.getGrowthData(
-                            widget.currentUser.shopId,
-                            period,
+                      }
+                      final c = customers[index - 1];
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: Duration(milliseconds: 500 + (index * 80)),
+                        curve: Curves.easeOutBack,
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value.clamp(0.0, 1.0),
+                            child: Transform(
+                              alignment: Alignment.center,
+                              transform: Matrix4.identity()
+                                ..setEntry(3, 2, 0.001)
+                                ..rotateY(0.15 * (1 - value))
+                                ..rotateX(0.1 * (1 - value))
+                                // ignore: deprecated_member_use
+                                ..translate(40 * (1 - value), 0.0, 0.0),
+                              child: child,
+                            ),
                           );
-                        });
-                      },
-                    );
-                  },
-                ),
-              ),
-            ),
-
-            // QUICK ACTIONS SECTION
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: QuickActionsSection(
-                  onAddCustomer: () async {
-                    await push3D(context, AddCustomerScreen(currentUser: user));
-                    _refreshData();
-                  },
-                  onViewAllCustomers: () {
-                    push3D(
-                      context,
-                      SearchResultsScreen(
-                        query: '',
-                        searchField: 'All',
-                        currentUser: widget.currentUser,
-                      ),
-                    );
-                  },
-                  onReports: () {
-                    if (user.isAdmin) {
-                      _export('excel');
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Reports export requires Admin permissions.')),
+                        },
+                        child: _CustomerTile(
+                          customer: c,
+                          onTap: () => push3D(context, CustomerDetailScreen(customer: c, currentUser: user)),
+                        ),
                       );
-                    }
-                  },
-                  onSettings: () {
-                    if (user.isAdmin) {
-                      push3D(context, StaffManagementScreen(currentUser: user));
-                    } else {
-                      push3D(context, EditProfileScreen(currentUser: user));
-                    }
-                  },
-                ),
-              ),
-            ),
-
-            // RECENT CUSTOMERS SECTION
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
-                child: StreamBuilder<List<Customer>>(
-                  stream: _customerService.recentCustomers(
-                    limit: 5,
-                    shopId: widget.currentUser.shopId,
+                    },
+                    childCount: customers.length + 1,
                   ),
-                  builder: (context, snap) {
-                    if (snap.connectionState == ConnectionState.waiting) {
-                      return const ShimmerLoading(count: 3);
-                    }
-
-                    final recentList = snap.data ?? [];
-
-                    return RecentCustomersSection(
-                      customers: recentList,
-                      onViewAll: () {
-                        push3D(
-                          context,
-                          SearchResultsScreen(
-                            query: '',
-                            searchField: 'All',
-                            currentUser: widget.currentUser,
-                          ),
-                        );
-                      },
-                      onCustomerTap: (customer) async {
-                        await push3D(
-                          context,
-                          CustomerDetailScreen(customer: customer, currentUser: user),
-                        );
-                        _refreshData();
-                      },
-                    );
-                  },
                 ),
-              ),
-            ),
-          ],
-        ),
+              );
+            },
+          ),
+        ],
       ),
+      floatingActionButton: user.can('add')
+          ? TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 1200),
+              curve: Curves.elasticOut,
+              builder: (context, value, child) {
+                return Transform.scale(scale: value, child: child);
+              },
+              child: FloatingActionButton(
+                elevation: 8,
+                backgroundColor: AppColors.gold,
+                onPressed: () => push3D(context, AddCustomerScreen(currentUser: user)),
+                child: const Icon(Icons.add, color: Colors.white, size: 28),
+              ),
+            )
+          : null,
     );
   }
 }
 
-class ShimmerCard extends StatelessWidget {
-  const ShimmerCard({super.key});
+class _CustomerTile extends StatelessWidget {
+  final Customer customer;
+  final VoidCallback onTap;
+  const _CustomerTile({required this.customer, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(width: 80, height: 12, color: Colors.grey.shade200),
-          const Spacer(),
-          Container(width: 60, height: 24, color: Colors.grey.shade200),
-          const SizedBox(height: 6),
-          Container(width: 100, height: 10, color: Colors.grey.shade200),
-        ],
+    final initials = customer.name.trim().isEmpty
+        ? '?'
+        : customer.name.trim().split(RegExp(r'\s+')).map((w) => w[0]).take(2).join().toUpperCase();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TiltTapCard(
+        onTap: onTap,
+        child: Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          margin: EdgeInsets.zero,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Hero(
+                  tag: 'avatar-${customer.accountNumber}',
+                  child: CircleAvatar(
+                    backgroundColor: AppColors.brand,
+                    child: Text(initials, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        customer.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              customer.maskedAccountNumber,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 11.5, color: AppColors.muted),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.brand.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              customer.accountType,
+                              style: const TextStyle(fontSize: 10, color: AppColors.brand, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(Icons.chevron_right, color: AppColors.muted),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

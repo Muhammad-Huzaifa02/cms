@@ -9,14 +9,14 @@ import '../../../core/widgets/fade_in_slide.dart';
 import 'customer_detail_screen.dart';
 
 class SearchResultsScreen extends StatefulWidget {
-  final String query;
   final String searchField;
+  final String query;
   final AppUser currentUser;
 
   const SearchResultsScreen({
     super.key,
-    required this.query,
     this.searchField = 'All',
+    required this.query,
     required this.currentUser,
   });
 
@@ -34,9 +34,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     if (widget.query.trim().isEmpty) {
       _future = _service.recentCustomers(limit: 500, shopId: widget.currentUser.shopId).first;
     } else {
-      _future = _service.search(
+      _future = _service.searchByField(
+        widget.searchField,
         widget.query,
-        searchField: widget.searchField,
         shopId: widget.currentUser.shopId,
       );
     }

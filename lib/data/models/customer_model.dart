@@ -1,9 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// The four field-isolated search types (see docs — search must ONLY
-/// ever query the one field the user explicitly picked, never several
-/// fields at once, since last-4-digit suffixes can coincidentally match
-/// across different fields for different customers).
+/// The four field-isolated search types.
 enum CustomerSearchField { accountTitle, accountNumber, phone, cnic }
 
 extension CustomerSearchFieldX on CustomerSearchField {
@@ -14,8 +11,6 @@ extension CustomerSearchFieldX on CustomerSearchField {
         CustomerSearchField.cnic => 'CNIC',
       };
 
-  /// Only Account Title takes free text — the other three are always
-  /// exactly 4 digits.
   bool get isFreeText => this == CustomerSearchField.accountTitle;
 
   String get inputHint => switch (this) {
@@ -82,45 +77,30 @@ class Customer {
     return '${'•' * (phone.length - 4)}$visible';
   }
 
-  /// Build search keywords for partial and exact matches on name, phone,
-  /// CNIC, and account number. Supports prefix matching (search for "0300"
-  /// finds "0300123..."). Kept for the Dashboard's general free-text
-  /// search box. NOT used by the field-isolated search screen — see
-  /// accountTitleSearchWords/phoneLast4/cnicLast4/accountNumberLast4
-  /// below, which exist specifically because this shared array can't tell
-  /// two different fields apart when they happen to share a suffix (a
-  /// phone and a CNIC both ending "4567" both land in this same array).
   List<String> buildSearchKeywords() {
     final keywords = <String>{};
 
-    // 1. Individual words from name AND account title (e.g. "Ali Traders"
-    // is searchable the same way a person's name is)
     for (final w in [...name.toLowerCase().split(RegExp(r'\s+')), ...accountTitle.toLowerCase().split(RegExp(r'\s+'))]) {
       if (w.length > 1) {
-        // Add full word
         keywords.add(w);
-        // Add prefixes for partial name search (e.g., "huz" finds "huzaifa")
         for (int i = 2; i <= w.length; i++) {
           keywords.add(w.substring(0, i));
         }
       }
     }
 
-    // 2. Phone number partials (from the end and start to catch common search patterns)
     final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
     for (int i = 3; i <= cleanPhone.length; i++) {
       keywords.add(cleanPhone.substring(0, i));
       keywords.add(cleanPhone.substring(cleanPhone.length - i));
     }
 
-    // 3. CNIC partials (usually people search for the last 5 digits)
     final cleanCnic = cnic.replaceAll(RegExp(r'[^0-9]'), '');
     for (int i = 4; i <= cleanCnic.length; i++) {
       keywords.add(cleanCnic.substring(0, i));
       keywords.add(cleanCnic.substring(cleanCnic.length - i));
     }
 
-    // 4. Account Number partials
     for (int i = 3; i <= accountNumber.length; i++) {
       keywords.add(accountNumber.substring(0, i).toLowerCase());
       keywords.add(accountNumber.substring(accountNumber.length - i).toLowerCase());
@@ -129,11 +109,6 @@ class Customer {
     return keywords.toList();
   }
 
-  /// Word-prefixes derived ONLY from accountTitle (unlike
-  /// buildSearchKeywords, which also mixes in `name`) — this is what
-  /// backs the field-isolated "Search by Account Title" option, so a
-  /// title search can never accidentally match on the customer's `name`
-  /// field or anything else.
   List<String> buildAccountTitleSearchWords() {
     final keywords = <String>{};
     for (final w in accountTitle.toLowerCase().split(RegExp(r'\s+'))) {
@@ -149,10 +124,6 @@ class Customer {
 
   static String _cleanDigits(String s) => s.replaceAll(RegExp(r'[^0-9]'), '');
 
-  /// Last-4-digits values for the field-isolated search screen. Each is
-  /// its own dedicated Firestore field — deliberately NOT combined into
-  /// any shared array — so a query on one can never match a different
-  /// field that happens to share the same last 4 digits.
   String get phoneLast4 {
     final clean = _cleanDigits(phone);
     return clean.length >= 4 ? clean.substring(clean.length - 4) : clean;
@@ -206,8 +177,6 @@ class Customer {
       'notes': notes,
       'status': status,
       'searchKeywords': buildSearchKeywords(),
-      // Field-isolated search support — see the doc comments above each
-      // getter/method for why these are separate from searchKeywords.
       'accountTitleSearchWords': buildAccountTitleSearchWords(),
       'phoneLast4': phoneLast4,
       'cnicLast4': cnicLast4,

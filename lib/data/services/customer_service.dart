@@ -2,316 +2,79 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/customer_model.dart';
 import '../models/user_model.dart';
 import '../models/activity_log_model.dart';
-import '../models/dashboard_stats_model.dart';
 import 'activity_service.dart';
 
 /// All reads/writes here are additionally enforced server-side by
-/// Firestore Security Rules — the permission checks in this class prevent
-/// bad UI states, the rules prevent bad actors.
+/// Firestore Security Rules (see Data Model §5) — the permission checks
+/// in this class prevent bad UI states, the rules prevent bad actors.
 class CustomerService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final ActivityService _activity = ActivityService();
 
   CollectionReference<Map<String, dynamic>> get _col => _db.collection('customers');
 
-  Stream<List<Customer>> recentCustomers({int limit = 20, String? shopId}) {
-    Query<Map<String, dynamic>> q = _col.orderBy('updatedAt', descending: true);
-    if (shopId != null && shopId.isNotEmpty) {
-      q = q.where('shopId', isEqualTo: shopId);
-    }
-    return q.limit(limit).snapshots().map((s) => s.docs.map(Customer.fromDoc).toList());
+  Stream<List<Customer>> recentCustomers({int limit = 20}) {
+    return _col
+        .orderBy('updatedAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((s) => s.docs.map(Customer.fromDoc).toList());
   }
 
-  /// Calculates real-time dashboard analytics using efficient Firestore count()
-  /// aggregations to avoid reading thousands of full documents.
-  Future<DashboardStats> getDashboardStats(String shopId) async {
+  // ---------------------------------------------------------------------
+  // Dashboard stats — both use Firestore's server-side COUNT aggregation
+  // (`.count().get()`), which returns just a number without downloading
+  // any documents. This is deliberate: the collection could eventually
+  // hold thousands of customers, and neither of these should ever pull
+  // the whole collection just to display a number on the Dashboard.
+  //
+  // Only these two are implemented as real stats. An "Active/Inactive
+  // customers" pair was requested elsewhere, but the Customer model has
+  // no status/active field to compute that from (every record simply
+  // exists or is deleted — see docs/TASKS.md) — showing those would mean
+  // inventing a number, which the same spec explicitly asked not to do.
+  // ---------------------------------------------------------------------
+
+  Future<int> getTotalCustomersCount() async {
+    final snap = await _col.count().get();
+    return snap.count ?? 0;
+  }
+
+  Future<int> getNewCustomersThisMonthCount() async {
     final now = DateTime.now();
     final startOfMonth = DateTime(now.year, now.month, 1);
-    final startOfLastMonth = DateTime(now.year, now.month - 1, 1);
-
-    Query<Map<String, dynamic>> baseQuery = _col;
-    if (shopId.isNotEmpty) {
-      final testSnap = await _col.where('shopId', isEqualTo: shopId).limit(1).get();
-      if (testSnap.docs.isNotEmpty) {
-        baseQuery = _col.where('shopId', isEqualTo: shopId);
-      }
-    }
-
-    try {
-      final totalSnap = await baseQuery.count().get();
-      final totalCount = totalSnap.count ?? 0;
-
-      final activeSnap = await baseQuery.where('status', isEqualTo: 'Active').count().get();
-      int activeCount = activeSnap.count ?? 0;
-
-      final inactiveSnap = await baseQuery.where('status', isEqualTo: 'Inactive').count().get();
-      int inactiveCount = inactiveSnap.count ?? 0;
-
-      if (activeCount == 0 && inactiveCount == 0 && totalCount > 0) {
-        activeCount = totalCount;
-      } else if (activeCount + inactiveCount < totalCount) {
-        activeCount = totalCount - inactiveCount;
-      }
-
-      final newThisMonthSnap = await baseQuery
-          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
-          .count()
-          .get();
-      final newThisMonthCount = newThisMonthSnap.count ?? 0;
-
-      final newLastMonthSnap = await baseQuery
-          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfLastMonth))
-          .where('createdAt', isLessThan: Timestamp.fromDate(startOfMonth))
-          .count()
-          .get();
-      final newLastMonthCount = newLastMonthSnap.count ?? 0;
-
-      double? growthPercentage;
-      if (newLastMonthCount > 0) {
-        growthPercentage = ((newThisMonthCount - newLastMonthCount) / newLastMonthCount) * 100;
-      } else if (newThisMonthCount > 0) {
-        growthPercentage = 100.0;
-      }
-
-      return DashboardStats(
-        totalCustomers: totalCount,
-        newThisMonth: newThisMonthCount,
-        activeCustomers: activeCount,
-        inactiveCustomers: inactiveCount,
-        monthlyGrowthPercentage: growthPercentage,
-        newLastMonth: newLastMonthCount,
-      );
-    } catch (e) {
-      final snap = await baseQuery.limit(5000).get();
-      final docs = snap.docs.map(Customer.fromDoc).toList();
-
-      final total = docs.length;
-      final active = docs.where((c) => c.status != 'Inactive').length;
-      final inactive = docs.where((c) => c.status == 'Inactive').length;
-
-      final thisMonth = docs.where((c) => c.createdAt != null && c.createdAt!.isAfter(startOfMonth)).length;
-      final lastMonth = docs.where((c) {
-        if (c.createdAt == null) return false;
-        return c.createdAt!.isAfter(startOfLastMonth) && c.createdAt!.isBefore(startOfMonth);
-      }).length;
-
-      double? pct;
-      if (lastMonth > 0) {
-        pct = ((thisMonth - lastMonth) / lastMonth) * 100;
-      } else if (thisMonth > 0) {
-        pct = 100.0;
-      }
-
-      return DashboardStats(
-        totalCustomers: total,
-        newThisMonth: thisMonth,
-        activeCustomers: active,
-        inactiveCustomers: inactive,
-        monthlyGrowthPercentage: pct,
-        newLastMonth: lastMonth,
-      );
-    }
+    final snap = await _col.where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth)).count().get();
+    return snap.count ?? 0;
   }
 
-  /// Calculates customer growth chart points for the selected time period.
-  Future<List<GrowthPoint>> getGrowthData(String shopId, GrowthPeriod period) async {
+  /// One lightweight `.count()` query per day for the last 7 days —
+  /// 7 small server-side counts, never a download of customer documents.
+  /// Returns oldest→newest. Deliberately fixed at 7 days rather than a
+  /// selectable period (week/month/quarter/year): each additional period
+  /// multiplies the query count, and a single always-useful view is a
+  /// better performance/complexity trade-off than a rarely-used dropdown.
+  Future<List<int>> getGrowthLast7Days() async {
     final now = DateTime.now();
-    DateTime startDate;
-    DateTime endDate = now;
-
-    switch (period) {
-      case GrowthPeriod.thisWeek:
-        startDate = now.subtract(Duration(days: now.weekday - 1));
-        startDate = DateTime(startDate.year, startDate.month, startDate.day);
-        break;
-      case GrowthPeriod.thisMonth:
-        startDate = DateTime(now.year, now.month, 1);
-        break;
-      case GrowthPeriod.lastMonth:
-        startDate = DateTime(now.year, now.month - 1, 1);
-        endDate = DateTime(now.year, now.month, 0, 23, 59, 59);
-        break;
-      case GrowthPeriod.last3Months:
-        startDate = DateTime(now.year, now.month - 2, 1);
-        break;
-      case GrowthPeriod.thisYear:
-        startDate = DateTime(now.year, 1, 1);
-        break;
-    }
-
-    Query<Map<String, dynamic>> baseQuery = _col;
-    if (shopId.isNotEmpty) {
-      final testSnap = await _col.where('shopId', isEqualTo: shopId).limit(1).get();
-      if (testSnap.docs.isNotEmpty) {
-        baseQuery = _col.where('shopId', isEqualTo: shopId);
-      }
-    }
-
-    final snap = await baseQuery
-        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-        .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
-        .get();
-
-    final customers = snap.docs.map(Customer.fromDoc).toList();
-
-    if (period == GrowthPeriod.thisWeek) {
-      final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      return List.generate(7, (i) {
-        final dayDate = startDate.add(Duration(days: i));
-        final label = days[i];
-        final count = customers.where((c) {
-          if (c.createdAt == null) return false;
-          return c.createdAt!.year == dayDate.year &&
-              c.createdAt!.month == dayDate.month &&
-              c.createdAt!.day == dayDate.day;
-        }).length;
-        return GrowthPoint(label: label, count: count, date: dayDate);
-      });
-    } else if (period == GrowthPeriod.thisMonth || period == GrowthPeriod.lastMonth) {
-      final daysInMonth = DateTime(startDate.year, startDate.month + 1, 0).day;
-      const intervals = 6;
-      final step = (daysInMonth / intervals).ceil();
-      final points = <GrowthPoint>[];
-
-      for (int i = 0; i < intervals; i++) {
-        final startDay = (i * step) + 1;
-        final endDay = ((i + 1) * step).clamp(1, daysInMonth);
-        if (startDay > daysInMonth) break;
-
-        final label = 'Day $startDay-$endDay';
-        final count = customers.where((c) {
-          if (c.createdAt == null) return false;
-          return c.createdAt!.year == startDate.year &&
-              c.createdAt!.month == startDate.month &&
-              c.createdAt!.day >= startDay &&
-              c.createdAt!.day <= endDay;
-        }).length;
-
-        points.add(GrowthPoint(label: label, count: count, date: DateTime(startDate.year, startDate.month, startDay.toInt())));
-      }
-      return points;
-    } else {
-      final months = <GrowthPoint>[];
-      final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      DateTime curr = DateTime(startDate.year, startDate.month, 1);
-
-      while (!curr.isAfter(endDate)) {
-        final label = monthNames[curr.month - 1];
-        final mYear = curr.year;
-        final mMonth = curr.month;
-        final count = customers.where((c) {
-          if (c.createdAt == null) return false;
-          return c.createdAt!.year == mYear && c.createdAt!.month == mMonth;
-        }).length;
-
-        months.add(GrowthPoint(label: label, count: count, date: curr));
-        curr = DateTime(curr.year, curr.month + 1, 1);
-      }
-      return months;
-    }
-  }
-
-  /// Field-specific customer search with multi-shop isolation support.
-  Future<List<Customer>> searchByField(dynamic field, String query, {String? shopId}) {
-    String fieldName;
-    if (field is CustomerSearchField) {
-      fieldName = field.label;
-    } else {
-      fieldName = field.toString();
-    }
-    return search(query, searchField: fieldName, shopId: shopId);
-  }
-
-  Future<List<Customer>> search(String query, {String? searchField, String? shopId}) async {
-    String q = query.trim().toLowerCase();
-    if (q.isEmpty) return [];
-
-    final cleanDigits = q.replaceAll(RegExp(r'[^0-9]'), '');
-
-    if (searchField != null && searchField != 'All') {
-      final snap = await _col.limit(200).get();
-      List<Customer> all = snap.docs.map(Customer.fromDoc).toList();
-
-      if (shopId != null && shopId.isNotEmpty) {
-        all = all.where((c) => c.shopId == null || c.shopId == shopId).toList();
-      }
-
-      switch (searchField) {
-        case 'Phone Number':
-        case 'Phone':
-          return all.where((c) {
-            final cleanPhone = c.phone.replaceAll(RegExp(r'[^0-9]'), '');
-            return cleanPhone.endsWith(cleanDigits) || cleanPhone.contains(cleanDigits);
-          }).toList();
-
-        case 'CNIC':
-          return all.where((c) {
-            final cleanCnic = c.cnic.replaceAll(RegExp(r'[^0-9]'), '');
-            return cleanCnic.endsWith(cleanDigits) || cleanCnic.contains(cleanDigits);
-          }).toList();
-
-        case 'Account Number':
-        case 'Account ID':
-          return all.where((c) {
-            final cleanAcc = c.accountNumber.replaceAll(RegExp(r'[^0-9a-zA-Z]'), '').toLowerCase();
-            return cleanAcc.endsWith(q) || cleanAcc.contains(q);
-          }).toList();
-
-        case 'Account Title':
-          return all.where((c) {
-            final title = c.accountTitle.toLowerCase();
-            final name = c.name.toLowerCase();
-            return title.contains(q) || name.contains(q);
-          }).toList();
-
-        default:
-          break;
-      }
-    }
-
-    if (RegExp(r'^[0-9\-\s]+$').hasMatch(q)) {
-      q = cleanDigits;
-    }
-
-    final words = q.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
-
-    List<Customer> results = [];
-    if (words.length > 1) {
+    final today = DateTime(now.year, now.month, now.day);
+    final counts = <int>[];
+    for (int i = 6; i >= 0; i--) {
+      final dayStart = today.subtract(Duration(days: i));
+      final dayEnd = dayStart.add(const Duration(days: 1));
       final snap = await _col
-          .where('searchKeywords', arrayContainsAny: words.take(30).toList())
-          .limit(50)
+          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(dayStart))
+          .where('createdAt', isLessThan: Timestamp.fromDate(dayEnd))
+          .count()
           .get();
-      final all = snap.docs.map(Customer.fromDoc);
-      results = all.where((c) {
-        final haystack = '${c.name} ${c.accountTitle}'.toLowerCase();
-        return words.every((w) => haystack.contains(w));
-      }).toList();
+      counts.add(snap.count ?? 0);
     }
-
-    if (results.isEmpty) {
-      final snap = await _col
-          .where('searchKeywords', arrayContains: q)
-          .limit(30)
-          .get();
-      if (snap.docs.isNotEmpty) {
-        results = snap.docs.map(Customer.fromDoc).toList();
-      } else {
-        final byAccount = await _col
-            .where(FieldPath.documentId, isGreaterThanOrEqualTo: q)
-            .where(FieldPath.documentId, isLessThan: '$q\uf8ff')
-            .limit(30)
-            .get();
-        results = byAccount.docs.map(Customer.fromDoc).toList();
-      }
-    }
-
-    if (shopId != null && shopId.isNotEmpty) {
-      results = results.where((c) => c.shopId == null || c.shopId == shopId).toList();
-    }
-
-    return results;
+    return counts;
   }
 
+  /// Exact-match lookup by phone or CNIC, used for duplicate detection
+  /// before creating/editing a customer. Relies on the fact that
+  /// buildSearchKeywords() always includes the FULL cleaned value as one
+  /// of its keywords (not just prefixes/suffixes), so arrayContains here
+  /// matches only an exact phone/CNIC, never a partial one.
   Future<Customer?> findByPhone(String phone) async {
     final clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
     if (clean.isEmpty) return null;
@@ -326,6 +89,99 @@ class CustomerService {
     final snap = await _col.where('searchKeywords', arrayContains: clean).limit(5).get();
     final matches = snap.docs.map(Customer.fromDoc).where((c) => c.cnic.replaceAll(RegExp(r'[^0-9]'), '') == clean);
     return matches.isEmpty ? null : matches.first;
+  }
+
+  // ---------------------------------------------------------------------
+  // Field-isolated search — each method queries EXACTLY ONE Firestore
+  // field and nothing else. This is deliberate: the combined `search()`
+  // above (and its shared `searchKeywords` array) can't tell two
+  // different fields apart when they happen to share the same last-4
+  // digits — a phone ending "4567" and a totally different customer's
+  // CNIC ending "4567" would both match the same keyword. These methods
+  // exist specifically so the Dashboard's "Search Customer By" flow can
+  // guarantee that never happens.
+  // ---------------------------------------------------------------------
+
+  Future<List<Customer>> searchByAccountTitle(String title) async {
+    final q = title.trim().toLowerCase();
+    if (q.isEmpty) return [];
+    final words = q.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final snap = await _col
+        .where('accountTitleSearchWords', arrayContainsAny: words.take(30).toList())
+        .limit(50)
+        .get();
+    final all = snap.docs.map(Customer.fromDoc);
+    // Narrow to titles containing every word typed, same reasoning as the
+    // multi-word branch in search() above — but checked ONLY against
+    // accountTitle, never name or anything else.
+    final narrowed = all.where((c) {
+      final haystack = c.accountTitle.toLowerCase();
+      return words.every((w) => haystack.contains(w));
+    }).toList();
+    return narrowed;
+  }
+
+  Future<List<Customer>> searchByAccountNumberLast4(String last4) async {
+    final clean = last4.replaceAll(RegExp(r'[^0-9]'), '');
+    if (clean.length != 4) return [];
+    final snap = await _col.where('accountNumberLast4', isEqualTo: clean).limit(50).get();
+    return snap.docs.map(Customer.fromDoc).toList();
+  }
+
+  Future<List<Customer>> searchByPhoneLast4(String last4) async {
+    final clean = last4.replaceAll(RegExp(r'[^0-9]'), '');
+    if (clean.length != 4) return [];
+    final snap = await _col.where('phoneLast4', isEqualTo: clean).limit(50).get();
+    return snap.docs.map(Customer.fromDoc).toList();
+  }
+
+  Future<List<Customer>> searchByCnicLast4(String last4) async {
+    final clean = last4.replaceAll(RegExp(r'[^0-9]'), '');
+    if (clean.length != 4) return [];
+    final snap = await _col.where('cnicLast4', isEqualTo: clean).limit(50).get();
+    return snap.docs.map(Customer.fromDoc).toList();
+  }
+
+  Future<List<Customer>> searchByField(CustomerSearchField field, String query) {
+    switch (field) {
+      case CustomerSearchField.accountTitle:
+        return searchByAccountTitle(query);
+      case CustomerSearchField.accountNumber:
+        return searchByAccountNumberLast4(query);
+      case CustomerSearchField.phone:
+        return searchByPhoneLast4(query);
+      case CustomerSearchField.cnic:
+        return searchByCnicLast4(query);
+    }
+  }
+
+  /// One-time migration helper: customers created/edited before the
+  /// field-isolated search fields existed won't have
+  /// phoneLast4/cnicLast4/accountNumberLast4/accountTitleSearchWords set,
+  /// so they won't show up in the new search until backfilled. Admin-only
+  /// — re-saves every customer doc with these fields freshly computed.
+  /// Safe to run more than once; it's idempotent.
+  Future<int> backfillSearchFields(AppUser actor) async {
+    if (!actor.isAdmin) throw Exception('Only Admin can run this.');
+    final snap = await _col.get();
+    var updated = 0;
+    // Firestore batches cap at 500 writes — chunk defensively.
+    for (var i = 0; i < snap.docs.length; i += 400) {
+      final chunk = snap.docs.skip(i).take(400);
+      final batch = _db.batch();
+      for (final doc in chunk) {
+        final customer = Customer.fromDoc(doc);
+        batch.update(doc.reference, {
+          'accountTitleSearchWords': customer.buildAccountTitleSearchWords(),
+          'phoneLast4': customer.phoneLast4,
+          'cnicLast4': customer.cnicLast4,
+          'accountNumberLast4': customer.accountNumberLast4,
+        });
+        updated++;
+      }
+      await batch.commit();
+    }
+    return updated;
   }
 
   Future<void> addCustomer(Customer customer, AppUser actor) async {
@@ -343,7 +199,7 @@ class CustomerService {
       throw Exception('A customer with this CNIC already exists (${cnicMatch.name}).');
     }
     await _col.doc(customer.accountNumber).set(
-          customer.toMap(actingUid: actor.uid, isNew: true, targetShopId: actor.shopId),
+          customer.toMap(actingUid: actor.uid, isNew: true),
         );
     await _activity.log(
       action: ActivityAction.customerCreated,
@@ -352,6 +208,10 @@ class CustomerService {
     );
   }
 
+  /// [originalPhone]/[originalCnic] are the values BEFORE this edit —
+  /// duplicate checks only run if the person actually changed the value,
+  /// so editing a customer's address doesn't spuriously flag their own
+  /// unchanged phone/CNIC as "already in use".
   Future<void> updateCustomer(
     Customer customer,
     AppUser actor, {
@@ -373,7 +233,7 @@ class CustomerService {
       }
     }
     await _col.doc(customer.accountNumber).update(
-          customer.toMap(actingUid: actor.uid, isNew: false, targetShopId: actor.shopId),
+          customer.toMap(actingUid: actor.uid, isNew: false),
         );
     await _activity.log(
       action: ActivityAction.customerUpdated,
