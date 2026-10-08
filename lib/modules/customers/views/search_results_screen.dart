@@ -12,13 +12,7 @@ class SearchResultsScreen extends StatefulWidget {
   final CustomerSearchField searchField;
   final String query;
   final AppUser currentUser;
-
-  const SearchResultsScreen({
-    super.key,
-    required this.searchField,
-    required this.query,
-    required this.currentUser,
-  });
+  const SearchResultsScreen({super.key, required this.searchField, required this.query, required this.currentUser});
 
   @override
   State<SearchResultsScreen> createState() => _SearchResultsScreenState();
@@ -31,24 +25,16 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.query.trim().isEmpty) {
-      _future = _service.recentCustomers(limit: 500).first;
-    } else {
-      _future = _service.searchByField(
-        widget.searchField,
-        widget.query,
-      );
-    }
+    // Deliberately calls the ONE matching isolated method for the chosen
+    // field — never the old combined search() — so a result can never
+    // come from a different field than the one the user picked.
+    _future = _service.searchByField(widget.searchField, widget.query);
   }
 
   @override
   Widget build(BuildContext context) {
-    final titleText = widget.query.trim().isEmpty
-        ? 'All Customers'
-        : '${widget.searchField.label}: "${widget.query}"';
-
     return Scaffold(
-      appBar: AppBar(title: Text(titleText)),
+      appBar: AppBar(title: Text('${widget.searchField.label}: "${widget.query}"')),
       body: FutureBuilder<List<Customer>>(
         future: _future,
         builder: (context, snap) {
@@ -72,7 +58,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             );
           }
           return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+            padding: const EdgeInsets.all(16),
             itemCount: results.length + 1,
             itemBuilder: (context, i) {
               if (i == 0) {
@@ -80,7 +66,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                   duration: const Duration(milliseconds: 400),
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: Text('${results.length} customer${results.length == 1 ? '' : 's'} found', style: const TextStyle(color: AppColors.muted, fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: Text('${results.length} match${results.length == 1 ? '' : 'es'}', style: const TextStyle(color: AppColors.muted, fontSize: 12)),
                   ),
                 );
               }
@@ -133,6 +119,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                                     Text(c.accountTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, color: AppColors.muted, fontStyle: FontStyle.italic)),
                                   ],
                                   const SizedBox(height: 5),
+                                  // Masked phone/CNIC/account number together —
+                                  // when a search matches on last-4 digits,
+                                  // several customers can share those same
+                                  // last 4 across different fields, so
+                                  // showing all three masked values here is
+                                  // what actually lets someone tell two
+                                  // results apart instead of guessing.
                                   Wrap(
                                     spacing: 10,
                                     runSpacing: 2,

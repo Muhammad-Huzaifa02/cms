@@ -5,7 +5,16 @@ import '../../../data/models/customer_model.dart';
 import '../../../data/services/customer_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/widgets/section_card.dart';
+import '../../../core/widgets/account_field.dart';
+import '../../../core/widgets/primary_button.dart';
+import '../../../core/widgets/feedback_text.dart';
 
+/// Organized into three sections — Customer Information, Contact
+/// Information, Account Information — matching the fields that actually
+/// exist on Customer. No "Activity/Transactions" section: this app has
+/// no real transaction data to show, and the activity log is a separate,
+/// Admin-only screen rather than something that belongs inline here.
 class CustomerDetailScreen extends StatefulWidget {
   final Customer customer;
   final AppUser currentUser;
@@ -19,6 +28,20 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _service = CustomerService();
   late TextEditingController _nameCtrl, _accountTitleCtrl, _phoneCtrl, _cnicCtrl, _addressCtrl, _notesCtrl;
+  // Display-only controllers for fields that are never actually edited
+  // (Account Number toggles masked/full text, Account Type is fixed) —
+  // kept as persistent fields rather than constructed inline in build(),
+  // since a TextEditingController passed in explicitly is NOT
+  // auto-disposed by TextField, so creating one fresh on every rebuild
+  // (e.g. every time the reveal toggle is tapped) would leak one each time.
+  late final TextEditingController _accountNumberDisplayCtrl;
+  late final TextEditingController _accountTypeDisplayCtrl;
+  late final TextEditingController _cnicMaskedDisplayCtrl;
+
+  // CNIC and Account Number stay masked by default for EVERYONE — edit
+  // permission does not imply "should see it unmasked at a glance". Each
+  // has its own reveal toggle, independent of whether editing is allowed.
+  bool _cnicRevealed = false;
   bool _acctRevealed = false;
   bool _saving = false;
   String? _error;
@@ -33,10 +56,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     _cnicCtrl = TextEditingController(text: c.cnic);
     _addressCtrl = TextEditingController(text: c.address ?? '');
     _notesCtrl = TextEditingController(text: c.notes ?? '');
+    _accountNumberDisplayCtrl = TextEditingController(text: c.maskedAccountNumber);
+    _accountTypeDisplayCtrl = TextEditingController(text: c.accountType);
+    _cnicMaskedDisplayCtrl = TextEditingController(text: c.maskedCnic);
   }
-
-  bool get _canEdit => widget.currentUser.can('edit');
-  bool get _canDelete => widget.currentUser.can('delete');
 
   @override
   void dispose() {
@@ -46,8 +69,14 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     _cnicCtrl.dispose();
     _addressCtrl.dispose();
     _notesCtrl.dispose();
+    _accountNumberDisplayCtrl.dispose();
+    _accountTypeDisplayCtrl.dispose();
+    _cnicMaskedDisplayCtrl.dispose();
     super.dispose();
   }
+
+  bool get _canEdit => widget.currentUser.can('edit');
+  bool get _canDelete => widget.currentUser.can('delete');
 
   Future<void> _save() async {
     setState(() => _error = null);
@@ -109,60 +138,77 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   Widget build(BuildContext context) {
     final c = widget.customer;
     return Scaffold(
-      appBar: AppBar(title: const Text('Customer details')),
+      backgroundColor: AppColors.bg,
+      appBar: AppBar(title: const Text('Customer Details')),
       body: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
-            _field('Full name', _nameCtrl, editable: _canEdit, validator: Validators.requiredName),
-            _field('Account Title', _accountTitleCtrl, editable: _canEdit, validator: Validators.accountTitle),
-            _field(
-              'Phone',
-              _phoneCtrl,
-              editable: _canEdit,
-              validator: Validators.phone,
-              keyboard: TextInputType.phone,
-              formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+            SectionCard(
+              title: 'Customer Information',
+              children: [
+                AccountField(label: 'Full Name', controller: _nameCtrl, readOnly: !_canEdit, validator: Validators.requiredName),
+                const SizedBox(height: 16),
+                AccountField(label: 'Account Title', controller: _accountTitleCtrl, readOnly: !_canEdit, validator: Validators.accountTitle),
+              ],
             ),
-            _field(
-              'CNIC',
-              _cnicCtrl,
-              editable: _canEdit,
-              validator: Validators.cnic,
-              keyboard: TextInputType.number,
-              formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
-            ),
-            // Account number is intentionally NOT editable here: it's the
-            // Firestore document ID (see Customer model docs), so
-            // "changing" it isn't a field update — it would mean deleting
-            // this document and creating a new one under a different ID,
-            // which would silently orphan every activityLog entry that
-            // references this account number by ID. If a customer's
-            // account number genuinely needs to change, that should be a
-            // deliberate Admin action (delete + re-add), not something
-            // that happens implicitly from an edit form.
-            _maskedField('Account number', c.maskedAccountNumber, c.accountNumber, _acctRevealed, () => setState(() => _acctRevealed = !_acctRevealed)),
-            _readOnlyField('Account type', c.accountType),
-            _field('Address', _addressCtrl, editable: _canEdit),
-            _field('Notes', _notesCtrl, editable: _canEdit),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10, top: 4),
-                child: Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
-              ),
-            const SizedBox(height: 8),
-            if (_canEdit)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _saving ? null : _save,
-                  child: _saving
-                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Save changes'),
+            const SizedBox(height: 16),
+            SectionCard(
+              title: 'Contact Information',
+              children: [
+                AccountField(
+                  label: 'Phone Number',
+                  controller: _phoneCtrl,
+                  readOnly: !_canEdit,
+                  validator: Validators.phone,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
                 ),
-              ),
+                const SizedBox(height: 16),
+                AccountField(label: 'Address', controller: _addressCtrl, readOnly: !_canEdit),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SectionCard(
+              title: 'Account Information',
+              children: [
+                _revealableCnic(),
+                const SizedBox(height: 16),
+                // Account Number is intentionally NEVER editable here —
+                // it's the Firestore document ID (see Customer model
+                // docs), so "changing" it isn't a field update, it would
+                // mean deleting this document and creating a new one
+                // under a different ID, which would silently orphan
+                // every activityLog entry that references this account
+                // number by ID. If a customer's account number
+                // genuinely needs to change, that should be a
+                // deliberate Admin action (delete + re-add), not
+                // something that happens implicitly from an edit form.
+                AccountField(
+                  label: 'Account Number',
+                  controller: _accountNumberDisplayCtrl..text = _acctRevealed ? c.accountNumber : c.maskedAccountNumber,
+                  readOnly: true,
+                  suffixIcon: TextButton(
+                    onPressed: () => setState(() => _acctRevealed = !_acctRevealed),
+                    child: Text(_acctRevealed ? 'Hide' : 'Reveal', style: const TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                AccountField(label: 'Account Type', controller: _accountTypeDisplayCtrl, readOnly: true),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SectionCard(
+              title: 'Notes',
+              children: [
+                AccountField(label: 'Notes', controller: _notesCtrl, readOnly: !_canEdit),
+              ],
+            ),
+            if (_error != null) FeedbackText(_error!, isError: true),
+            const SizedBox(height: 18),
+            if (_canEdit) PrimaryButton(label: 'Save Changes', loading: _saving, onPressed: _save),
             if (_canDelete)
               Padding(
                 padding: const EdgeInsets.only(top: 14),
@@ -179,83 +225,33 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  Widget _field(
-    String label,
-    TextEditingController ctrl, {
-    required bool editable,
-    String? Function(String?)? validator,
-    TextInputType? keyboard,
-    List<TextInputFormatter>? formatters,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label.toUpperCase(), style: const TextStyle(fontSize: 9.5, color: AppColors.muted, letterSpacing: 0.5)),
-              TextFormField(
-                controller: ctrl,
-                enabled: editable,
-                validator: editable ? validator : null,
-                keyboardType: keyboard,
-                inputFormatters: formatters,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.zero, filled: false, isDense: true),
-              ),
-            ],
-          ),
+  /// CNIC stays masked by default for every viewer, edit permission or
+  /// not. Revealing it shows the real value — editable if the viewer has
+  /// edit permission, read-only otherwise. This is deliberately NOT just
+  /// "AccountField with readOnly: !_canEdit" the way the other fields
+  /// are, because masking has to apply independently of editability.
+  Widget _revealableCnic() {
+    if (!_cnicRevealed) {
+      return AccountField(
+        label: 'CNIC',
+        controller: _cnicMaskedDisplayCtrl,
+        readOnly: true,
+        suffixIcon: TextButton(
+          onPressed: () => setState(() => _cnicRevealed = true),
+          child: const Text('Reveal', style: TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.bold)),
         ),
-      ),
-    );
-  }
-
-  Widget _readOnlyField(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label.toUpperCase(), style: const TextStyle(fontSize: 9.5, color: AppColors.muted, letterSpacing: 0.5)),
-              const SizedBox(height: 3),
-              Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _maskedField(String label, String masked, String full, bool revealed, VoidCallback onToggle) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(label.toUpperCase(), style: const TextStyle(fontSize: 9.5, color: AppColors.muted, letterSpacing: 0.5)),
-                    const SizedBox(height: 3),
-                    Text(revealed ? full : masked, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-              TextButton(
-                onPressed: onToggle,
-                child: Text(revealed ? 'Hide' : 'Reveal', style: const TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        ),
+      );
+    }
+    return AccountField(
+      label: 'CNIC',
+      controller: _cnicCtrl,
+      readOnly: !_canEdit,
+      validator: Validators.cnic,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
+      suffixIcon: TextButton(
+        onPressed: () => setState(() => _cnicRevealed = false),
+        child: const Text('Hide', style: TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.bold)),
       ),
     );
   }

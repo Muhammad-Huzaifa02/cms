@@ -5,7 +5,16 @@ import '../../../data/models/customer_model.dart';
 import '../../../data/services/customer_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/widgets/section_card.dart';
+import '../../../core/widgets/account_field.dart';
+import '../../../core/widgets/primary_button.dart';
+import '../../../core/widgets/feedback_text.dart';
 
+/// Same three-section structure as Customer Details (Customer / Contact /
+/// Account Information) so creating and viewing a customer feel like the
+/// same screen, built from the same shared components. All validation and
+/// duplicate-checking is unchanged — this is a layout/consistency pass,
+/// not a business-logic change.
 class AddCustomerScreen extends StatefulWidget {
   final AppUser currentUser;
   const AddCustomerScreen({super.key, required this.currentUser});
@@ -15,6 +24,8 @@ class AddCustomerScreen extends StatefulWidget {
 }
 
 class _AddCustomerScreenState extends State<AddCustomerScreen> {
+  static const _accountTypes = ['Current', 'Savings', 'Current Plus', 'Business'];
+
   final _formKey = GlobalKey<FormState>();
   final _service = CustomerService();
   final _nameCtrl = TextEditingController();
@@ -24,9 +35,21 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final _accountCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
-  String _accountType = 'Current';
+  String _accountType = _accountTypes.first;
   bool _saving = false;
   String? _error;
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _accountTitleCtrl.dispose();
+    _phoneCtrl.dispose();
+    _cnicCtrl.dispose();
+    _accountCtrl.dispose();
+    _addressCtrl.dispose();
+    _notesCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _save() async {
     setState(() => _error = null);
@@ -59,102 +82,99 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add customer')),
+      backgroundColor: AppColors.bg,
+      appBar: AppBar(title: const Text('Add Customer')),
       body: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
-            const Text('CUSTOMER INFORMATION', style: TextStyle(fontSize: 9.5, color: AppColors.muted, letterSpacing: 0.5, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 10),
-            _input('Full name', _nameCtrl, validator: Validators.requiredName),
-            _input('Account Title', _accountTitleCtrl, hint: 'e.g. Ali Traders', validator: Validators.accountTitle),
-            _input(
-              'Phone number',
-              _phoneCtrl,
-              hint: '03001234567',
-              keyboard: TextInputType.phone,
-              validator: Validators.phone,
-              formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+            SectionCard(
+              title: 'Customer Information',
+              children: [
+                AccountField(label: 'Full Name', controller: _nameCtrl, validator: Validators.requiredName),
+                const SizedBox(height: 16),
+                AccountField(
+                  label: 'Account Title',
+                  controller: _accountTitleCtrl,
+                  hintText: 'e.g. Ali Traders',
+                  validator: Validators.accountTitle,
+                ),
+              ],
             ),
-            _input(
-              'CNIC number',
-              _cnicCtrl,
-              hint: '3520212345671',
-              keyboard: TextInputType.number,
-              validator: Validators.cnic,
-              formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
+            const SizedBox(height: 16),
+            SectionCard(
+              title: 'Contact Information',
+              children: [
+                AccountField(
+                  label: 'Phone Number',
+                  controller: _phoneCtrl,
+                  hintText: '03001234567',
+                  keyboardType: TextInputType.phone,
+                  validator: Validators.phone,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+                ),
+                const SizedBox(height: 16),
+                AccountField(label: 'Address (optional)', controller: _addressCtrl),
+              ],
             ),
-            _input(
-              'Account number',
-              _accountCtrl,
-              hint: '12345678901234',
-              keyboard: TextInputType.number,
-              validator: Validators.accountNumber,
-              formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(14)],
-            ),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 6, top: 2),
-              child: Text('ACCOUNT TYPE', style: TextStyle(fontSize: 9.5, color: AppColors.muted, letterSpacing: 0.5)),
-            ),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _accountType,
-                    isExpanded: true,
-                    items: const ['Current', 'Savings', 'Current Plus', 'Business']
-                        .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                        .toList(),
-                    onChanged: (v) {
-                      if (v != null) setState(() => _accountType = v);
-                    },
+            const SizedBox(height: 16),
+            SectionCard(
+              title: 'Account Information',
+              children: [
+                AccountField(
+                  label: 'CNIC',
+                  controller: _cnicCtrl,
+                  hintText: '3520212345671',
+                  keyboardType: TextInputType.number,
+                  validator: Validators.cnic,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
+                ),
+                const SizedBox(height: 16),
+                AccountField(
+                  label: 'Account Number',
+                  controller: _accountCtrl,
+                  hintText: '12345678901234',
+                  keyboardType: TextInputType.number,
+                  validator: Validators.accountNumber,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(14)],
+                ),
+                const SizedBox(height: 16),
+                const Text('Account Type', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                const SizedBox(height: 6),
+                // DropdownButton inside an InputDecorator (rather than
+                // DropdownButtonFormField) so it picks up the app's themed
+                // input look without relying on `value`, which newer
+                // Flutter SDKs have deprecated on the FormField variant.
+                InputDecorator(
+                  decoration: const InputDecoration(),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _accountType,
+                      isExpanded: true,
+                      isDense: true,
+                      items: _accountTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                      onChanged: (v) {
+                        if (v != null) setState(() => _accountType = v);
+                      },
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(height: 10),
-            _input('Address (optional)', _addressCtrl),
-            _input('Notes (optional)', _notesCtrl),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
-              ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _saving ? null : _save,
-                child: _saving
-                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Save customer'),
-              ),
+            const SizedBox(height: 16),
+            SectionCard(
+              title: 'Notes',
+              children: [
+                AccountField(label: 'Notes (optional)', controller: _notesCtrl),
+              ],
             ),
+            if (_error != null) FeedbackText(_error!, isError: true),
+            const SizedBox(height: 18),
+            PrimaryButton(label: 'Save Customer', loading: _saving, onPressed: _save),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _input(
-    String label,
-    TextEditingController ctrl, {
-    String? hint,
-    TextInputType? keyboard,
-    String? Function(String?)? validator,
-    List<TextInputFormatter>? formatters,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: ctrl,
-        keyboardType: keyboard,
-        inputFormatters: formatters,
-        validator: validator,
-        decoration: InputDecoration(labelText: label, hintText: hint),
       ),
     );
   }
