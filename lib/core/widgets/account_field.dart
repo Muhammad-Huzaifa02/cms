@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 
-/// A single labeled input used throughout account-style screens. Height,
-/// radius, and spacing all come from the app's global InputDecorationTheme
-/// (see app_theme.dart) so this stays visually identical to every other
-/// text field in the app — this widget's job is just the label placement,
-/// the read-only visual treatment, and optional helper/trailing content.
+/// A single labeled input used throughout account-style screens (My
+/// Account, Add/Edit Customer, Add Staff). Height, radius, and spacing
+/// all come from the app's global InputDecorationTheme (see
+/// app_theme.dart) so this stays visually identical to every other text
+/// field in the app — this widget's job is label placement, the
+/// read-only visual treatment, and optional validation/helper content.
+///
+/// [validator]/[inputFormatters] are optional — when [validator] is
+/// omitted this behaves exactly as it always has (a plain TextField);
+/// passing one switches it to a TextFormField so it participates in a
+/// parent Form's validation. This is deliberately one component for
+/// both cases rather than a second near-duplicate widget.
 class AccountField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
@@ -14,6 +22,10 @@ class AccountField extends StatelessWidget {
   final TextInputType? keyboardType;
   final Widget? suffixIcon;
   final bool obscureText;
+  final String? Function(String?)? validator;
+  final List<TextInputFormatter>? inputFormatters;
+  final AutovalidateMode? autovalidateMode;
+  final String? hintText;
 
   const AccountField({
     super.key,
@@ -24,10 +36,22 @@ class AccountField extends StatelessWidget {
     this.keyboardType,
     this.suffixIcon,
     this.obscureText = false,
+    this.validator,
+    this.inputFormatters,
+    this.autovalidateMode,
+    this.hintText,
   });
 
   @override
   Widget build(BuildContext context) {
+    final decoration = InputDecoration(
+      isDense: false,
+      hintText: hintText,
+      suffixIcon: suffixIcon,
+      fillColor: readOnly ? AppColors.bg : Colors.white,
+    );
+    final style = TextStyle(fontSize: 14, color: readOnly ? AppColors.muted : AppColors.ink);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -48,18 +72,28 @@ class AccountField extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          enabled: !readOnly,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          style: TextStyle(fontSize: 14, color: readOnly ? AppColors.muted : AppColors.ink),
-          decoration: InputDecoration(
-            isDense: false,
-            suffixIcon: suffixIcon,
-            fillColor: readOnly ? AppColors.bg : Colors.white,
+        if (validator != null)
+          TextFormField(
+            controller: controller,
+            enabled: !readOnly,
+            obscureText: obscureText,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
+            validator: readOnly ? null : validator,
+            autovalidateMode: autovalidateMode,
+            style: style,
+            decoration: decoration,
+          )
+        else
+          TextField(
+            controller: controller,
+            enabled: !readOnly,
+            obscureText: obscureText,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
+            style: style,
+            decoration: decoration,
           ),
-        ),
         if (helperText != null) ...[
           const SizedBox(height: 5),
           Text(helperText!, style: const TextStyle(fontSize: 11, color: AppColors.muted, height: 1.3)),
