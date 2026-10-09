@@ -14,7 +14,9 @@ lib/
     widgets/                    # reusable, cross-screen components:
       section_card.dart, account_field.dart, primary_button.dart,
       feedback_text.dart, tilt_tap_card.dart, fade_in_slide.dart,
-      shimmer_loading.dart, biometric_lock_screen.dart
+      shimmer_loading.dart, biometric_lock_screen.dart,
+      dashboard_stat_card.dart, quick_action_card.dart,
+      growth_chart.dart, error_state.dart
   data/
     models/                     # AppUser, Customer, ActivityLogEntry
     services/                   # AuthService, CustomerService,
@@ -24,7 +26,8 @@ lib/
     authentication/views/       # Login, Create Admin (first-run)
     home/views/                 # Dashboard, Staff mgmt, Add staff,
                                  # Activity log
-    customers/views/            # Add/Edit customer, Search results
+    customers/views/            # Add customer, Customer details/edit,
+                                 # Search-by-field, Search results
     profile/views/              # Edit own account (My Account)
   routes/app_routes.dart
 firestore.rules
@@ -35,7 +38,7 @@ docs/                           # this folder
 
 ## Firestore data model
 
-Four collections:
+Five collections:
 
 - **`users/{uid}`** — one doc per login (Admin or Staff), keyed by
   Firebase Auth UID. Fields: `name`, `email`, `phone`, `isAdmin`,
@@ -55,15 +58,51 @@ Four collections:
 - **`system/bootstrap`** — single doc, `{adminExists: bool}`. Gates the
   one-time self-serve Admin creation flow.
 
-### Search
+### Search — field-isolated, never global
 
-`Customer.buildSearchKeywords()` indexes: every prefix of every word in
-`name` and `accountTitle`; every prefix AND suffix (from length 3–4 up)
-of the cleaned (digits-only) `phone`, `cnic`, and `accountNumber`. This
-is what makes "search last 4 digits of CNIC" or "search a partial name"
-work via a single `array-contains` Firestore query, with a multi-word
-fallback (`array-contains-any` + client-side narrowing) for queries like
-an Account Title with spaces.
+The Dashboard search bar is a tap-trigger (read-only field) that opens
+`SearchCustomerScreen`. The user must pick exactly ONE field — Account
+Title, Account Number, Phone, or CNIC — before entering a value.
+`SearchResultsScreen` *requires* a `CustomerSearchField`, so it cannot be
+reached without one, and calls `CustomerService.searchByField`, which
+dispatches to one of four methods that each query exactly one field:
+
+| Search by      | Input            | Firestore query                                  |
+|----------------|------------------|--------------------------------------------------|
+| Account Title  | free text (2+ letters in at least one word) | `accountTitleSearchWords` array-contains-any, then narrowed client-side to titles containing every typed word |
+| Phone          | exactly 4 digits | `phoneLast4 ==`                                  |
+| CNIC           | exactly 4 digits | `cnicLast4 ==`                                   |
+| Account Number | exactly 4 digits | `accountNumberLast4 ==`                          |
+
+`phoneLast4`, `cnicLast4`, `accountNumberLast4` and
+`accountTitleSearchWords` are written by `Customer.toMap()` on every add
+and edit. They are separate fields (never merged into one array) because a
+shared array cannot tell fields apart: a phone ending 4567 and a different
+customer's CNIC ending 4567 produce the same keyword.
+
+No Firestore composite index is needed — every query is single-field
+equality or array-contains-any, which Firestore indexes automatically.
+
+**Existing customers need a one-time backfill.** Customers saved before
+these fields existed don't have them, so they don't appear in field search
+until re-saved. Admin runs "Sync search index" in the drawer
+(`CustomerService.backfillSearchFields`) once; it is idempotent.
+
+`searchKeywords` (from `buildSearchKeywords()`) is still written and is
+still used by `findByPhone`/`findByCnic` for duplicate detection — those
+re-check the normalized full number client-side, so a keyword collision
+across fields can't produce a false duplicate. It is NOT used for user
+search any more. Do not reintroduce a combined search over it.
+
+### Dashboard statistics
+
+Total Customers and New This Month use Firestore `count()` aggregation
+queries (no documents downloaded). The growth chart is a fixed last-7-days
+view built from per-day counts, deliberately not a period dropdown (each
+extra period multiplies query cost for a rarely-used control). There are
+no Active/Inactive customer stats: customers have no such field, and one
+was deliberately not invented. Staff accounts have `active`; customers do
+not.
 
 ## Auth — the tricky parts, and why
 

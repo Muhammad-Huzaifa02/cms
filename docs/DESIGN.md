@@ -41,6 +41,20 @@ header and Login screen.
   package) instead of a bare spinner, used on the Dashboard's initial
   customer list load.
 
+- **`DashboardStatCard`** / `DashboardStatSkeleton` — animated count-up
+  stat with icon, accent colour and optional caption.
+- **`QuickActionCard`** — compact tappable shortcut tile; only wire it to
+  screens that actually exist.
+- **`GrowthChart`** / `GrowthChartSkeleton` — dependency-free 7-bar chart
+  fed a `List<int>` of daily counts.
+- **`ErrorStateWidget`** / **`SliverErrorState`** — error message with a
+  Try Again button. Use whenever a stream/future can fail, so a failure
+  is never shown as an empty list.
+- **`AccountField`** now takes optional `validator`, `inputFormatters`,
+  `hintText`. Passing a validator makes it a `TextFormField`; omitting it
+  keeps the plain `TextField`. Use it for every labelled form field
+  rather than a screen-local text-field helper.
+
 ## A recurring bug class — read before adding a new animation
 
 **Never feed a raw `Curves.easeOutBack` / elastic / bounce-curve value

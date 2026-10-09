@@ -32,6 +32,23 @@ only check fields that actually *changed* (compare against
 `originalPhone`/`originalCnic`) — don't flag a customer's own unchanged
 value as a duplicate of itself.
 
+## Search — field isolation is a hard rule
+
+User-facing customer search must only ever query the single field the
+user picked (Account Title, Account Number, Phone, or CNIC). Never add a
+"search everything" box and never route user search through the shared
+`searchKeywords` array: last-4 digits routinely coincide across different
+fields for different customers, so a combined search returns the wrong
+person. Phone/CNIC/Account Number search takes exactly 4 digits and
+queries its own dedicated `*Last4` field. `SearchResultsScreen` requires
+a `CustomerSearchField` on purpose — keep it required so a global search
+can't be reached by accident.
+
+Any change to how phone, CNIC, account number or account title are
+stored must keep `Customer.toMap()` writing the matching `*Last4` /
+`accountTitleSearchWords` fields, and existing customers then need
+"Sync search index" run once.
+
 ## Data integrity
 
 - **Account Number is never editable after creation.** It's the

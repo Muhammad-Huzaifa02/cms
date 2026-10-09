@@ -84,3 +84,49 @@ phone/CNIC rejection) already exists in `core/utils/validators.dart`
 and `CustomerService`. Before re-implementing any of this from a fresh
 spec, check whether it's already there — it has been built and rebuilt
 more than once because it wasn't checked for first.
+
+## Search is field-isolated, never global — settled
+
+Dashboard search is "pick one field, then enter its value" (see
+ARCHITECTURE.md → Search). The earlier combined search over one shared
+`searchKeywords` array was removed because it couldn't distinguish a
+phone ending 4567 from a CNIC ending 4567. If a request asks for a
+single search box that "finds a customer by anything", that is this same
+rejected design in different words.
+
+## Dashboard shows only statistics that are real — settled
+
+Total Customers, New This Month and a 7-day growth chart come from
+Firestore `count()` queries. There are deliberately NO "Active /
+Inactive customers" cards: the Customer model has no such field and none
+was invented. There is also no multi-shop isolation layer: this is a
+single-branch tool, so there is no shop concept to isolate by. If a spec
+mentions either, check whether the underlying data actually exists
+before building UI for it.
+
+## Visual direction was a deliberate scope decision
+
+A large "floating bottom navigation dock + blue premium palette"
+redesign was requested. It was NOT applied wholesale: the existing green
+and gold brand was kept (the spec itself said not to replace an
+established palette), and navigation stays the existing Drawer (the spec
+itself ranked navigation reliability above the floating look). The
+floating/depth treatment was applied to existing components instead
+(search bar, stat cards, quick actions, customer cards). Don't swap the
+navigation paradigm or palette without an explicit decision to.
+
+## Errors must never look like empty data
+
+A failed Firestore stream/future must show an error with Retry
+(`ErrorStateWidget` / `SliverErrorState`), never fall through to
+`snap.data ?? []` and render the friendly "No customers yet" state.
+That exact bug existed on the Dashboard and was fixed.
+
+## CNIC stays masked for everyone, edit permission or not
+
+Customer Details shows CNIC and Account Number masked until Reveal is
+tapped, for all users. Edit permission only decides whether the revealed
+CNIC is editable. An earlier fix briefly showed CNIC unmasked to every
+editor and, via a disabled field, to view-only staff; that was
+corrected.
+

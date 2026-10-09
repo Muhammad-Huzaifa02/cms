@@ -12,9 +12,16 @@
 - [x] Customer CRUD: Add/Edit with Account Title, strict Pakistani
       phone/CNIC/account-number validation, duplicate phone/CNIC
       detection.
-- [x] Search: name, Account Title, full or last-4-digits of
-      phone/CNIC/account number; multi-word Account Title search;
-      disambiguated result cards showing all three masked identifiers.
+- [x] Search: field-isolated — pick Account Title / Account Number /
+      Phone / CNIC, then enter a value (exactly 4 digits for the three
+      numeric fields, 2+ letters for title). Result cards show Account
+      Title plus all three masked identifiers.
+- [x] "Sync search index" (Admin, drawer) backfills the new search
+      fields for customers saved before field-isolated search existed.
+- [x] Dashboard: Total Customers, New This Month, 7-day growth chart,
+      Admin quick actions, skeleton loading, and error-with-retry states.
+- [x] Customer Details and Add Customer use the same sectioned layout
+      and shared components as My Account.
 - [x] CNIC/Account Number masked by default, tap-to-reveal.
 - [x] Activity log — append-only, Admin-only visibility.
 - [x] Export to Excel/PDF (Admin-only), logged to activity log.
@@ -31,6 +38,16 @@
       (`customer-management-syst-36662`).
 
 ## Known limitations / deliberately not done
+
+- **Customers saved before field-isolated search won't appear in field
+  search until the Admin runs "Sync search index" once** (drawer →
+  Sync search index). New and edited customers are indexed automatically.
+- **No floating bottom-navigation dock and no blue palette** — a
+  deliberate scope decision, see MEMORY.md.
+- **No Active/Inactive customer stats** — the field doesn't exist.
+- **Account Title search reads up to 50 candidate documents** before
+  narrowing client-side; a very common title prefix with more than 50
+  matches could hide some. Fine for one branch's size; revisit if it grows.
 
 - **Account Number is not editable** after a customer is created — it's
   the Firestore document ID; changing it would orphan activity-log
