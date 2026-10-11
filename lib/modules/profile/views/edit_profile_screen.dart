@@ -316,8 +316,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(
-                      child: const Text(
+                    const Expanded(
+                      child: Text(
                         'Changing your email requires verifying the new address first.',
                         style: TextStyle(fontSize: 11.5, color: AppColors.muted, height: 1.3),
                       ),

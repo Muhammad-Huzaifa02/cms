@@ -65,14 +65,14 @@ class RecentCustomersSection extends StatelessWidget {
         if (customers.isEmpty)
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.black12),
+              borderRadius: BorderRadius.all(Radius.circular(15)),
+              border: Border.fromBorderSide(BorderSide(color: Colors.black12)),
             ),
-            child: Center(
+            child: const Center(
               child: Column(
-                children: const [
+                children: [
                   Icon(Icons.people_outline, size: 36, color: AppColors.muted),
                   SizedBox(height: 8),
                   Text(

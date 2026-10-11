@@ -91,6 +91,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         phone: _phoneCtrl.text.trim(),
         cnic: _cnicCtrl.text.trim(),
         accountType: widget.customer.accountType,
+        status: widget.customer.status,
         dateOpened: widget.customer.dateOpened,
         address: _addressCtrl.text.trim(),
         notes: _notesCtrl.text.trim(),
