@@ -22,7 +22,7 @@ admin.initializeApp({
 
 // ---- EDIT THESE THREE VALUES ----
 const ADMIN_NAME = 'Branch Manager';
-const ADMIN_EMAIL = 'manager@meezanbank.example.com'; // or use a phone-based synthetic email — see auth_service.dart
+const ADMIN_EMAIL = 'admin@example.com'; // or use a phone-based synthetic email — see auth_service.dart
 const ADMIN_PASSWORD = 'ChangeThisPassword123!'; // change immediately after first login
 // ----------------------------------
 

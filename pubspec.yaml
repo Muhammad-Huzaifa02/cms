@@ -1,5 +1,5 @@
 name: cms
-description: "CMS — Customer Management System. Internal branch tool for Meezan Bank."
+description: "CMS — Customer Management System."
 publish_to: 'none'
 version: 1.0.0+1
 

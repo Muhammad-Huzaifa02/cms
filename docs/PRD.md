@@ -2,7 +2,7 @@
 
 ## What this is
 
-An internal branch tool for Meezan Bank. A branch manager (Admin) and
+A branch management tool. A branch manager (Admin) and
 their staff use it to look up, add, and edit customer contact/identity
 records — name, Account Title, phone, CNIC, account number, account
 type. It is **independent of core banking**: no real-time connection to

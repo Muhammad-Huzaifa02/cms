@@ -143,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 3),
                     FadeInSlide(
                       delay: const Duration(milliseconds: 300),
-                      child: Text('Meezan Bank — Branch tool', style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11.5)),
+                      child: Text('Branch Customer Portal', style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11.5)),
                     ),
                     const SizedBox(height: 26),
                     TweenAnimationBuilder<double>(

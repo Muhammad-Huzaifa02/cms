@@ -1,6 +1,6 @@
 # CMS — Customer Management System
 
-Internal branch tool for **Meezan Bank**. Independent customer lookup and record management tool — not connected to core banking systems.
+Branch customer lookup and record management tool — independent of core banking systems.
 
 ---
 
