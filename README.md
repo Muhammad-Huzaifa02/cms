@@ -1,96 +1,98 @@
 # CMS — Customer Management System
 
-Internal branch tool for Meezan Bank. Independent app — not connected to
-core banking.
+Internal branch tool for **Meezan Bank**. Independent customer lookup and record management tool — not connected to core banking systems.
 
-## Project layout
+---
+
+## Features
+
+- **Dual Authentication (Email OR Phone)**: Sign in with either a verified email or Pakistani mobile number (`03xx-xxxxxxx`) and password.
+- **First-Time Self-Serve Admin Bootstrap**: First-run setup directly inside the app to create the branch manager (Admin) account without Firebase console steps.
+- **Staff Account Management**: Admin can create staff accounts and assign individual permissions (`view`, `add`, `edit`, `delete`) and toggle account active/deactivated status.
+- **Customer Record CRUD**: Full customer management with strict Pakistani mobile (`03xx-xxxxxxx`), CNIC (13 digits), and Account Number (14 digits) format validations and duplicate checks.
+- **Field-Isolated Search**: Search customers strictly by exact fields (`Account Title`, `Account Number`, `Phone`, or `CNIC`) with 4-digit last-four lookup and dedicated index backfill.
+- **Data Masking & Security**: CNIC, Account Number, and Phone masked by default (showing last 4 digits) with tap-to-reveal.
+- **Biometric App-Lock**: Optional fingerprint / Face ID session lock isolated per user UID without storing passwords.
+- **Excel & PDF Export**: Admin-only customer list export with OS native sharing and audit logging.
+- **Append-Only Activity Audit Log**: Every customer addition, update, deletion, staff permission change, and export is logged in an append-only audit trail.
+
+---
+
+## Project Structure
 
 ```
 lib/
-  main.dart                  # entry point, auth-state routing (always → Sign In when signed out)
-  core/                      # theme, reusable widgets, page-transition utils
+  main.dart                  # Application entry point, auth gate & lock gate
+  firebase_options.dart      # Firebase SDK options
+  core/                      # Shared theme, validators, and UI components
+    theme/app_theme.dart     # Brand color palette and global widget styling
+    utils/validators.dart    # Strict Pakistani format validators (phone, CNIC, account)
+    widgets/                 # Reusable UI components (SectionCard, PrimaryButton, etc.)
   data/
     models/                  # AppUser, Customer, ActivityLogEntry
-    services/                # AuthService, CustomerService, StaffService,
-                              # ActivityService, ExportService, BiometricService
+    services/                # AuthService, CustomerService, StaffService, ActivityService, ExportService, BiometricService
   modules/
-    authentication/views/    # Login, Create Admin (first-run setup)
-    home/views/               # Dashboard, Staff management, Add staff, Activity log
-    customers/views/          # Add/Edit customer, Search results
-    profile/views/            # Edit own account
-  routes/app_routes.dart
-  routes/app_routes.dart
-firestore.rules
-assets/icon/                 # App logo (source + rasterized)
+    authentication/views/    # LoginScreen, CreateAdminScreen
+    home/views/              # DashboardScreen, StaffManagementScreen, AddStaffScreen, ActivityLogScreen
+    customers/views/         # AddCustomerScreen, CustomerDetailScreen, SearchCustomerScreen, SearchResultsScreen
+    profile/views/           # EditProfileScreen (My Account)
+  routes/app_routes.dart     # Central route definitions
+firestore.rules              # Security rules for Cloud Firestore
+test/                        # Unit and widget test suite
 ```
 
-## First-time setup
+---
 
-1. **Flutter deps:**
-   ```
-   flutter pub get
-   ```
-2. **Firebase config** is already in `lib/firebase_options.dart` and
-   `android/app/google-services.json` for project
-   `customer-management-syst-36662`. If you ever repoint this to a
-   different Firebase project, run `flutterfire configure` again.
-3. **Enable Email/Password sign-in** — Firebase Console → Authentication →
-   Sign-in method → Email/Password → Enable. (Everything authenticates via
-   a real email under the hood, even phone-number logins — see
-   `AuthService`'s doc comments.)
-4. **Deploy Firestore rules:**
-   ```
-   firebase deploy --only firestore:rules
-   ```
-   That's the only deployment step — no Cloud Functions, no Blaze
-   (pay-as-you-go) plan required. Everything runs on Firebase's free
-   Spark plan.
-5. **Create the first Admin account** — open the app, tap **"First time?
-   Create the Admin account"** on the Sign In screen. No console step
-   needed; this is a one-time, self-closing path (see `/system/bootstrap`
-   in `firestore.rules`).
-6. **Run it:**
-   ```
+## Getting Started
+
+### 1. Prerequisites
+- **Flutter SDK** `>=3.3.0 <4.0.0` installed.
+- **Android SDK** API 21 or higher.
+
+### 2. Install Dependencies
+```bash
+flutter pub get
+```
+
+### 3. Firebase Setup
+- Firebase project configuration is provided in `lib/firebase_options.dart` and `android/app/google-services.json` (Project ID: `customer-management-syst-36662`).
+- Ensure **Email/Password** sign-in is enabled in **Firebase Console → Authentication → Sign-in method**.
+
+### 4. Deploy Firestore Security Rules
+Deploy the provided security rules to your Firebase project:
+```bash
+firebase deploy --only firestore:rules
+```
+*(No Cloud Functions or paid Blaze plan required — runs 100% on Firebase Spark free tier).*
+
+### 5. Running the Application & First-Time Setup
+1. Launch the app on an Android device or emulator:
+   ```bash
    flutter run
    ```
+2. On first launch on the login screen, tap **"First time? Create the Admin account"**.
+3. Fill in the branch manager details (Name, Email, Phone, Password). This creates the branch Admin account and locks the bootstrap path.
+4. Log in as Admin to manage customers, add staff, or export records.
 
-## Why staff creation uses a second Firebase app instance
+---
 
-Firebase's client SDK has a well-known quirk: calling
-`createUserWithEmailAndPassword` signs you in as the account you just
-created. That meant every time Admin added a staff member, Admin's own
-session got silently swapped for the new staff member's — a real bug,
-not just an inconvenience.
+## Running Unit & Widget Tests
 
-The clean fix is normally a Cloud Function (Admin SDK never touches
-client sessions) — but that requires Firebase's Blaze plan, which needs a
-billing card on file even to stay within the free quota. Since this
-project intentionally stays on the free Spark plan, `AuthService.
-createStaffAccount` instead creates the new Auth account on a temporary,
-throwaway SECOND Firebase app instance (same project, just a second
-client-side handle to it). That secondary instance is the one that gets
-signed in as the new staff member — Admin's session, on the default app
-instance, is never touched. The instance is torn down immediately after.
-The Firestore writes (the new user's doc, phoneIndex entry, activity log)
-still happen on the default app, under Admin's own session, authorized
-by the normal `isAdmin()` check in `firestore.rules`.
+Execute all test suites with:
+```bash
+flutter test
+```
+The test suite covers:
+- `test/validators_test.dart` — Form input validation rules (Pakistani phone, CNIC, account numbers, account title).
+- `test/customer_model_test.dart` — Field masking, last-4 digit extraction, and search keyword generation.
+- `test/user_model_test.dart` — Role-based permission checks (`isAdmin` vs staff permissions).
+- `test/widget_test.dart` — Login screen UI rendering smoke test.
 
-## Known design choices worth knowing
+---
 
-- **Email is mandatory on every account** and is the real Firebase Auth
-  login. **Phone is also mandatory**, registered via a small public
-  `phoneIndex/{normalizedPhone} → {email, uid}` lookup collection, so
-  phone-number sign-in resolves to the real email before authenticating.
-  Both were made mandatory specifically so this always works.
-- **CNIC and account numbers are masked by default** in list/detail views
-  (last 4 digits), with a tap-to-reveal.
-- **Biometric login** stores the account's password in
-  `flutter_secure_storage` (OS-level encrypted storage) to replay after a
-  fingerprint/Face ID check — this works, but if you'd rather biometrics
-  only gate access to an already-persisted Firebase session (no password
-  storage at all), that's a reasonable alternative worth considering for
-  a banking-adjacent tool.
-- **Export (Excel/PDF) is Admin-only** and logs an `activityLog` entry
-  each time.
-- **Activity log is append-only** — even Admin can't edit or delete
-  entries, by rule.
+## Key Architecture & Design Decisions
+
+- **Secondary Firebase App Instance for Staff Creation**: `AuthService.createStaffAccount` creates new staff credentials on a temporary secondary `FirebaseApp` instance. This prevents Firebase Auth from automatically swapping out Admin's active session on the primary app instance while staying on the free Spark plan without requiring Cloud Functions.
+- **Field-Isolated Search**: Searches are executed against single dedicated fields (`phoneLast4`, `cnicLast4`, `accountNumberLast4`, `accountTitleSearchWords`) rather than a single combined array, preventing false positive cross-field matches.
+- **Biometric App Lock**: Biometric verification is implemented as an on-device session gate in front of an already persisted Firebase Auth session. It does not store plaintext or encrypted user passwords.
+- **Account Number Immutability**: Account Numbers serve as Firestore document IDs and cannot be edited after creation, preserving audit trail integrity in `activityLog`.

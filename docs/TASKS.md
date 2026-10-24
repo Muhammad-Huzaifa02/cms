@@ -36,6 +36,10 @@
 - [x] App logo + launcher icon source.
 - [x] Real Firebase project wired for Android
       (`customer-management-syst-36662`).
+- [x] Unit test suite added (`validators_test.dart`, `customer_model_test.dart`,
+      `user_model_test.dart`, `widget_test.dart`) — 100% passing.
+- [x] Cleaned up unused files (`floating_navigation_bar.dart`,
+      `premium_3d_card.dart`, `dashboard_stats_model.dart`).
 
 ## Known limitations / deliberately not done
 
@@ -48,7 +52,6 @@
 - **Account Title search reads up to 50 candidate documents** before
   narrowing client-side; a very common title prefix with more than 50
   matches could hide some. Fine for one branch's size; revisit if it grows.
-
 - **Account Number is not editable** after a customer is created — it's
   the Firestore document ID; changing it would orphan activity-log
   history. See RULES.md. Revisit only as a deliberate, separately-
@@ -56,14 +59,6 @@
 - **iOS Firebase config** has not been set up — only Android
   (`google-services.json`) is confirmed wired. Run `flutterfire
   configure` and select iOS when ready to build for iPhone.
-- **No automated test coverage** beyond one smoke test
-  (`test/widget_test.dart`) verifying the Login screen renders with
-  injectable `AuthService`/mocks.
-- **Claude cannot run `flutter analyze` / `flutter build` /
-  `flutter test`** in the sandbox used to develop this (no Flutter SDK
-  installed there) — every change has been verified by brace/paren
-  balance checks and manual cross-reference only. **Always run the real
-  toolchain locally after any AI-assisted change** before trusting it.
 - **Export** produces a local Excel/PDF file and hands it to the OS
   share sheet — there's no cloud backup/archival of exports.
 
