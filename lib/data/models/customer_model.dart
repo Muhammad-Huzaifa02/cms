@@ -80,6 +80,9 @@ class Customer {
     return '${'•' * (phone.length - 4)}$visible';
   }
 
+  static final _nonDigits = RegExp(r'[^0-9]');
+  static final _whitespace = RegExp(r'\s+');
+
   /// Build search keywords for partial and exact matches on name, phone,
   /// CNIC, and account number. Supports prefix matching (search for "0300"
   /// finds "0300123..."). Kept for the Dashboard's general free-text
@@ -93,7 +96,7 @@ class Customer {
 
     // 1. Individual words from name AND account title (e.g. "Ali Traders"
     // is searchable the same way a person's name is)
-    for (final w in [...name.toLowerCase().split(RegExp(r'\s+')), ...accountTitle.toLowerCase().split(RegExp(r'\s+'))]) {
+    for (final w in [...name.toLowerCase().split(_whitespace), ...accountTitle.toLowerCase().split(_whitespace)]) {
       if (w.length > 1) {
         // Add full word
         keywords.add(w);
@@ -105,14 +108,14 @@ class Customer {
     }
 
     // 2. Phone number partials (from the end and start to catch common search patterns)
-    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    final cleanPhone = phone.replaceAll(_nonDigits, '');
     for (int i = 3; i <= cleanPhone.length; i++) {
       keywords.add(cleanPhone.substring(0, i));
       keywords.add(cleanPhone.substring(cleanPhone.length - i));
     }
 
     // 3. CNIC partials (usually people search for the last 5 digits)
-    final cleanCnic = cnic.replaceAll(RegExp(r'[^0-9]'), '');
+    final cleanCnic = cnic.replaceAll(_nonDigits, '');
     for (int i = 4; i <= cleanCnic.length; i++) {
       keywords.add(cleanCnic.substring(0, i));
       keywords.add(cleanCnic.substring(cleanCnic.length - i));
@@ -134,7 +137,7 @@ class Customer {
   /// field or anything else.
   List<String> buildAccountTitleSearchWords() {
     final keywords = <String>{};
-    for (final w in accountTitle.toLowerCase().split(RegExp(r'\s+'))) {
+    for (final w in accountTitle.toLowerCase().split(_whitespace)) {
       if (w.length > 1) {
         keywords.add(w);
         for (int i = 2; i <= w.length; i++) {
@@ -145,7 +148,7 @@ class Customer {
     return keywords.toList();
   }
 
-  static String _cleanDigits(String s) => s.replaceAll(RegExp(r'[^0-9]'), '');
+  static String _cleanDigits(String s) => s.replaceAll(_nonDigits, '');
 
   /// Last-4-digits values for the field-isolated search screen. Each is
   /// its own dedicated Firestore field — deliberately NOT combined into

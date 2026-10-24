@@ -6,6 +6,7 @@ class Validators {
   Validators._();
 
   static final _digitsOnly = RegExp(r'^[0-9]+$');
+  static final _hasLetter = RegExp(r'[A-Za-z]');
 
   /// Pakistani mobile format: exactly 11 digits, digits only, starts
   /// with "03". Returns null when valid, an error message otherwise —
@@ -52,7 +53,7 @@ class Validators {
   static String? accountTitle(String? value) {
     final v = (value ?? '').trim();
     if (v.isEmpty) return 'Account Title is required.';
-    if (!RegExp(r'[A-Za-z]').hasMatch(v)) {
+    if (!_hasLetter.hasMatch(v)) {
       return 'Account Title must contain a name.';
     }
     return null;
