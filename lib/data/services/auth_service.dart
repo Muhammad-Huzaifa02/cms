@@ -146,6 +146,7 @@ class AuthService {
 
       try {
         final batch = _db.batch();
+        final staffCreatedEvent = _db.collection('activityLog').doc();
         batch.set(_db.collection('users').doc(uid), {
           'name': name.trim(),
           'email': email.trim(),
@@ -155,12 +156,13 @@ class AuthService {
           'active': true,
           'createdBy': createdByUid,
           'createdAt': FieldValue.serverTimestamp(),
+          'lastActivityId': staffCreatedEvent.id,
         });
         batch.set(_db.collection('phoneIndex').doc(normalizePhone(phone)), {
           'email': email.trim(),
           'uid': uid,
         });
-        batch.set(_db.collection('activityLog').doc(), {
+        batch.set(staffCreatedEvent, {
           'action': 'staff_created',
           'targetId': uid,
           'performedBy': createdByUid,

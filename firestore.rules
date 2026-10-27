@@ -5,8 +5,9 @@ service cloud.firestore {
     function userDoc() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
-    function isAdmin() { return request.auth != null && userDoc().isAdmin == true; }
-    function isActive() { return request.auth != null && userDoc().active == true; }
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && userDoc().isAdmin == true; }
+    function isActive() { return signedIn() && userDoc().active == true; }
     function can(perm) {
       return isActive() && (isAdmin() || userDoc().permissions[perm] == true);
     }
@@ -21,6 +22,20 @@ service cloud.firestore {
       return a is string && a.matches('^[0-9]{14}$');
     }
 
+    function activityMatches(logId, action, targetId) {
+      return logId is string
+        && existsAfter(/databases/$(database)/documents/activityLog/$(logId))
+        && getAfter(/databases/$(database)/documents/activityLog/$(logId)).data.action == action
+        && getAfter(/databases/$(database)/documents/activityLog/$(logId)).data.targetId == targetId
+        && getAfter(/databases/$(database)/documents/activityLog/$(logId)).data.performedBy == request.auth.uid;
+    }
+
+    function validActivityShape() {
+      return request.resource.data.keys().hasAll(['action', 'targetId', 'performedBy', 'performedByName', 'timestamp'])
+        && request.resource.data.performedBy == request.auth.uid
+        && request.resource.data.timestamp == request.time;
+    }
+
     match /customers/{accountNumber} {
       allow read: if can('view');
 
@@ -33,10 +48,7 @@ service cloud.firestore {
         && request.resource.data.updatedBy == request.auth.uid
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time
-        && request.resource.data.lastActivityId is string
-        && request.resource.data.deleteActivityId is string
-        && getAfter(/databases/$(database)/documents/activityLog/$(request.resource.data.lastActivityId)).data.action == 'customer_created'
-        && getAfter(/databases/$(database)/documents/activityLog/$(request.resource.data.lastActivityId)).data.targetId == accountNumber;
+        && activityMatches(request.resource.data.lastActivityId, 'customer_created', accountNumber);
 
       allow update: if can('edit')
         && isAccountNumber(accountNumber)
@@ -47,19 +59,14 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.updatedBy == request.auth.uid
         && request.resource.data.updatedAt == request.time
-        && request.resource.data.lastActivityId is string
-        && request.resource.data.deleteActivityId == resource.data.deleteActivityId
-        && getAfter(/databases/$(database)/documents/activityLog/$(request.resource.data.lastActivityId)).data.action == 'customer_updated'
-        && getAfter(/databases/$(database)/documents/activityLog/$(request.resource.data.lastActivityId)).data.targetId == accountNumber;
+        && activityMatches(request.resource.data.lastActivityId, 'customer_updated', accountNumber);
 
       allow delete: if can('delete')
-        && resource.data.deleteActivityId is string
-        && getAfter(/databases/$(database)/documents/activityLog/$(resource.data.deleteActivityId)).data.action == 'customer_deleted'
-        && getAfter(/databases/$(database)/documents/activityLog/$(resource.data.deleteActivityId)).data.targetId == accountNumber;
+        && activityMatches(resource.data.deleteActivityId, 'customer_deleted', accountNumber);
     }
 
     match /users/{uid} {
-      allow read: if request.auth.uid == uid || isAdmin();
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
       allow create: if isAdmin() || (
         request.auth.uid == uid
         && request.resource.data.isAdmin == true
@@ -68,44 +75,106 @@ service cloud.firestore {
       );
 
       allow update: if isAdmin() || (
-        request.auth.uid == uid
+        signedIn() && request.auth.uid == uid
         && request.resource.data.isAdmin == resource.data.isAdmin
-        && request.resource.data.permissions == resource.data.permissions
         && request.resource.data.active == resource.data.active
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt
+        && (
+          (request.resource.data.diff(resource.data).affectedKeys().hasAny(['permissions'])
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['active'])
+            && request.resource.data.permissions != resource.data.permissions
+            && activityMatches(request.resource.data.lastActivityId, 'staff_permissions_changed', uid))
+          || (request.resource.data.diff(resource.data).affectedKeys().hasAny(['active'])
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['permissions'])
+            && request.resource.data.active != resource.data.active
+            && activityMatches(request.resource.data.lastActivityId, 'staff_removed', uid))
+        )
       );
-      allow delete: if isAdmin();
+      allow delete: if false;
     }
 
     match /system/bootstrap {
       allow read: if true;
-      allow create: if request.resource.data.adminExists == false;
-      allow update: if request.auth != null
+      allow create: if request.resource.data.keys().hasOnly(['adminExists'])
+        && request.resource.data.adminExists == false;
+      allow update: if signedIn()
         && resource.data.adminExists == false
+        && request.resource.data.keys().hasOnly(['adminExists'])
         && request.resource.data.adminExists == true
-        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.createdBy == request.auth.uid;
+      allow delete: if false;
     }
 
     match /activityLog/{logId} {
       allow read: if isAdmin();
       allow create: if isActive()
-        && request.resource.data.performedBy == request.auth.uid
-        && request.resource.data.timestamp == request.time
-        && request.resource.data.action in ['customer_created', 'customer_updated', 'customer_deleted', 'staff_created', 'staff_permissions_changed', 'staff_removed', 'export'];
+        && validActivityShape()
+        && (
+          (request.resource.data.action == 'customer_created'
+            && can('add')
+            && !exists(/databases/$(database)/documents/customers/$(request.resource.data.targetId))
+            && existsAfter(/databases/$(database)/documents/customers/$(request.resource.data.targetId))
+            && getAfter(/databases/$(database)/documents/customers/$(request.resource.data.targetId)).data.lastActivityId == logId
+            && getAfter(/databases/$(database)/documents/customers/$(request.resource.data.targetId)).data.createdBy == request.auth.uid)
+          || (request.resource.data.action == 'customer_updated'
+            && can('edit')
+            && exists(/databases/$(database)/documents/customers/$(request.resource.data.targetId))
+            && existsAfter(/databases/$(database)/documents/customers/$(request.resource.data.targetId))
+            && getAfter(/databases/$(database)/documents/customers/$(request.resource.data.targetId)).data.lastActivityId == logId
+            && getAfter(/databases/$(database)/documents/customers/$(request.resource.data.targetId)).data.updatedBy == request.auth.uid
+            && getAfter(/databases/$(database)/documents/customers/$(request.resource.data.targetId)).data.updatedAt == request.time)
+          || (request.resource.data.action == 'customer_deleted'
+            && can('delete')
+            && exists(/databases/$(database)/documents/customers/$(request.resource.data.targetId))
+            && !existsAfter(/databases/$(database)/documents/customers/$(request.resource.data.targetId))
+            && get(/databases/$(database)/documents/customers/$(request.resource.data.targetId)).data.deleteActivityId == logId)
+          || (request.resource.data.action == 'staff_created'
+            && isAdmin()
+            && !exists(/databases/$(database)/documents/users/$(request.resource.data.targetId))
+            && existsAfter(/databases/$(database)/documents/users/$(request.resource.data.targetId))
+            && getAfter(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.isAdmin == false
+            && getAfter(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.createdBy == request.auth.uid
+            && getAfter(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.lastActivityId == logId)
+          || (request.resource.data.action == 'staff_permissions_changed'
+            && isAdmin()
+            && exists(/databases/$(database)/documents/users/$(request.resource.data.targetId))
+            && existsAfter(/databases/$(database)/documents/users/$(request.resource.data.targetId))
+            && get(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.isAdmin == false
+            && getAfter(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.isAdmin == false
+            && get(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.permissions != getAfter(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.permissions
+            && getAfter(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.lastActivityId == logId)
+          || (request.resource.data.action == 'staff_removed'
+            && isAdmin()
+            && exists(/databases/$(database)/documents/users/$(request.resource.data.targetId))
+            && existsAfter(/databases/$(database)/documents/users/$(request.resource.data.targetId))
+            && get(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.isAdmin == false
+            && getAfter(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.isAdmin == false
+            && get(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.active != getAfter(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.active
+            && getAfter(/databases/$(database)/documents/users/$(request.resource.data.targetId)).data.lastActivityId == logId)
+          || (request.resource.data.action == 'export' && isAdmin())
+        );
       allow update, delete: if false;
     }
 
     match /phoneIndex/{phone} {
       allow get: if true;
       allow list: if false;
-      allow create: if request.auth != null && (
-        request.resource.data.uid == request.auth.uid || isAdmin()
+      allow create: if signedIn() && (
+        (request.resource.data.uid == request.auth.uid
+          && request.resource.data.keys().hasOnly(['email', 'uid'])
+          && request.resource.data.email == request.auth.token.email
+          && phone.matches('^03[0-9]{9}$'))
+        || isAdmin()
       );
-      allow delete: if isAdmin() || (
-        request.auth != null && resource.data.uid == request.auth.uid
-      );
-      allow update: if isAdmin();
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow update: if isAdmin() || (signedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['email', 'uid'])
+        && request.resource.data.email == request.auth.token.email
+        && phone.matches('^03[0-9]{9}$'));
     }
   }
 }

@@ -25,12 +25,30 @@ class StaffService {
     required AppUser actor,
   }) async {
     if (!actor.isAdmin) throw Exception('Only Admin can change staff permissions.');
-    await _col.doc(staffUid).update({'permissions': permissions.toMap()});
-    await _activity.log(
-      action: ActivityAction.staffPermissionsChanged,
-      targetId: staffUid,
-      actor: actor,
-    );
+    final userRef = _col.doc(staffUid);
+    final eventId = _db.collection('activityLog').doc().id;
+    await _db.runTransaction((transaction) async {
+      final current = await transaction.get(userRef);
+      if (!current.exists || current.data()?['isAdmin'] == true) {
+        throw Exception('Staff account not found.');
+      }
+      final old = Permissions.fromMap(current.data()?['permissions']);
+      if (old.view == permissions.view && old.add == permissions.add &&
+          old.edit == permissions.edit && old.delete == permissions.delete) {
+        return;
+      }
+      transaction.update(userRef, {
+        'permissions': permissions.toMap(),
+        'lastActivityId': eventId,
+      });
+      _activity.stageInTransaction(
+        transaction,
+        logId: eventId,
+        action: ActivityAction.staffPermissionsChanged,
+        targetId: staffUid,
+        actor: actor,
+      );
+    });
   }
 
   Future<void> setActive({
@@ -39,12 +57,26 @@ class StaffService {
     required AppUser actor,
   }) async {
     if (!actor.isAdmin) throw Exception('Only Admin can deactivate staff accounts.');
-    await _col.doc(staffUid).update({'active': active});
-    await _activity.log(
-      action: ActivityAction.staffRemoved,
-      targetId: staffUid,
-      actor: actor,
-      details: active ? 'reactivated' : 'deactivated',
-    );
+    final userRef = _col.doc(staffUid);
+    final eventId = _db.collection('activityLog').doc().id;
+    await _db.runTransaction((transaction) async {
+      final current = await transaction.get(userRef);
+      if (!current.exists || current.data()?['isAdmin'] == true) {
+        throw Exception('Staff account not found.');
+      }
+      if (current.data()?['active'] == active) return;
+      transaction.update(userRef, {
+        'active': active,
+        'lastActivityId': eventId,
+      });
+      _activity.stageInTransaction(
+        transaction,
+        logId: eventId,
+        action: ActivityAction.staffRemoved,
+        targetId: staffUid,
+        actor: actor,
+        details: active ? 'reactivated' : 'deactivated',
+      );
+    });
   }
 }
