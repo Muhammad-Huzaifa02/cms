@@ -11,68 +11,97 @@ service cloud.firestore {
       return isActive() && (isAdmin() || userDoc().permissions[perm] == true);
     }
 
+    function isPakistaniPhone(p) {
+      return p is string && p.matches('^03[0-9]{9}$');
+    }
+    function isCnic(c) {
+      return c is string && c.matches('^[0-9]{13}$');
+    }
+    function isAccountNumber(a) {
+      return a is string && a.matches('^[0-9]{14}$');
+    }
+
     match /customers/{accountNumber} {
-      allow read:   if can('view');
-      allow create: if can('add');
-      allow update: if can('edit');
-      allow delete: if can('delete');
+      allow read: if can('view');
+
+      allow create: if can('add')
+        && isAccountNumber(accountNumber)
+        && request.resource.data.accountNumber == accountNumber
+        && isPakistaniPhone(request.resource.data.phone)
+        && isCnic(request.resource.data.cnic)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastActivityId is string
+        && request.resource.data.deleteActivityId is string
+        && getAfter(/databases/$(database)/documents/activityLog/$(request.resource.data.lastActivityId)).data.action == 'customer_created'
+        && getAfter(/databases/$(database)/documents/activityLog/$(request.resource.data.lastActivityId)).data.targetId == accountNumber;
+
+      allow update: if can('edit')
+        && isAccountNumber(accountNumber)
+        && request.resource.data.accountNumber == resource.data.accountNumber
+        && isPakistaniPhone(request.resource.data.phone)
+        && isCnic(request.resource.data.cnic)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastActivityId is string
+        && request.resource.data.deleteActivityId == resource.data.deleteActivityId
+        && getAfter(/databases/$(database)/documents/activityLog/$(request.resource.data.lastActivityId)).data.action == 'customer_updated'
+        && getAfter(/databases/$(database)/documents/activityLog/$(request.resource.data.lastActivityId)).data.targetId == accountNumber;
+
+      allow delete: if can('delete')
+        && resource.data.deleteActivityId is string
+        && getAfter(/databases/$(database)/documents/activityLog/$(resource.data.deleteActivityId)).data.action == 'customer_deleted'
+        && getAfter(/databases/$(database)/documents/activityLog/$(resource.data.deleteActivityId)).data.targetId == accountNumber;
     }
 
     match /users/{uid} {
       allow read: if request.auth.uid == uid || isAdmin();
-      // Two ways a `users/{uid}` doc gets created:
-      // 1. Self-bootstrap — the very first Admin, once, before any Admin
-      //    exists (guarded by /system/bootstrap).
-      // 2. An existing Admin creating a STAFF account. This runs entirely
-      //    client-side: the new Auth account is created on a temporary
-      //    SECOND Firebase app instance (so Admin's own session on the
-      //    default app is never disturbed — see
-      //    AuthService.createStaffAccount), then this Firestore write
-      //    happens on the default app under Admin's own still-valid
-      //    session, authorized by isAdmin() below.
       allow create: if isAdmin() || (
         request.auth.uid == uid
         && request.resource.data.isAdmin == true
+        && request.resource.data.createdBy == uid
         && get(/databases/$(database)/documents/system/bootstrap).data.adminExists == false
       );
 
-      // Allow Admins to manage all users, and users to update their own basic info
       allow update: if isAdmin() || (
         request.auth.uid == uid
         && request.resource.data.isAdmin == resource.data.isAdmin
         && request.resource.data.permissions == resource.data.permissions
         && request.resource.data.active == resource.data.active
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
       );
       allow delete: if isAdmin();
     }
 
     match /system/bootstrap {
       allow read: if true;
-      // Anyone can create the flag doc itself, but only ever as "false" —
-      // this just lets the app auto-create it on first run with no manual
-      // Firebase Console step required.
       allow create: if request.resource.data.adminExists == false;
-      // Flipping it to true only happens as part of the bootstrap admin
-      // being created (see AuthService.bootstrapFirstAdmin), and only
-      // ever false -> true, never back.
       allow update: if request.auth != null
         && resource.data.adminExists == false
-        && request.resource.data.adminExists == true;
+        && request.resource.data.adminExists == true
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
     match /activityLog/{logId} {
       allow read: if isAdmin();
-      allow create: if isActive();
+      allow create: if isActive()
+        && request.resource.data.performedBy == request.auth.uid
+        && request.resource.data.timestamp == request.time
+        && request.resource.data.action in ['customer_created', 'customer_updated', 'customer_deleted', 'staff_created', 'staff_permissions_changed', 'staff_removed', 'export'];
       allow update, delete: if false;
     }
 
     match /phoneIndex/{phone} {
-      allow read: if true;
-      // Allow creation if the user is registering themselves, or if an Admin is doing it
+      allow get: if true;
+      allow list: if false;
       allow create: if request.auth != null && (
         request.resource.data.uid == request.auth.uid || isAdmin()
       );
-      // Allow deletion if it's the user's own entry (for phone changes) or if Admin
       allow delete: if isAdmin() || (
         request.auth != null && resource.data.uid == request.auth.uid
       );

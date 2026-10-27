@@ -10,24 +10,8 @@ class ActivityService {
 
   CollectionReference<Map<String, dynamic>> get _col => _db.collection('activityLog');
 
-  Future<void> log({
-    required ActivityAction action,
-    required String targetId,
-    required AppUser actor,
-    String? details,
-  }) async {
-    final entry = ActivityLogEntry(
-      logId: '',
-      action: action,
-      targetId: targetId,
-      performedBy: actor.uid,
-      performedByName: actor.name,
-      details: details,
-    );
-    await _col.add(entry.toMap());
-  }
-
-  /// Stages an append-only activity log write within a Firestore Transaction.
+  /// Adds an audit record to a caller-owned Firestore transaction. The
+  /// business write and its audit event then commit or fail together.
   void stageInTransaction(
     Transaction transaction, {
     required String logId,
@@ -45,6 +29,23 @@ class ActivityService {
       details: details,
     );
     transaction.set(_col.doc(logId), entry.toMap());
+  }
+
+  Future<void> log({
+    required ActivityAction action,
+    required String targetId,
+    required AppUser actor,
+    String? details,
+  }) async {
+    final entry = ActivityLogEntry(
+      logId: '',
+      action: action,
+      targetId: targetId,
+      performedBy: actor.uid,
+      performedByName: actor.name,
+      details: details,
+    );
+    await _col.add(entry.toMap());
   }
 
   /// Admin-only screen (SRS §3.4 / Screen 6). Rules also enforce this
