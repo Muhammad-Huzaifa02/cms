@@ -67,19 +67,30 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
-      allow create: if isAdmin() || (
+
+      allow create: if (
         request.auth.uid == uid
         && request.resource.data.isAdmin == true
         && request.resource.data.createdBy == uid
         && get(/databases/$(database)/documents/system/bootstrap).data.adminExists == false
+      ) || (
+        isAdmin()
+        && request.resource.data.isAdmin == false
+        && request.resource.data.createdBy == request.auth.uid
+        && activityMatches(request.resource.data.lastActivityId, 'staff_created', uid)
       );
 
-      allow update: if isAdmin() || (
+      allow update: if (
         signedIn() && request.auth.uid == uid
         && request.resource.data.isAdmin == resource.data.isAdmin
         && request.resource.data.active == resource.data.active
+        && request.resource.data.permissions == resource.data.permissions
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt
+      ) || (
+        isAdmin()
+        && resource.data.isAdmin == false
+        && request.resource.data.isAdmin == false
         && (
           (request.resource.data.diff(resource.data).affectedKeys().hasAny(['permissions'])
             && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['active'])
@@ -91,6 +102,7 @@ service cloud.firestore {
             && activityMatches(request.resource.data.lastActivityId, 'staff_removed', uid))
         )
       );
+
       allow delete: if false;
     }
 
