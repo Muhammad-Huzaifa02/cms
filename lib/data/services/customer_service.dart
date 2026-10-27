@@ -171,12 +171,19 @@ class CustomerService {
       final batch = _db.batch();
       for (final doc in chunk) {
         final customer = Customer.fromDoc(doc);
-        batch.update(doc.reference, {
+        final updates = <String, dynamic>{
           'accountTitleSearchWords': customer.buildAccountTitleSearchWords(),
           'phoneLast4': customer.phoneLast4,
           'cnicLast4': customer.cnicLast4,
           'accountNumberLast4': customer.accountNumberLast4,
-        });
+        };
+        final existingDeleteEventId = doc.data().containsKey('deleteActivityId')
+            ? doc.data()['deleteActivityId'] as String?
+            : null;
+        if (existingDeleteEventId == null || existingDeleteEventId.isEmpty) {
+          updates['deleteActivityId'] = _db.collection('activityLog').doc().id;
+        }
+        batch.update(doc.reference, updates);
         updated++;
       }
       await batch.commit();
@@ -186,10 +193,6 @@ class CustomerService {
 
   Future<void> addCustomer(Customer customer, AppUser actor) async {
     if (!actor.can('add')) throw Exception('You do not have permission to add customers.');
-    final existing = await _col.doc(customer.accountNumber).get();
-    if (existing.exists) {
-      throw Exception('An account with this number already exists.');
-    }
     final phoneMatch = await findByPhone(customer.phone);
     if (phoneMatch != null) {
       throw Exception('A customer with this phone number already exists (${phoneMatch.name}).');
@@ -198,14 +201,26 @@ class CustomerService {
     if (cnicMatch != null) {
       throw Exception('A customer with this CNIC already exists (${cnicMatch.name}).');
     }
-    await _col.doc(customer.accountNumber).set(
-          customer.toMap(actingUid: actor.uid, isNew: true),
-        );
-    await _activity.log(
-      action: ActivityAction.customerCreated,
-      targetId: customer.accountNumber,
-      actor: actor,
-    );
+    final customerRef = _col.doc(customer.accountNumber);
+    final eventId = _db.collection('activityLog').doc().id;
+    final deleteEventId = _db.collection('activityLog').doc().id;
+    await _db.runTransaction((transaction) async {
+      final existing = await transaction.get(customerRef);
+      if (existing.exists) {
+        throw Exception('An account with this number already exists.');
+      }
+      final data = customer.toMap(actingUid: actor.uid, isNew: true)
+        ..['lastActivityId'] = eventId
+        ..['deleteActivityId'] = deleteEventId;
+      transaction.set(customerRef, data);
+      _activity.stageInTransaction(
+        transaction,
+        logId: eventId,
+        action: ActivityAction.customerCreated,
+        targetId: customer.accountNumber,
+        actor: actor,
+      );
+    });
   }
 
   /// [originalPhone]/[originalCnic] are the values BEFORE this edit —
@@ -232,24 +247,48 @@ class CustomerService {
         throw Exception('A customer with this CNIC already exists (${cnicMatch.name}).');
       }
     }
-    await _col.doc(customer.accountNumber).update(
-          customer.toMap(actingUid: actor.uid, isNew: false),
-        );
-    await _activity.log(
-      action: ActivityAction.customerUpdated,
-      targetId: customer.accountNumber,
-      actor: actor,
-      details: details,
-    );
+    final customerRef = _col.doc(customer.accountNumber);
+    final eventId = _db.collection('activityLog').doc().id;
+    await _db.runTransaction((transaction) async {
+      final current = await transaction.get(customerRef);
+      if (!current.exists) throw Exception('Customer no longer exists. Refresh and try again.');
+      final deleteEventId = current.data()?['deleteActivityId'] as String?;
+      if (deleteEventId == null || deleteEventId.isEmpty) {
+        throw Exception('Run the Admin search-index sync once before editing existing customers.');
+      }
+      final data = customer.toMap(actingUid: actor.uid, isNew: false)
+        ..['lastActivityId'] = eventId
+        ..['deleteActivityId'] = deleteEventId;
+      transaction.update(customerRef, data);
+      _activity.stageInTransaction(
+        transaction,
+        logId: eventId,
+        action: ActivityAction.customerUpdated,
+        targetId: customer.accountNumber,
+        actor: actor,
+        details: details,
+      );
+    });
   }
 
   Future<void> deleteCustomer(String accountNumber, AppUser actor) async {
     if (!actor.can('delete')) throw Exception('You do not have permission to delete customers.');
-    await _col.doc(accountNumber).delete();
-    await _activity.log(
-      action: ActivityAction.customerDeleted,
-      targetId: accountNumber,
-      actor: actor,
-    );
+    final customerRef = _col.doc(accountNumber);
+    await _db.runTransaction((transaction) async {
+      final current = await transaction.get(customerRef);
+      if (!current.exists) throw Exception('Customer no longer exists.');
+      final deleteEventId = current.data()?['deleteActivityId'] as String?;
+      if (deleteEventId == null || deleteEventId.isEmpty) {
+        throw Exception('Run the Admin search-index sync once before deleting existing customers.');
+      }
+      transaction.delete(customerRef);
+      _activity.stageInTransaction(
+        transaction,
+        logId: deleteEventId,
+        action: ActivityAction.customerDeleted,
+        targetId: accountNumber,
+        actor: actor,
+      );
+    });
   }
 }
