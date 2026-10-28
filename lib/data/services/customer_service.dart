@@ -222,7 +222,6 @@ class CustomerService {
       );
     });
   }
-
   /// [originalPhone]/[originalCnic] are the values BEFORE this edit —
   /// duplicate checks only run if the person actually changed the value,
   /// so editing a customer's address doesn't spuriously flag their own
@@ -270,7 +269,6 @@ class CustomerService {
       );
     });
   }
-
   Future<void> deleteCustomer(String accountNumber, AppUser actor) async {
     if (!actor.can('delete')) throw Exception('You do not have permission to delete customers.');
     final customerRef = _col.doc(accountNumber);
@@ -292,3 +290,6 @@ class CustomerService {
     });
   }
 }
+
+
+

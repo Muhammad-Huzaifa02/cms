@@ -113,10 +113,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(c.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          Text(c.name, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                   if (c.accountTitle.isNotEmpty && c.accountTitle != c.name) ...[
                                     const SizedBox(height: 2),
-                                    Text(c.accountTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, color: AppColors.muted, fontStyle: FontStyle.italic)),
+                                    Text(c.accountTitle, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, color: AppColors.muted, fontStyle: FontStyle.italic)),
                                   ],
                                   const SizedBox(height: 5),
                                   // Masked phone/CNIC/account number together —
@@ -130,9 +130,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                                     spacing: 10,
                                     runSpacing: 2,
                                     children: [
-                                      Text('Ph: ${c.maskedPhone}', style: const TextStyle(fontSize: 10.5, color: AppColors.muted)),
-                                      Text('CNIC: ${c.maskedCnic}', style: const TextStyle(fontSize: 10.5, color: AppColors.muted)),
-                                      Text('A/C: ${c.maskedAccountNumber}', style: const TextStyle(fontSize: 10.5, color: AppColors.muted)),
+                                      Text('Ph: ${c.maskedPhone}', style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+                                      Text('CNIC: ${c.maskedCnic}', style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+                                      Text('A/C: ${c.maskedAccountNumber}', style: const TextStyle(fontSize: 13, color: AppColors.muted)),
                                     ],
                                   ),
                                 ],

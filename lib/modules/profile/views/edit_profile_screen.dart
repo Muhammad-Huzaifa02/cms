@@ -314,13 +314,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               children: [
                 AccountField(label: 'Email (Login)', controller: _emailDisplayCtrl, readOnly: true),
                 const SizedBox(height: 12),
-                Row(
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
-                    const Expanded(
-                      child: Text(
+                    const Text(
                         'Changing your email requires verifying the new address first.',
-                        style: TextStyle(fontSize: 11.5, color: AppColors.muted, height: 1.3),
-                      ),
+                        style: TextStyle(fontSize: 14, color: AppColors.muted, height: 1.4),
                     ),
                     TextButton(
                       onPressed: _showChangeEmailDialog,

@@ -120,136 +120,136 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 480),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      FadeInSlide(
-                        delay: const Duration(milliseconds: 100),
-                        offset: const Offset(0, -20),
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 18, offset: Offset(0, 10))],
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FadeInSlide(
+                      delay: const Duration(milliseconds: 100),
+                      offset: const Offset(0, -20),
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 18, offset: Offset(0, 10))],
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Image.asset('assets/icon/app_logo.png', fit: BoxFit.contain),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const FadeInSlide(
+                      delay: Duration(milliseconds: 200),
+                      child: Text('Customer Management System', textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(height: 3),
+                    FadeInSlide(
+                      delay: const Duration(milliseconds: 300),
+                      child: Text('Branch Customer Portal', style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11.5)),
+                    ),
+                    const SizedBox(height: 26),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 1000),
+                      curve: Curves.easeOutBack,
+                      builder: (context, t, child) {
+                        return Opacity(
+                          opacity: t.clamp(0.0, 1.0),
+                          child: Transform(
+                            alignment: Alignment.center,
+                            transform: Matrix4.identity()
+                              ..setEntry(3, 2, 0.0018)
+                              ..rotateX((1 - t) * 0.45)
+                              ..rotateY((1 - t) * -0.1)
+                              // ignore: deprecated_member_use
+                              ..scale(0.8 + (0.2 * t), 0.8 + (0.2 * t), 1.0),
+                            child: child,
                           ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Image.asset('assets/icon/app_logo.png', fit: BoxFit.contain),
+                        );
+                      },
+                      child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: [
+                            const Text('Login', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.brandDeep)),
+                            const SizedBox(height: 4),
+                            const Text('Use either your email or phone number', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                            const SizedBox(height: 16),
+                            AnimatedBuilder(
+                              animation: _identifierCtrl,
+                              builder: (context, _) {
+                                final text = _identifierCtrl.text.trim();
+                                final isEmail = text.contains('@');
+                                return TextField(
+                                  controller: _identifierCtrl,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: InputDecoration(
+                                    hintText: 'Email or phone number',
+                                    prefixIcon: Icon(
+                                      text.isEmpty ? Icons.person_outline : (isEmail ? Icons.email_outlined : Icons.phone_outlined),
+                                      size: 19,
+                                      color: AppColors.muted,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: _passwordCtrl,
+                              obscureText: true,
+                              decoration: const InputDecoration(hintText: 'Password', prefixIcon: Icon(Icons.lock_outline, size: 19)),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: _loading ? null : _showForgotPasswordDialog,
+                                style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 30)),
+                                child: const Text('Forgot password?', style: TextStyle(fontSize: 11.5, color: AppColors.muted)),
+                              ),
+                            ),
+                            if (_error != null) ...[
+                              const SizedBox(height: 4),
+                              Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
+                            ],
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _loading ? null : _signIn,
+                                child: _loading
+                                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                    : const Text('Login'),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      const FadeInSlide(
-                        delay: Duration(milliseconds: 200),
-                        child: Text('Customer Management System', textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
-                      ),
-                      const SizedBox(height: 3),
-                      FadeInSlide(
-                        delay: const Duration(milliseconds: 300),
-                        child: Text('Branch Customer Portal', style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11.5)),
-                      ),
-                      const SizedBox(height: 26),
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 1000),
-                        curve: Curves.easeOutBack,
-                        builder: (context, t, child) {
-                          return Opacity(
-                            opacity: t.clamp(0.0, 1.0),
-                            child: Transform(
-                              alignment: Alignment.center,
-                              transform: Matrix4.identity()
-                                ..setEntry(3, 2, 0.0018)
-                                ..rotateX((1 - t) * 0.45)
-                                ..rotateY((1 - t) * -0.1)
-                                // ignore: deprecated_member_use
-                                ..scale(0.8 + (0.2 * t), 0.8 + (0.2 * t), 1.0),
-                              child: child,
+                    ),
+                    ),
+                    const SizedBox(height: 18),
+                    FadeInSlide(
+                      delay: const Duration(milliseconds: 500),
+                      child: FutureBuilder<bool>(
+                        future: _auth.adminAlreadyExists(),
+                        builder: (context, snap) {
+                          // While loading, or once an Admin exists, show nothing —
+                          // this link is only for the very first setup.
+                          if (snap.connectionState != ConnectionState.done || snap.data == true) {
+                            return const SizedBox.shrink();
+                          }
+                          return TextButton(
+                            onPressed: () => push3D(context, CreateAdminScreen(authService: _auth)),
+                            child: Text(
+                              'First time? Create the Admin account',
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12.5, fontWeight: FontWeight.w600),
                             ),
                           );
                         },
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              children: [
-                                const Text('Login', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.brandDeep)),
-                                const SizedBox(height: 4),
-                                const Text('Use either your email or phone number', style: TextStyle(fontSize: 11, color: AppColors.muted)),
-                                const SizedBox(height: 16),
-                                AnimatedBuilder(
-                                  animation: _identifierCtrl,
-                                  builder: (context, _) {
-                                    final text = _identifierCtrl.text.trim();
-                                    final isEmail = text.contains('@');
-                                    return TextField(
-                                      controller: _identifierCtrl,
-                                      keyboardType: TextInputType.emailAddress,
-                                      decoration: InputDecoration(
-                                        hintText: 'Email or phone number',
-                                        prefixIcon: Icon(
-                                          text.isEmpty ? Icons.person_outline : (isEmail ? Icons.email_outlined : Icons.phone_outlined),
-                                          size: 19,
-                                          color: AppColors.muted,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: 10),
-                                TextField(
-                                  controller: _passwordCtrl,
-                                  obscureText: true,
-                                  decoration: const InputDecoration(hintText: 'Password', prefixIcon: Icon(Icons.lock_outline, size: 19)),
-                                ),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: _loading ? null : _showForgotPasswordDialog,
-                                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 30)),
-                                    child: const Text('Forgot password?', style: TextStyle(fontSize: 11.5, color: AppColors.muted)),
-                                  ),
-                                ),
-                                if (_error != null) ...[
-                                  const SizedBox(height: 4),
-                                  Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
-                                ],
-                                const SizedBox(height: 12),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: _loading ? null : _signIn,
-                                    child: _loading
-                                        ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                        : const Text('Login'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       ),
-                      const SizedBox(height: 18),
-                      FadeInSlide(
-                        delay: const Duration(milliseconds: 500),
-                        child: FutureBuilder<bool>(
-                          future: _auth.adminAlreadyExists(),
-                          builder: (context, snap) {
-                            // While loading, or once an Admin exists, show nothing —
-                            // this link is only for the very first setup.
-                            if (snap.connectionState != ConnectionState.done || snap.data == true) {
-                              return const SizedBox.shrink();
-                            }
-                            return TextButton(
-                              onPressed: () => push3D(context, CreateAdminScreen(authService: _auth)),
-                              child: Text(
-                                'First time? Create the Admin account',
-                                style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12.5, fontWeight: FontWeight.w600),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
                   ),
                 ),
               ),

@@ -404,32 +404,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   }
                   final total = snap.data?[0] ?? 0;
                   final newThisMonth = snap.data?[1] ?? 0;
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: loading
-                            ? const DashboardStatSkeleton()
-                            : DashboardStatCard(
-                                icon: Icons.people_alt_outlined,
-                                label: 'Total Customers',
-                                value: total,
-                                accent: AppColors.brand,
-                              ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: loading
-                            ? const DashboardStatSkeleton()
-                            : DashboardStatCard(
-                                icon: Icons.person_add_alt_1_outlined,
-                                label: 'New This Month',
-                                value: newThisMonth,
-                                accent: AppColors.success,
-                                caption: newThisMonth > 0 ? '+$newThisMonth added' : null,
-                                captionColor: AppColors.success,
-                              ),
-                      ),
-                    ],
+                  final cards = [
+                    loading
+                        ? const DashboardStatSkeleton()
+                        : DashboardStatCard(
+                            icon: Icons.people_alt_outlined,
+                            label: 'Total Customers',
+                            value: total,
+                            accent: AppColors.brand,
+                          ),
+                    loading
+                        ? const DashboardStatSkeleton()
+                        : DashboardStatCard(
+                            icon: Icons.person_add_alt_1_outlined,
+                            label: 'New This Month',
+                            value: newThisMonth,
+                            accent: AppColors.success,
+                            caption: newThisMonth > 0 ? '+$newThisMonth added' : null,
+                            captionColor: AppColors.success,
+                          ),
+                  ];
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final scale = MediaQuery.textScalerOf(context).scale(1);
+                      final stack = constraints.maxWidth < 440 || scale > 1.25;
+                      if (stack) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [cards[0], const SizedBox(height: 12), cards[1]],
+                        );
+                      }
+                      return Row(children: [
+                        Expanded(child: cards[0]),
+                        const SizedBox(width: 12),
+                        Expanded(child: cards[1]),
+                      ]);
+                    },
                   );
                 },
               ),

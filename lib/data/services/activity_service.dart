@@ -30,7 +30,6 @@ class ActivityService {
     );
     transaction.set(_col.doc(logId), entry.toMap());
   }
-
   Future<void> log({
     required ActivityAction action,
     required String targetId,
@@ -58,3 +57,5 @@ class ActivityService {
         .map((s) => s.docs.map(ActivityLogEntry.fromDoc).toList());
   }
 }
+
+

@@ -82,8 +82,9 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Add staff account')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
         children: [
+          ConstrainedBox(constraints: const BoxConstraints(maxWidth: 680), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Full name *')),
           const SizedBox(height: 12),
           TextField(
@@ -102,9 +103,9 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
           TextField(controller: _passwordCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Temporary password *')),
           const SizedBox(height: 6),
           const Text('* All fields required — staff can login with either their email or phone number.',
-              style: TextStyle(fontSize: 10.5, color: AppColors.muted)),
+              style: TextStyle(fontSize: 14, color: AppColors.muted)),
           const SizedBox(height: 18),
-          const Text('PERMISSIONS', style: TextStyle(fontSize: 10.5, letterSpacing: 1, color: AppColors.muted, fontWeight: FontWeight.w600)),
+          const Text('Permissions', style: TextStyle(fontSize: 16, color: AppColors.ink, fontWeight: FontWeight.w700)),
           SwitchListTile(title: const Text('View customers'), value: _view, onChanged: (v) => setState(() => _view = v)),
           SwitchListTile(title: const Text('Add customers'), value: _add, onChanged: (v) => setState(() => _add = v)),
           SwitchListTile(title: const Text('Edit customers'), value: _edit, onChanged: (v) => setState(() => _edit = v)),
@@ -124,6 +125,7 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
                   : const Text('Create account'),
             ),
           ),
+          ])),
         ],
       ),
     );

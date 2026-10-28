@@ -71,9 +71,9 @@ class _SearchCustomerScreenState extends State<SearchCustomerScreen> {
     final field = _selectedField;
     return Scaffold(
       appBar: AppBar(title: const Text('Search Customer By')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      body: SafeArea(child: SingleChildScrollView(child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 640), child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (field == null) ...[
@@ -142,8 +142,8 @@ class _SearchCustomerScreenState extends State<SearchCustomerScreen> {
               ),
             ],
           ],
-        ),
-      ),
+        )),
+      ))),
     );
   }
 }

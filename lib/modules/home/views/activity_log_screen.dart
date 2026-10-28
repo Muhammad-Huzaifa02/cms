@@ -64,7 +64,7 @@ class ActivityLogScreen extends StatelessWidget {
                           children: [
                             RichText(
                               text: TextSpan(
-                                style: const TextStyle(fontSize: 12.5, color: AppColors.ink),
+                                style: const TextStyle(fontSize: 15, color: AppColors.ink, height: 1.4),
                                 children: [
                                   TextSpan(text: e.performedByName, style: const TextStyle(fontWeight: FontWeight.bold)),
                                   TextSpan(text: ' ${e.action.label} '),
@@ -73,7 +73,7 @@ class ActivityLogScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 3),
-                            Text(time, style: const TextStyle(fontSize: 10, color: AppColors.muted)),
+                            Text(time, style: const TextStyle(fontSize: 13, color: AppColors.muted)),
                           ],
                         ),
                       ),
