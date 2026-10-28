@@ -10,7 +10,6 @@ import '../../../core/utils/perspective_page_route.dart';
 import '../../../core/widgets/tilt_tap_card.dart';
 import '../../../core/widgets/shimmer_loading.dart';
 import '../../../core/widgets/dashboard_stat_card.dart';
-import '../../../core/widgets/quick_action_card.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../customers/views/customer_detail_screen.dart';
 import '../../customers/views/add_customer_screen.dart';
@@ -443,42 +442,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          if (user.isAdmin)
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
-              sliver: SliverToBoxAdapter(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: QuickActionCard(
-                        icon: Icons.person_add_outlined,
-                        label: 'Add Customer',
-                        accent: AppColors.brand,
-                        onTap: () => push3D(context, AddCustomerScreen(currentUser: user)),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: QuickActionCard(
-                        icon: Icons.people_outline,
-                        label: 'Manage Staff',
-                        accent: AppColors.indigo,
-                        onTap: () => push3D(context, StaffManagementScreen(currentUser: user)),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: QuickActionCard(
-                        icon: Icons.history,
-                        label: 'Activity Log',
-                        accent: AppColors.warning,
-                        onTap: () => push3D(context, ActivityLogScreen(currentUser: user)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           StreamBuilder<List<Customer>>(
             stream: _customerService.recentCustomers(),
             builder: (context, snap) {
