@@ -29,14 +29,14 @@ class AppTheme {
   static ThemeData light() {
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: const Color(0xFFF7F8F6),
+      scaffoldBackgroundColor: const Color(0xFFEAF0EF),
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.brand,
         primary: AppColors.brand,
         secondary: AppColors.gold,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFFF7F8F6),
+        backgroundColor: Color(0xDDF7FBFA),
         foregroundColor: AppColors.ink,
         elevation: 0,
         centerTitle: false,
@@ -69,10 +69,14 @@ class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 0,
-        color: Colors.white,
-        shadowColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: AppColors.border)),
+        elevation: 4,
+        color: const Color(0xEFFFFFFF),
+        shadowColor: AppColors.brandDeep.withValues(alpha: 0.10),
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.95), width: 1.5),
+        ),
       ),
       // Dialogs, bottom sheets, snackbars and chips are themed globally so
       // every one of them floats the same way (rounded, elevated, clear of

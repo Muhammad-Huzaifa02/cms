@@ -100,7 +100,7 @@ class _BiometricLockScreenState extends State<BiometricLockScreen> with WidgetsB
         ),
         child: SafeArea(
           child: Center(
-            child: Padding(
+            child: SingleChildScrollView(child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -145,7 +145,7 @@ class _BiometricLockScreenState extends State<BiometricLockScreen> with WidgetsB
                   ),
                 ],
               ),
-            ),
+            )),
           ),
         ),
       ),
