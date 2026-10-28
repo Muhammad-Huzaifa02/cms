@@ -88,9 +88,13 @@ class _SearchCustomerScreenState extends State<SearchCustomerScreen> {
                     onTap: () => _selectField(f),
                   )),
             ] else ...[
-              Row(
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  Expanded(
+                  Container(
+                    constraints: const BoxConstraints(minWidth: 200),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
@@ -106,7 +110,6 @@ class _SearchCustomerScreenState extends State<SearchCustomerScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   TextButton(
                     onPressed: () => _selectField(null),
                     child: const Text('Change'),

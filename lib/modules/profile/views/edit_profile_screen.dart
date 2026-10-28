@@ -320,8 +320,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   runSpacing: 4,
                   children: [
                     const Text(
-                        'Changing your email requires verifying the new address first.',
-                        style: TextStyle(fontSize: 14, color: AppColors.muted, height: 1.4),
+                      'Changing your email requires verifying the new address first.',
+                      style: TextStyle(fontSize: 14, color: AppColors.muted, height: 1.4),
                     ),
                     TextButton(
                       onPressed: _showChangeEmailDialog,
@@ -353,39 +353,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               SectionCard(
                 title: 'Biometric Login',
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _biometricEnabled ? 'Enabled' : 'Disabled',
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w600,
-                                color: _biometricEnabled ? AppColors.brand : AppColors.muted,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              _biometricEnabled
-                                  ? 'You can log in with your fingerprint next time'
-                                  : 'Log in with your fingerprint instead of typing your password',
-                              style: const TextStyle(fontSize: 11.5, color: AppColors.muted, height: 1.3),
-                            ),
-                          ],
+                  LayoutBuilder(builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 420 || MediaQuery.textScalerOf(context).scale(1) > 1.25;
+                    final content = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _biometricEnabled ? 'Enabled' : 'Disabled',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: _biometricEnabled ? AppColors.brand : AppColors.muted,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Switch(
-                        value: _biometricEnabled,
-                        activeThumbColor: AppColors.brand,
-                        onChanged: _toggleBiometrics,
-                      ),
-                    ],
-                  ),
+                        const SizedBox(height: 3),
+                        Text(
+                          _biometricEnabled
+                              ? 'You can log in with your fingerprint next time'
+                              : 'Log in with your fingerprint instead of typing your password',
+                          style: const TextStyle(fontSize: 14, color: AppColors.muted, height: 1.4),
+                        ),
+                      ],
+                    );
+                    final toggle = Switch(
+                      value: _biometricEnabled,
+                      activeThumbColor: AppColors.brand,
+                      onChanged: _toggleBiometrics,
+                    );
+                    return compact
+                        ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [content, Align(alignment: Alignment.centerRight, child: toggle)])
+                        : Row(children: [Expanded(child: content), toggle]);
+                  }),
                 ],
               ),
               const SizedBox(height: 16),

@@ -64,9 +64,9 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                                Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                 Text(s.active ? 'Active' : 'Deactivated',
-                                    style: TextStyle(fontSize: 11, color: s.active ? AppColors.brand : AppColors.danger)),
+                                    style: TextStyle(fontSize: 14, color: s.active ? AppColors.brand : AppColors.danger)),
                               ],
                             ),
                           ),
@@ -105,7 +105,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
 
   Widget _permChip(String label, bool value, ValueChanged<bool> onChanged) {
     return FilterChip(
-      label: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+      label: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
       selected: value,
       onSelected: onChanged,
       selectedColor: const Color(0xFFE3F0EC),
