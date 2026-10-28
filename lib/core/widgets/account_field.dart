@@ -77,7 +77,7 @@ class AccountField extends StatelessWidget {
         if (validator != null)
           TextFormField(
             controller: controller,
-            enabled: !readOnly,
+            readOnly: readOnly,
             obscureText: obscureText,
             keyboardType: keyboardType,
             inputFormatters: inputFormatters,
@@ -89,7 +89,7 @@ class AccountField extends StatelessWidget {
         else
           TextField(
             controller: controller,
-            enabled: !readOnly,
+            readOnly: readOnly,
             obscureText: obscureText,
             keyboardType: keyboardType,
             inputFormatters: inputFormatters,

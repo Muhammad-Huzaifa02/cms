@@ -11,7 +11,6 @@ import '../../../core/widgets/tilt_tap_card.dart';
 import '../../../core/widgets/shimmer_loading.dart';
 import '../../../core/widgets/dashboard_stat_card.dart';
 import '../../../core/widgets/quick_action_card.dart';
-import '../../../core/widgets/growth_chart.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../customers/views/customer_detail_screen.dart';
 import '../../customers/views/add_customer_screen.dart';
@@ -39,7 +38,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Firestore COUNT aggregation, so this is two small server-side counts,
   // never a download of the whole customers collection.
   late Future<List<int>> _statsFuture = _loadStats();
-  late Future<List<int>> _growthFuture = _customerService.getGrowthLast7Days();
 
   Future<List<int>> _loadStats() => Future.wait([
         _customerService.getTotalCustomersCount(),
@@ -441,26 +439,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ]);
                     },
                   );
-                },
-              ),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-            sliver: SliverToBoxAdapter(
-              child: FutureBuilder<List<int>>(
-                future: _growthFuture,
-                builder: (context, snap) {
-                  if (snap.connectionState != ConnectionState.done) {
-                    return const GrowthChartSkeleton();
-                  }
-                  if (snap.hasError || !snap.hasData) {
-                    return ErrorStateWidget(
-                      message: 'Unable to load the growth chart.',
-                      onRetry: () => setState(() => _growthFuture = _customerService.getGrowthLast7Days()),
-                    );
-                  }
-                  return GrowthChart(dailyCounts: snap.data!);
                 },
               ),
             ),
