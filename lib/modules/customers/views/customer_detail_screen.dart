@@ -202,7 +202,20 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 const SizedBox(height: 16),
                 AccountField(label: 'Account Type', controller: _accountTypeDisplayCtrl, readOnly: true),
                 const SizedBox(height: 16),
-                AccountField(label: 'IBN No.', controller: _ibnCtrl, readOnly: !_canEdit),
+                AccountField(
+                  label: 'IBN No.',
+                  controller: _ibnCtrl,
+                  readOnly: !_canEdit,
+                  validator: Validators.ibnNo,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                    TextInputFormatter.withFunction((oldValue, newValue) => newValue.copyWith(
+                          text: newValue.text.toUpperCase(),
+                          selection: newValue.selection,
+                        )),
+                    LengthLimitingTextInputFormatter(24),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 16),

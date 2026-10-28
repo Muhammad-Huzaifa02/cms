@@ -145,10 +145,19 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                 ),
                 const SizedBox(height: 16),
                 AccountField(
-                  label: 'IBN No. (optional)',
+                  label: 'IBN No.',
                   controller: _ibnCtrl,
-                  hintText: 'Enter IBN number',
+                  hintText: '24 uppercase letters or digits',
                   keyboardType: TextInputType.text,
+                  validator: Validators.ibnNo,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                    TextInputFormatter.withFunction((oldValue, newValue) => newValue.copyWith(
+                          text: newValue.text.toUpperCase(),
+                          selection: newValue.selection,
+                        )),
+                    LengthLimitingTextInputFormatter(24),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 const Text('Account Type', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),

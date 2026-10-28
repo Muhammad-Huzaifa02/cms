@@ -204,7 +204,7 @@ class Customer {
       'phone': phone,
       'cnic': cnic,
       'accountType': accountType,
-      'ibnNo': ibnNo,
+      'ibnNo': ibnNo.trim().toUpperCase(),
       'status': status,
       'dateOpened': openedDate != null ? Timestamp.fromDate(openedDate) : null,
       'address': address,

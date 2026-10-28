@@ -76,6 +76,20 @@ void main() {
     });
   });
 
+  group('Validators - IBN No.', () {
+    test('accepts exactly 24 uppercase alphanumeric characters', () {
+      expect(Validators.ibnNo('AB12CD34EF56GH78IJ90KL12'), isNull);
+    });
+
+    test('requires 24 uppercase alphanumeric characters', () {
+      expect(Validators.ibnNo(''), equals('IBN No. is required.'));
+      expect(Validators.ibnNo('ab12CD34EF56GH78IJ90KL12'), isNotNull);
+      expect(Validators.ibnNo('AB12CD34EF56GH78IJ90KL1'), isNotNull);
+      expect(Validators.ibnNo('AB12CD34EF56GH78IJ90KL123'), isNotNull);
+      expect(Validators.ibnNo('AB12-CD34EF56GH78IJ90KL12'), isNotNull);
+    });
+  });
+
   group('Validators - Account Title & Required Name', () {
     test('validates account title containing letters', () {
       expect(Validators.accountTitle('Muhammad Huzaifa'), isNull);

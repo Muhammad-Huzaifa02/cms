@@ -21,6 +21,9 @@ service cloud.firestore {
     function isAccountNumber(a) {
       return a is string && a.matches('^[0-9]{14}$');
     }
+    function isIbnNo(n) {
+      return n is string && n.matches('^[A-Z0-9]{24}$');
+    }
 
     function activityMatches(logId, action, targetId) {
       return logId is string
@@ -44,6 +47,7 @@ service cloud.firestore {
         && request.resource.data.accountNumber == accountNumber
         && isPakistaniPhone(request.resource.data.phone)
         && isCnic(request.resource.data.cnic)
+        && isIbnNo(request.resource.data.ibnNo)
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.updatedBy == request.auth.uid
         && request.resource.data.createdAt == request.time
@@ -55,6 +59,7 @@ service cloud.firestore {
         && request.resource.data.accountNumber == resource.data.accountNumber
         && isPakistaniPhone(request.resource.data.phone)
         && isCnic(request.resource.data.cnic)
+        && isIbnNo(request.resource.data.ibnNo)
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.updatedBy == request.auth.uid

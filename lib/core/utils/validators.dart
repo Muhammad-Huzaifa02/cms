@@ -7,6 +7,18 @@ class Validators {
 
   static final _digitsOnly = RegExp(r'^[0-9]+$');
   static final _hasLetter = RegExp(r'[A-Za-z]');
+  static final _ibnNoPattern = RegExp(r'^[A-Z0-9]{24}$');
+
+  /// Required 24-character IBN identifier using uppercase ASCII letters
+  /// and digits only.
+  static String? ibnNo(String? value) {
+    final v = (value ?? '').trim();
+    if (v.isEmpty) return 'IBN No. is required.';
+    if (!_ibnNoPattern.hasMatch(v)) {
+      return 'IBN No. must contain exactly 24 uppercase letters or digits.';
+    }
+    return null;
+  }
 
   /// Pakistani mobile format: exactly 11 digits, digits only, starts
   /// with "03". Returns null when valid, an error message otherwise —
