@@ -35,41 +35,41 @@ class DashboardStatCard extends StatelessWidget {
       label: '$label: $value${caption != null ? ', $caption' : ''}',
       excludeSemantics: true,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: _cardDecoration(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 30,
+              height: 30,
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: Icon(icon, size: 19, color: accent),
+              child: Icon(icon, size: 17, color: accent),
             ),
-            const SizedBox(height: 14),
-            Text(label, style: const TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
+            Text(label, style: const TextStyle(fontSize: 14, color: AppColors.muted, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 2),
             TweenAnimationBuilder<int>(
               tween: IntTween(begin: 0, end: value),
               duration: const Duration(milliseconds: 700),
               curve: Curves.easeOutCubic,
               builder: (context, v, _) => Text(
                 NumberFormat.decimalPattern().format(v),
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.ink, height: 1.1),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.ink, height: 1.1),
               ),
             ),
-            const SizedBox(height: 6),
-            // Always render this line (even blank) so every card in a row
-            // has the same height whether or not it has a caption.
-            Text(
-              caption ?? ' ',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11, color: captionColor ?? AppColors.muted, fontWeight: FontWeight.w600),
-            ),
+            if (caption != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                caption!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 13, color: captionColor ?? AppColors.muted, fontWeight: FontWeight.w600),
+              ),
+            ],
           ],
         ),
       ),
@@ -88,7 +88,7 @@ class DashboardStatSkeleton extends StatelessWidget {
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       child: Container(
-        height: 132,
+        height: 104,
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
       ),
     );

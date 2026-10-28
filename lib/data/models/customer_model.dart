@@ -35,6 +35,7 @@ class Customer {
   final String phone;
   final String cnic;
   final String accountType;
+  final String ibnNo;
   final String status;
   final DateTime? dateOpened;
   final String? address;
@@ -51,6 +52,7 @@ class Customer {
     required this.phone,
     required this.cnic,
     required this.accountType,
+    this.ibnNo = '',
     this.status = 'Active',
     this.dateOpened,
     this.address,
@@ -181,6 +183,7 @@ class Customer {
       phone: data['phone'] ?? '',
       cnic: data['cnic'] ?? '',
       accountType: data['accountType'] ?? 'Current',
+      ibnNo: data['ibnNo'] ?? '',
       status: data['status'] ?? 'Active',
       dateOpened: (data['dateOpened'] as Timestamp?)?.toDate(),
       address: data['address'],
@@ -201,6 +204,7 @@ class Customer {
       'phone': phone,
       'cnic': cnic,
       'accountType': accountType,
+      'ibnNo': ibnNo,
       'status': status,
       'dateOpened': openedDate != null ? Timestamp.fromDate(openedDate) : null,
       'address': address,

@@ -27,7 +27,7 @@ class CustomerDetailScreen extends StatefulWidget {
 class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _service = CustomerService();
-  late TextEditingController _nameCtrl, _accountTitleCtrl, _phoneCtrl, _cnicCtrl, _addressCtrl, _notesCtrl;
+  late TextEditingController _nameCtrl, _accountTitleCtrl, _phoneCtrl, _cnicCtrl, _addressCtrl, _notesCtrl, _ibnCtrl;
   // Display-only controllers for fields that are never actually edited
   // (Account Number toggles masked/full text, Account Type is fixed) —
   // kept as persistent fields rather than constructed inline in build(),
@@ -56,6 +56,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     _cnicCtrl = TextEditingController(text: c.cnic);
     _addressCtrl = TextEditingController(text: c.address ?? '');
     _notesCtrl = TextEditingController(text: c.notes ?? '');
+    _ibnCtrl = TextEditingController(text: c.ibnNo);
     _accountNumberDisplayCtrl = TextEditingController(text: c.maskedAccountNumber);
     _accountTypeDisplayCtrl = TextEditingController(text: c.accountType);
     _cnicMaskedDisplayCtrl = TextEditingController(text: c.maskedCnic);
@@ -69,6 +70,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     _cnicCtrl.dispose();
     _addressCtrl.dispose();
     _notesCtrl.dispose();
+    _ibnCtrl.dispose();
     _accountNumberDisplayCtrl.dispose();
     _accountTypeDisplayCtrl.dispose();
     _cnicMaskedDisplayCtrl.dispose();
@@ -91,6 +93,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         phone: _phoneCtrl.text.trim(),
         cnic: _cnicCtrl.text.trim(),
         accountType: widget.customer.accountType,
+        ibnNo: _ibnCtrl.text.trim(),
         status: widget.customer.status,
         dateOpened: widget.customer.dateOpened,
         address: _addressCtrl.text.trim(),
@@ -198,6 +201,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 ),
                 const SizedBox(height: 16),
                 AccountField(label: 'Account Type', controller: _accountTypeDisplayCtrl, readOnly: true),
+                const SizedBox(height: 16),
+                AccountField(label: 'IBN No.', controller: _ibnCtrl, readOnly: !_canEdit),
               ],
             ),
             const SizedBox(height: 16),

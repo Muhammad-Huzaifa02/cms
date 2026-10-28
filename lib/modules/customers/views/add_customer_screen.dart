@@ -33,6 +33,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final _phoneCtrl = TextEditingController();
   final _cnicCtrl = TextEditingController();
   final _accountCtrl = TextEditingController();
+  final _ibnCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   String _accountType = _accountTypes.first;
@@ -46,6 +47,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     _phoneCtrl.dispose();
     _cnicCtrl.dispose();
     _accountCtrl.dispose();
+    _ibnCtrl.dispose();
     _addressCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
@@ -64,6 +66,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
         phone: _phoneCtrl.text.trim(),
         cnic: _cnicCtrl.text.trim(),
         accountType: _accountType,
+        ibnNo: _ibnCtrl.text.trim(),
         address: _addressCtrl.text.trim(),
         notes: _notesCtrl.text.trim(),
         createdBy: widget.currentUser.uid,
@@ -139,6 +142,13 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   keyboardType: TextInputType.number,
                   validator: Validators.accountNumber,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(14)],
+                ),
+                const SizedBox(height: 16),
+                AccountField(
+                  label: 'IBN No. (optional)',
+                  controller: _ibnCtrl,
+                  hintText: 'Enter IBN number',
+                  keyboardType: TextInputType.text,
                 ),
                 const SizedBox(height: 16),
                 const Text('Account Type', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
