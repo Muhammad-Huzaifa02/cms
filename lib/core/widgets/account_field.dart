@@ -55,18 +55,20 @@ class AccountField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6,
+          runSpacing: 4,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
+            Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
             if (readOnly) ...[
-              const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                 decoration: BoxDecoration(
                   color: AppColors.muted.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(5),
                 ),
-                child: const Text('LOCKED', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: AppColors.muted, letterSpacing: 0.4)),
+                child: const Text('READ ONLY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted, letterSpacing: 0.2)),
               ),
             ],
           ],
@@ -96,7 +98,7 @@ class AccountField extends StatelessWidget {
           ),
         if (helperText != null) ...[
           const SizedBox(height: 5),
-          Text(helperText!, style: const TextStyle(fontSize: 11, color: AppColors.muted, height: 1.3)),
+          Text(helperText!, style: const TextStyle(fontSize: 13, color: AppColors.muted, height: 1.4)),
         ],
       ],
     );

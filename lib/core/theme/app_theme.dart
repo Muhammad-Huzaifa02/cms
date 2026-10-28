@@ -29,17 +29,19 @@ class AppTheme {
   static ThemeData light() {
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: AppColors.bg,
+      scaffoldBackgroundColor: const Color(0xFFF7F8F6),
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.brand,
         primary: AppColors.brand,
         secondary: AppColors.gold,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.brandDeep,
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFFF7F8F6),
+        foregroundColor: AppColors.ink,
         elevation: 0,
         centerTitle: false,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: TextStyle(color: AppColors.ink, fontSize: 20, fontWeight: FontWeight.w700),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -47,22 +49,30 @@ class AppTheme {
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
-          elevation: 6,
+          elevation: 0,
+          minimumSize: const Size(48, 52),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        labelStyle: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w500),
+        hintStyle: const TextStyle(color: AppColors.muted),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.brand, width: 1.5),
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 4,
-        shadowColor: AppColors.ink.withValues(alpha: 0.15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        elevation: 0,
+        color: Colors.white,
+        shadowColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: AppColors.border)),
       ),
       // Dialogs, bottom sheets, snackbars and chips are themed globally so
       // every one of them floats the same way (rounded, elevated, clear of
