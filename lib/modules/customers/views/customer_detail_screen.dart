@@ -28,21 +28,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _service = CustomerService();
   late TextEditingController _nameCtrl, _accountTitleCtrl, _phoneCtrl, _cnicCtrl, _addressCtrl, _notesCtrl, _ibnCtrl;
-  // Display-only controllers for fields that are never actually edited
-  // (Account Number toggles masked/full text, Account Type is fixed) —
-  // kept as persistent fields rather than constructed inline in build(),
-  // since a TextEditingController passed in explicitly is NOT
-  // auto-disposed by TextField, so creating one fresh on every rebuild
-  // (e.g. every time the reveal toggle is tapped) would leak one each time.
-  late final TextEditingController _accountNumberDisplayCtrl;
   late final TextEditingController _accountTypeDisplayCtrl;
-  late final TextEditingController _cnicMaskedDisplayCtrl;
-
-  // CNIC and Account Number stay masked by default for EVERYONE — edit
-  // permission does not imply "should see it unmasked at a glance". Each
-  // has its own reveal toggle, independent of whether editing is allowed.
-  bool _cnicRevealed = false;
-  bool _acctRevealed = false;
+  late final TextEditingController _accountNumberDisplayCtrl;
   bool _saving = false;
   String? _error;
 
@@ -57,9 +44,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     _addressCtrl = TextEditingController(text: c.address ?? '');
     _notesCtrl = TextEditingController(text: c.notes ?? '');
     _ibnCtrl = TextEditingController(text: c.ibnNo);
-    _accountNumberDisplayCtrl = TextEditingController(text: c.maskedAccountNumber);
     _accountTypeDisplayCtrl = TextEditingController(text: c.accountType);
-    _cnicMaskedDisplayCtrl = TextEditingController(text: c.maskedCnic);
+    _accountNumberDisplayCtrl = TextEditingController(text: c.accountNumber);
   }
 
   @override
@@ -71,9 +57,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     _addressCtrl.dispose();
     _notesCtrl.dispose();
     _ibnCtrl.dispose();
-    _accountNumberDisplayCtrl.dispose();
     _accountTypeDisplayCtrl.dispose();
-    _cnicMaskedDisplayCtrl.dispose();
+    _accountNumberDisplayCtrl.dispose();
     super.dispose();
   }
 
@@ -140,7 +125,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = widget.customer;
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(title: const Text('Customer Details')),
@@ -151,56 +135,17 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
             SectionCard(
-              title: 'Customer Information',
+              title: 'Customer Details',
               children: [
                 AccountField(label: 'Full Name', controller: _nameCtrl, readOnly: !_canEdit, validator: Validators.requiredName),
                 const SizedBox(height: 16),
                 AccountField(label: 'Account Title', controller: _accountTitleCtrl, readOnly: !_canEdit, validator: Validators.accountTitle),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SectionCard(
-              title: 'Contact Information',
-              children: [
-                AccountField(
-                  label: 'Phone Number',
-                  controller: _phoneCtrl,
-                  readOnly: !_canEdit,
-                  validator: Validators.phone,
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
-                ),
                 const SizedBox(height: 16),
-                AccountField(label: 'Address', controller: _addressCtrl, readOnly: !_canEdit),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SectionCard(
-              title: 'Account Information',
-              children: [
-                _revealableCnic(),
-                const SizedBox(height: 16),
-                // Account Number is intentionally NEVER editable here —
-                // it's the Firestore document ID (see Customer model
-                // docs), so "changing" it isn't a field update, it would
-                // mean deleting this document and creating a new one
-                // under a different ID, which would silently orphan
-                // every activityLog entry that references this account
-                // number by ID. If a customer's account number
-                // genuinely needs to change, that should be a
-                // deliberate Admin action (delete + re-add), not
-                // something that happens implicitly from an edit form.
                 AccountField(
                   label: 'Account Number',
-                  controller: _accountNumberDisplayCtrl..text = _acctRevealed ? c.accountNumber : c.maskedAccountNumber,
+                  controller: _accountNumberDisplayCtrl,
                   readOnly: true,
-                  suffixIcon: TextButton(
-                    onPressed: () => setState(() => _acctRevealed = !_acctRevealed),
-                    child: Text(_acctRevealed ? 'Hide' : 'Reveal', style: const TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
                 ),
-                const SizedBox(height: 16),
-                AccountField(label: 'Account Type', controller: _accountTypeDisplayCtrl, readOnly: true),
                 const SizedBox(height: 16),
                 AccountField(
                   label: 'IBN No.',
@@ -216,12 +161,29 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     LengthLimitingTextInputFormatter(24),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SectionCard(
-              title: 'Notes',
-              children: [
+                const SizedBox(height: 16),
+                AccountField(label: 'Account Type', controller: _accountTypeDisplayCtrl, readOnly: true),
+                const SizedBox(height: 16),
+                AccountField(
+                  label: 'CNIC No.',
+                  controller: _cnicCtrl,
+                  readOnly: !_canEdit,
+                  validator: Validators.cnic,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
+                ),
+                const SizedBox(height: 16),
+                AccountField(
+                  label: 'Phone Number',
+                  controller: _phoneCtrl,
+                  readOnly: !_canEdit,
+                  validator: Validators.phone,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+                ),
+                const SizedBox(height: 16),
+                AccountField(label: 'Address', controller: _addressCtrl, readOnly: !_canEdit),
+                const SizedBox(height: 16),
                 AccountField(label: 'Notes', controller: _notesCtrl, readOnly: !_canEdit),
               ],
             ),
@@ -240,37 +202,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  /// CNIC stays masked by default for every viewer, edit permission or
-  /// not. Revealing it shows the real value — editable if the viewer has
-  /// edit permission, read-only otherwise. This is deliberately NOT just
-  /// "AccountField with readOnly: !_canEdit" the way the other fields
-  /// are, because masking has to apply independently of editability.
-  Widget _revealableCnic() {
-    if (!_cnicRevealed) {
-      return AccountField(
-        label: 'CNIC',
-        controller: _cnicMaskedDisplayCtrl,
-        readOnly: true,
-        suffixIcon: TextButton(
-          onPressed: () => setState(() => _cnicRevealed = true),
-          child: const Text('Reveal', style: TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.bold)),
-        ),
-      );
-    }
-    return AccountField(
-      label: 'CNIC',
-      controller: _cnicCtrl,
-      readOnly: !_canEdit,
-      validator: Validators.cnic,
-      keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
-      suffixIcon: TextButton(
-        onPressed: () => setState(() => _cnicRevealed = false),
-        child: const Text('Hide', style: TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.bold)),
       ),
     );
   }

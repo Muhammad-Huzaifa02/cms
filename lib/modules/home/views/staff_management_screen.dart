@@ -4,6 +4,7 @@ import '../../../data/services/staff_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/perspective_page_route.dart';
 import 'add_staff_screen.dart';
+import 'staff_detail_screen.dart';
 
 class StaffManagementScreen extends StatefulWidget {
   final AppUser currentUser;
@@ -61,13 +62,20 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                Text(s.active ? 'Active' : 'Deactivated',
-                                    style: TextStyle(fontSize: 14, color: s.active ? AppColors.brand : AppColors.danger)),
-                              ],
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () => push3D(context, StaffDetailScreen(staff: s)),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                    Text(s.active ? 'Active' : 'Deactivated',
+                                        style: TextStyle(fontSize: 14, color: s.active ? AppColors.brand : AppColors.danger)),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                           Switch(
