@@ -21,6 +21,13 @@ class CustomerService {
         .map((s) => s.docs.map(Customer.fromDoc).toList());
   }
 
+  /// Streams every customer for the permission-gated management screen.
+  Stream<List<Customer>> allCustomers() => _col.snapshots().map((snapshot) {
+        final customers = snapshot.docs.map(Customer.fromDoc).toList();
+        customers.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        return customers;
+      });
+
   // ---------------------------------------------------------------------
   // Dashboard stats — both use Firestore's server-side COUNT aggregation
   // (`.count().get()`), which returns just a number without downloading

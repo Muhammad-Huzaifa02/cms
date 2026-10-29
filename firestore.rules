@@ -127,6 +127,20 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Per-user favorites are isolated from the shared user profile document.
+    match /users/{uid}/favorites/{customerId} {
+      allow read: if signedIn() && request.auth.uid == uid && isActive();
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && isActive()
+        && isAccountNumber(customerId)
+        && request.resource.data.keys().hasOnly(['customerId', 'starredAt'])
+        && request.resource.data.customerId == customerId
+        && request.resource.data.starredAt == request.time;
+      allow update: if false;
+      allow delete: if signedIn() && request.auth.uid == uid && isActive();
+    }
+
     match /system/bootstrap {
       allow read: if true;
       allow create: if request.resource.data.keys().hasOnly(['adminExists'])

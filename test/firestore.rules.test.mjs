@@ -325,3 +325,36 @@ test('customer identifier formats are validated by rules', async () => {
   batch.set(doc(db, 'activityLog/bad-customer-event'), activity('customer_created', '12345678901234', 'adder', 'Branch Staff'));
   await assertFails(batch.commit());
 });
+
+test('users can create and delete only their own customer favorites', async () => {
+  await seedAdmin();
+  await seedStaff('other-user');
+  const db = env.authenticatedContext('admin', { email: adminUser.email }).firestore();
+  const ownFavorite = doc(db, 'users/admin/favorites/12345678901234');
+  await assertSucceeds(setDoc(ownFavorite, {
+    customerId: '12345678901234',
+    starredAt: serverTimestamp(),
+  }));
+  await assertSucceeds(deleteDoc(ownFavorite));
+
+  const otherFavorite = doc(db, 'users/other-user/favorites/12345678901234');
+  await assertFails(setDoc(otherFavorite, {
+    customerId: '12345678901234',
+    starredAt: serverTimestamp(),
+  }));
+});
+
+test('favorites reject malformed customer IDs and client updates', async () => {
+  await seedAdmin();
+  const db = env.authenticatedContext('admin', { email: adminUser.email }).firestore();
+  await assertFails(setDoc(doc(db, 'users/admin/favorites/not-an-account'), {
+    customerId: 'not-an-account',
+    starredAt: serverTimestamp(),
+  }));
+  const favorite = doc(db, 'users/admin/favorites/12345678901234');
+  await assertSucceeds(setDoc(favorite, {
+    customerId: '12345678901234',
+    starredAt: serverTimestamp(),
+  }));
+  await assertFails(updateDoc(favorite, { customerId: '12345678901234' }));
+});

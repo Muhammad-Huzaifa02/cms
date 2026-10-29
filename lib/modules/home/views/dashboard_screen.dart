@@ -14,6 +14,7 @@ import '../../../core/widgets/error_state.dart';
 import '../../customers/views/customer_detail_screen.dart';
 import '../../customers/views/add_customer_screen.dart';
 import '../../customers/views/search_customer_screen.dart';
+import '../../customers/views/customer_management_screen.dart';
 import 'staff_management_screen.dart';
 import 'activity_log_screen.dart';
 import '../../profile/views/edit_profile_screen.dart';
@@ -216,6 +217,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
             ],
+            if (user.can('view'))
+              ListTile(
+                leading: const Icon(Icons.manage_search_outlined),
+                title: const Text('Customer Manage'),
+                onTap: () {
+                  Navigator.pop(context);
+                  push3D(context, CustomerManagementScreen(currentUser: user));
+                },
+              ),
             const Spacer(),
             const Divider(),
             ListTile(
