@@ -123,6 +123,15 @@ class Customer {
       keywords.add(cleanCnic.substring(cleanCnic.length - i));
     }
 
+    // IBN is alphanumeric; store substrings to search it without loading the
+    // full customer collection into the app.
+    final cleanIbn = ibnNo.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    for (int length = 2; length <= cleanIbn.length; length++) {
+      for (int start = 0; start + length <= cleanIbn.length; start++) {
+        keywords.add(cleanIbn.substring(start, start + length));
+      }
+    }
+
     // 4. Account Number partials
     for (int i = 3; i <= accountNumber.length; i++) {
       keywords.add(accountNumber.substring(0, i).toLowerCase());

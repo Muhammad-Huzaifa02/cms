@@ -4,6 +4,14 @@ import '../models/user_model.dart';
 import '../models/activity_log_model.dart';
 import 'activity_service.dart';
 
+class CustomerPage {
+  final List<Customer> customers;
+  final DocumentSnapshot<Map<String, dynamic>>? lastDocument;
+  final bool hasMore;
+
+  const CustomerPage({required this.customers, required this.lastDocument, required this.hasMore});
+}
+
 /// All reads/writes here are additionally enforced server-side by
 /// Firestore Security Rules (see Data Model §5) — the permission checks
 /// in this class prevent bad UI states, the rules prevent bad actors.
@@ -27,6 +35,59 @@ class CustomerService {
         customers.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
         return customers;
       });
+
+  /// Loads a bounded page for Customer Management. Search uses indexed
+  /// keywords, so it doesn't download the full collection.
+  Future<CustomerPage> managementPage({
+    String query = '',
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int pageSize = 50,
+  }) async {
+    final cleanQuery = query.trim().toLowerCase();
+    Query<Map<String, dynamic>> request = _col;
+    if (cleanQuery.isEmpty) {
+      request = request.orderBy('name');
+    } else {
+      final tokens = <String>{cleanQuery, ...cleanQuery.split(RegExp(r'\s+'))}
+        ..removeWhere((token) => token.isEmpty);
+      final digitQuery = cleanQuery.replaceAll(RegExp(r'[^0-9]'), '');
+      if (digitQuery.length >= 2) tokens.add(digitQuery);
+      request = request.where('searchKeywords', arrayContainsAny: tokens.take(30).toList());
+    }
+    if (startAfter != null) request = request.startAfterDocument(startAfter);
+    final snapshot = await request.limit(pageSize).get();
+    var customers = snapshot.docs.map(Customer.fromDoc).toList();
+    if (cleanQuery.isNotEmpty) {
+      final digits = cleanQuery.replaceAll(RegExp(r'[^0-9]'), '');
+      customers = customers.where((customer) {
+        final textMatch = customer.name.toLowerCase().contains(cleanQuery) ||
+            customer.accountTitle.toLowerCase().contains(cleanQuery) ||
+            customer.ibnNo.toLowerCase().contains(cleanQuery);
+        final digitMatch = digits.length >= 2 && (customer.accountNumber.contains(digits) ||
+            customer.phone.replaceAll(RegExp(r'[^0-9]'), '').contains(digits) ||
+            customer.cnic.replaceAll(RegExp(r'[^0-9]'), '').contains(digits));
+        return textMatch || digitMatch;
+      }).toList();
+    }
+    customers.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return CustomerPage(
+      customers: customers,
+      lastDocument: snapshot.docs.isEmpty ? startAfter : snapshot.docs.last,
+      hasMore: snapshot.docs.length == pageSize,
+    );
+  }
+
+  Future<List<Customer>> customersByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    final result = <Customer>[];
+    for (var i = 0; i < ids.length; i += 30) {
+      final chunk = ids.skip(i).take(30).toList();
+      final snapshot = await _col.where(FieldPath.documentId, whereIn: chunk).get();
+      result.addAll(snapshot.docs.map(Customer.fromDoc));
+    }
+    result.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return result;
+  }
 
   // ---------------------------------------------------------------------
   // Dashboard stats — both use Firestore's server-side COUNT aggregation

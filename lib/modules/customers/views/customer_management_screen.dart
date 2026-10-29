@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/perspective_page_route.dart';
@@ -19,11 +20,15 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
   final _customers = CustomerService();
   final _favorites = FavoriteService();
   final _search = TextEditingController();
+  late final Stream<List<Customer>> _customerStream = _customers.allCustomers();
+  late final Stream<Set<String>> _favoriteStream = _favorites.watchIds(widget.currentUser.uid);
+  Timer? _searchDebounce;
   String _query = '';
   bool _favoritesOnly = false;
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _search.dispose();
     super.dispose();
   }
@@ -51,7 +56,12 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: TextField(
             controller: _search,
-            onChanged: (value) => setState(() => _query = value.trim().toLowerCase()),
+            onChanged: (value) {
+              _searchDebounce?.cancel();
+              _searchDebounce = Timer(const Duration(milliseconds: 250), () {
+                if (mounted) setState(() => _query = value.trim().toLowerCase());
+              });
+            },
             decoration: InputDecoration(
               hintText: 'Search customers',
               prefixIcon: const Icon(Icons.search),
@@ -88,7 +98,7 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
         ),
         Expanded(
           child: StreamBuilder<List<Customer>>(
-            stream: _customers.allCustomers(),
+            stream: _customerStream,
             builder: (context, customerSnapshot) {
               if (customerSnapshot.hasError) {
                 return const Center(child: Text('Unable to load customers. Check access and connection.'));
@@ -104,7 +114,7 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
                     customer.ibnNo.toLowerCase().contains(_query);
               }).toList();
               return StreamBuilder<Set<String>>(
-                stream: _favorites.watchIds(widget.currentUser.uid),
+                stream: _favoriteStream,
                 builder: (context, favoriteSnapshot) {
                   final favoriteIds = favoriteSnapshot.data ?? <String>{};
                   final customers = _favoritesOnly

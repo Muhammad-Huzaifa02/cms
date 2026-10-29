@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/services/staff_service.dart';
@@ -16,6 +17,7 @@ class StaffManagementScreen extends StatefulWidget {
 
 class _StaffManagementScreenState extends State<StaffManagementScreen> {
   final _service = StaffService();
+  late final Stream<List<AppUser>> _staffStream = _service.staffList();
 
   Future<void> _togglePermission(AppUser staff, String perm, bool value) async {
     final updated = staff.permissions.copyWith(
@@ -35,7 +37,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Staff accounts')),
       body: StreamBuilder<List<AppUser>>(
-        stream: _service.staffList(),
+        stream: _staffStream,
         builder: (context, snap) {
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
           final staff = snap.data!;

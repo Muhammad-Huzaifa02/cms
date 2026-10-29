@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../data/models/user_model.dart';
@@ -33,6 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _exportService = ExportService();
   final _authService = AuthService();
   bool _exporting = false;
+  late final Stream<List<Customer>> _recentCustomersStream = _customerService.recentCustomers();
 
   // Fetched once per Dashboard visit (not per rebuild) — both use
   // Firestore COUNT aggregation, so this is two small server-side counts,
@@ -444,7 +446,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           StreamBuilder<List<Customer>>(
-            stream: _customerService.recentCustomers(),
+            stream: _recentCustomersStream,
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
                 return const SliverPadding(
