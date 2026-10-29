@@ -133,7 +133,7 @@ service cloud.firestore {
         && isAccountNumber(customerId)
         && request.resource.data.keys().hasOnly(['customerId', 'starredAt'])
         && request.resource.data.customerId == customerId
-        && request.resource.data.starredAt == request.time;
+        && request.resource.data.starredAt is timestamp;
       allow update: if false;
       allow delete: if signedIn() && request.auth.uid == uid;
     }
