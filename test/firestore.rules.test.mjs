@@ -326,6 +326,20 @@ test('customer identifier formats are validated by rules', async () => {
   await assertFails(batch.commit());
 });
 
+test('Admin can backfill isolated search indexes on legacy customer documents', async () => {
+  await seedAdmin();
+  const legacyCustomer = customerData('admin');
+  delete legacyCustomer.accountNumber;
+  await seed('customers/12345678901234', legacyCustomer);
+  const db = env.authenticatedContext('admin', { email: adminUser.email }).firestore();
+  await assertSucceeds(updateDoc(doc(db, 'customers/12345678901234'), {
+    accountTitleSearchWords: ['test', 'trading'],
+    phoneLast4: '2223',
+    cnicLast4: '5671',
+    accountNumberLast4: '1234',
+  }));
+});
+
 test('users can create and delete only their own customer favorites', async () => {
   await seedAdmin();
   await seedStaff('other-user');

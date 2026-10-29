@@ -178,6 +178,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   push3D(context, StaffManagementScreen(currentUser: user));
                 },
               ),
+              if (user.can('view'))
+                ListTile(
+                  leading: const Icon(Icons.manage_search_outlined),
+                  title: const Text('Customer Manage'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    push3D(context, CustomerManagementScreen(currentUser: user));
+                  },
+                ),
               ListTile(
                 leading: const Icon(Icons.history),
                 title: const Text('Activity log'),
@@ -217,7 +226,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
             ],
-            if (user.can('view'))
+            if (!user.isAdmin && user.can('view'))
               ListTile(
                 leading: const Icon(Icons.manage_search_outlined),
                 title: const Text('Customer Manage'),
