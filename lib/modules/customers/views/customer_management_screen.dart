@@ -20,6 +20,7 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
   final _favorites = FavoriteService();
   final _search = TextEditingController();
   String _query = '';
+  bool _favoritesOnly = false;
 
   @override
   void dispose() {
@@ -63,6 +64,28 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
             ),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('All customers'),
+                  selected: !_favoritesOnly,
+                  onSelected: (_) => setState(() => _favoritesOnly = false),
+                ),
+                ChoiceChip(
+                  avatar: const Icon(Icons.star, size: 18),
+                  label: const Text('Favorites'),
+                  selected: _favoritesOnly,
+                  onSelected: (_) => setState(() => _favoritesOnly = true),
+                ),
+              ],
+            ),
+          ),
+        ),
         Expanded(
           child: StreamBuilder<List<Customer>>(
             stream: _customers.allCustomers(),
@@ -71,7 +94,7 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
                 return const Center(child: Text('Unable to load customers. Check access and connection.'));
               }
               if (!customerSnapshot.hasData) return const Center(child: CircularProgressIndicator());
-              final customers = customerSnapshot.data!.where((customer) {
+              final searchedCustomers = customerSnapshot.data!.where((customer) {
                 if (_query.isEmpty) return true;
                 return customer.name.toLowerCase().contains(_query) ||
                     customer.accountTitle.toLowerCase().contains(_query) ||
@@ -80,13 +103,19 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
                     customer.cnic.contains(_query) ||
                     customer.ibnNo.toLowerCase().contains(_query);
               }).toList();
-              if (customers.isEmpty) {
-                return Center(child: Text(_query.isEmpty ? 'No customers yet.' : 'No matching customers.'));
-              }
               return StreamBuilder<Set<String>>(
                 stream: _favorites.watchIds(widget.currentUser.uid),
                 builder: (context, favoriteSnapshot) {
                   final favoriteIds = favoriteSnapshot.data ?? <String>{};
+                  final customers = _favoritesOnly
+                      ? searchedCustomers.where((customer) => favoriteIds.contains(customer.accountNumber)).toList()
+                      : searchedCustomers;
+                  if (customers.isEmpty) {
+                    final message = _favoritesOnly
+                        ? 'No favorite customers match your search.'
+                        : (_query.isEmpty ? 'No customers yet.' : 'No matching customers.');
+                    return Center(child: Text(message));
+                  }
                   return ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     itemCount: customers.length,
