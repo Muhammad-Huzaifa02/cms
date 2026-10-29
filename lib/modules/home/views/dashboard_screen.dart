@@ -64,26 +64,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _logoutAndExit() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Exit CMS?'),
-        content: const Text('This will sign you out and close the application.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            child: const Text('Logout & Exit'),
-          ),
-        ],
-      ),
-    );
-
-    if (ok == true) {
-      await _authService.signOut();
-      await SystemNavigator.pop();
-    }
+    await _authService.signOut();
+    await SystemNavigator.pop();
   }
 
   void _openSearch() {

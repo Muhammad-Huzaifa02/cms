@@ -124,16 +124,18 @@ service cloud.firestore {
 
     // Per-user favorites are isolated from the shared user profile document.
     match /users/{uid}/favorites/{customerId} {
-      allow read: if signedIn() && request.auth.uid == uid && isActive();
+      // Favorites are private preferences. Keep their access tied to the
+      // authenticated owner; requiring the profile's `active` flag here can
+      // block the star toggle even though the user can access the app.
+      allow read: if signedIn() && request.auth.uid == uid;
       allow create: if signedIn()
         && request.auth.uid == uid
-        && isActive()
         && isAccountNumber(customerId)
         && request.resource.data.keys().hasOnly(['customerId', 'starredAt'])
         && request.resource.data.customerId == customerId
         && request.resource.data.starredAt == request.time;
       allow update: if false;
-      allow delete: if signedIn() && request.auth.uid == uid && isActive();
+      allow delete: if signedIn() && request.auth.uid == uid;
     }
 
     match /system/bootstrap {
