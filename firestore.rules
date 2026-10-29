@@ -66,8 +66,7 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time
         && activityMatches(request.resource.data.lastActivityId, 'customer_updated', accountNumber);
 
-      // Separate Admin-only migration path for backfilling legacy indexes.
-      // The diff allowlist prevents changing customer identity or business data.
+      // Admin-only backfill for legacy search indexes.
       allow update: if isAdmin()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'accountTitleSearchWords',
@@ -122,11 +121,8 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Per-user favorites are isolated from the shared user profile document.
+    // Legacy per-user favorites, retained so existing favorites can be migrated.
     match /users/{uid}/favorites/{customerId} {
-      // Favorites are private preferences. Keep their access tied to the
-      // authenticated owner; requiring the profile's `active` flag here can
-      // block the star toggle even though the user can access the app.
       allow read: if signedIn() && request.auth.uid == uid;
       allow create: if signedIn()
         && request.auth.uid == uid
