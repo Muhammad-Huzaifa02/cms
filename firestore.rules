@@ -64,7 +64,23 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.updatedBy == request.auth.uid
         && request.resource.data.updatedAt == request.time
-        && activityMatches(request.resource.data.lastActivityId, 'customer_updated', accountNumber);
+        && activityMatches(request.resource.data.lastActivityId, 'customer_updated', accountNumber)
+        || (isAdmin()
+          && request.resource.data.accountNumber == resource.data.accountNumber
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'accountTitleSearchWords',
+            'phoneLast4',
+            'cnicLast4',
+            'accountNumberLast4',
+            'deleteActivityId'
+          ])
+          && request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'accountTitleSearchWords',
+            'phoneLast4',
+            'cnicLast4',
+            'accountNumberLast4',
+            'deleteActivityId'
+          ]));
 
       allow delete: if can('delete')
         && activityMatches(resource.data.deleteActivityId, 'customer_deleted', accountNumber);

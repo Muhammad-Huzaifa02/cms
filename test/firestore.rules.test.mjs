@@ -69,6 +69,7 @@ function customerData(actorUid, overrides = {}) {
     phone: '03001112223',
     cnic: '3520212345671',
     accountType: 'Current',
+    ibnNo: 'AB12CD34EF56GH78IJ90KL12',
     status: 'Active',
     dateOpened: null,
     address: null,
