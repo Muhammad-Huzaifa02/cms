@@ -283,7 +283,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           TweenAnimationBuilder<double>(
                             tween: Tween(begin: 0.0, end: 1.0),
-                            duration: const Duration(milliseconds: 800),
+                            duration: const Duration(milliseconds: 260),
                             builder: (context, value, child) {
                               return Opacity(
                                 opacity: value.clamp(0.0, 1.0),
@@ -347,22 +347,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                   child: TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0.0, end: 1.0),
-                    duration: const Duration(milliseconds: 1000),
-                    curve: Curves.easeOutBack,
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeOutCubic,
                     builder: (context, value, child) {
                       return Transform(
                         alignment: Alignment.center,
                         transform: Matrix4.identity()
-                          ..setEntry(3, 2, 0.0015)
-                          ..rotateX(0.25 * (1 - value))
+                          ..setEntry(3, 2, 0.001)
+                          ..rotateY(0.06 * (1 - value))
                           // ignore: deprecated_member_use
-                          ..scale(0.9 + (0.1 * value), 0.9 + (0.1 * value), 1.0),
+                          ..scale(0.97 + (0.03 * value), 0.97 + (0.03 * value), 1.0),
                         child: child,
                       );
                     },
                     child: Material(
-                      elevation: 16,
-                      shadowColor: Colors.black45,
+                      elevation: 4,
+                      shadowColor: Colors.black12,
                       borderRadius: BorderRadius.circular(16),
                       child: TextField(
                         // Tap-only: the actual typing happens on the "Search
@@ -500,29 +500,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       }
                       final c = customers[index - 1];
-                      return TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: Duration(milliseconds: 500 + (index * 80)),
-                        curve: Curves.easeOutBack,
-                        builder: (context, value, child) {
-                          return Opacity(
-                            opacity: value.clamp(0.0, 1.0),
-                            child: Transform(
-                              alignment: Alignment.center,
-                              transform: Matrix4.identity()
-                                ..setEntry(3, 2, 0.001)
-                                ..rotateY(0.15 * (1 - value))
-                                ..rotateX(0.1 * (1 - value))
-                                // ignore: deprecated_member_use
-                                ..translate(40 * (1 - value), 0.0, 0.0),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: _CustomerTile(
-                          customer: c,
-                          onTap: () => push3D(context, CustomerDetailScreen(customer: c, currentUser: user)),
-                        ),
+                      return _CustomerTile(
+                        customer: c,
+                        onTap: () => push3D(context, CustomerDetailScreen(customer: c, currentUser: user)),
                       );
                     },
                     childCount: customers.length + 1,
@@ -536,8 +516,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       floatingActionButton: user.can('add')
           ? TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 1200),
-              curve: Curves.elasticOut,
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
               builder: (context, value, child) {
                 return Transform.scale(scale: value, child: child);
               },
@@ -568,7 +548,7 @@ class _CustomerTile extends StatelessWidget {
       child: TiltTapCard(
         onTap: onTap,
         child: Card(
-          elevation: 4,
+          elevation: 1,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           margin: EdgeInsets.zero,
           child: Padding(

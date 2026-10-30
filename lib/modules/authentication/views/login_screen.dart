@@ -125,14 +125,14 @@ class _LoginScreenState extends State<LoginScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: FadeInSlide(
-                duration: const Duration(milliseconds: 800),
+                duration: const Duration(milliseconds: 300),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 480),
                   child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     FadeInSlide(
-                      delay: const Duration(milliseconds: 100),
+                      delay: const Duration(milliseconds: 50),
                       offset: const Offset(0, -20),
                       child: Container(
                         width: 64,
@@ -147,20 +147,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 12),
                     const FadeInSlide(
-                      delay: Duration(milliseconds: 200),
+                      delay: Duration(milliseconds: 100),
                       child: Text('Customer Management System', textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(height: 3),
                     FadeInSlide(
-                      delay: const Duration(milliseconds: 300),
+                      delay: const Duration(milliseconds: 150),
                       child: Text('Branch Customer Portal', style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11.5)),
                     ),
                     const SizedBox(height: 26),
                     TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(milliseconds: 1000),
-                      curve: Curves.easeOutBack,
+                      duration: const Duration(milliseconds: 280),
+                      curve: Curves.easeOutCubic,
                       builder: (context, t, child) {
                         return Opacity(
                           opacity: t.clamp(0.0, 1.0),
@@ -247,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 18),
                     FadeInSlide(
-                      delay: const Duration(milliseconds: 500),
+                      delay: const Duration(milliseconds: 180),
                       child: FutureBuilder<bool>(
                         future: _adminExistsFuture,
                         builder: (context, snap) {

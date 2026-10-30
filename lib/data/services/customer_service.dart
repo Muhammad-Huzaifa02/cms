@@ -43,11 +43,27 @@ class CustomerService {
     } else {
       final tokens = <String>{cleanQuery, ...cleanQuery.split(RegExp(r'\s+'))}
         ..removeWhere((token) => token.isEmpty);
+      void addSearchGrams(String value) {
+        for (var size = 2; size <= 3 && size <= value.length; size++) {
+          for (var i = 0; i + size <= value.length; i++) {
+            tokens.add(value.substring(i, i + size));
+          }
+        }
+      }
+      for (final word in cleanQuery.split(RegExp(r'\s+'))) {
+        addSearchGrams(word);
+      }
       final compactQuery = cleanQuery.replaceAll(RegExp(r'[^a-z0-9]'), '');
-      if (compactQuery.length >= 2) tokens.add(compactQuery);
+      if (compactQuery.length >= 2) {
+        tokens.add(compactQuery);
+        addSearchGrams(compactQuery);
+      }
       final digitQuery = cleanQuery.replaceAll(RegExp(r'[^0-9]'), '');
       final hasLetters = RegExp(r'[a-z]').hasMatch(cleanQuery);
-      if (!hasLetters && digitQuery.length >= 2) tokens.add(digitQuery);
+      if (!hasLetters && digitQuery.length >= 2) {
+        tokens.add(digitQuery);
+        addSearchGrams(digitQuery);
+      }
       request = request.where('searchKeywords', arrayContainsAny: tokens.take(30).toList());
     }
     if (startAfter != null) request = request.startAfterDocument(startAfter);

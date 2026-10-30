@@ -54,7 +54,7 @@ class DashboardStatCard extends StatelessWidget {
             const SizedBox(height: 2),
             TweenAnimationBuilder<int>(
               tween: IntTween(begin: 0, end: value),
-              duration: const Duration(milliseconds: 700),
+              duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
               builder: (context, v, _) => Text(
                 NumberFormat.decimalPattern().format(v),

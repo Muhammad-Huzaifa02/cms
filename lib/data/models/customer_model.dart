@@ -96,46 +96,43 @@ class Customer {
   List<String> buildSearchKeywords() {
     final keywords = <String>{};
 
-    // 1. Substrings from name AND account title (e.g. searching "ders"
-    // can still find "Traders") without downloading every customer.
-    for (final w in [...name.toLowerCase().split(_whitespace), ...accountTitle.toLowerCase().split(_whitespace)]) {
-      if (w.isNotEmpty) {
-        for (int start = 0; start < w.length; start++) {
-          for (int end = start + 1; end <= w.length; end++) {
-            keywords.add(w.substring(start, end));
-          }
+    void addSearchGrams(String value) {
+      for (var size = 2; size <= 3 && size <= value.length; size++) {
+        for (var i = 0; i + size <= value.length; i++) {
+          keywords.add(value.substring(i, i + size));
         }
       }
     }
 
-    // 2. Phone number partials (from the end and start to catch common search patterns)
-    final cleanPhone = phone.replaceAll(_nonDigits, '');
-    for (int i = 1; i <= cleanPhone.length; i++) {
-      keywords.add(cleanPhone.substring(0, i));
-      keywords.add(cleanPhone.substring(cleanPhone.length - i));
-    }
-
-    // 3. CNIC partials (usually people search for the last 5 digits)
-    final cleanCnic = cnic.replaceAll(_nonDigits, '');
-    for (int i = 1; i <= cleanCnic.length; i++) {
-      keywords.add(cleanCnic.substring(0, i));
-      keywords.add(cleanCnic.substring(cleanCnic.length - i));
-    }
-
-    // IBN is alphanumeric; store substrings to search it without loading the
-    // full customer collection into the app.
-    final cleanIbn = ibnNo.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-    for (int length = 1; length <= cleanIbn.length; length++) {
-      for (int start = 0; start + length <= cleanIbn.length; start++) {
-        keywords.add(cleanIbn.substring(start, start + length));
+    for (final word in [
+      ...name.toLowerCase().split(_whitespace),
+      ...accountTitle.toLowerCase().split(_whitespace),
+    ]) {
+      if (word.isNotEmpty) {
+        for (var i = 1; i <= word.length; i++) {
+          keywords.add(word.substring(0, i));
+        }
+        addSearchGrams(word);
       }
     }
 
-    // 4. Account Number partials
-    for (int i = 1; i <= accountNumber.length; i++) {
-      keywords.add(accountNumber.substring(0, i).toLowerCase());
-      keywords.add(accountNumber.substring(accountNumber.length - i).toLowerCase());
+    final cleanPhone = phone.replaceAll(_nonDigits, '');
+    final cleanCnic = cnic.replaceAll(_nonDigits, '');
+    final cleanIbn = ibnNo.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+    for (final value in [cleanPhone, cleanCnic, accountNumber.toLowerCase()]) {
+      for (var i = 1; i <= value.length; i++) {
+        keywords.add(value.substring(0, i));
+        keywords.add(value.substring(value.length - i));
+      }
+      addSearchGrams(value);
     }
+
+    for (var i = 1; i <= cleanIbn.length; i++) {
+      keywords.add(cleanIbn.substring(0, i));
+      keywords.add(cleanIbn.substring(cleanIbn.length - i));
+    }
+    addSearchGrams(cleanIbn);
 
     return keywords.toList();
   }
