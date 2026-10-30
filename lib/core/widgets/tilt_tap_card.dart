@@ -23,7 +23,7 @@ class TiltTapCard extends StatefulWidget {
 class _TiltTapCardState extends State<TiltTapCard> with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 140),
+    duration: const Duration(milliseconds: 110),
     lowerBound: 0.0,
     upperBound: 1.0,
   );
@@ -50,25 +50,23 @@ class _TiltTapCardState extends State<TiltTapCard> with SingleTickerProviderStat
         child: widget.child,
         builder: (context, child) {
           final t = _ctrl.value; // 0 = resting, 1 = pressed
-          final scale = 1.0 - (0.04 * t);
-          final tiltX = 0.025 * t;
-          final tiltY = 0.015 * t;
+          final scale = 1.0 - (0.025 * t);
+          final tiltY = 0.01 * t;
           return Transform(
             alignment: Alignment.center,
             transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.0015)
-              ..rotateX(tiltX)
+              ..setEntry(3, 2, 0.001)
               ..rotateY(tiltY)
               // ignore: deprecated_member_use
               ..scale(scale, scale, 1.0),
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: widget.borderRadius,
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15 * (1 - t)),
-                    blurRadius: 10 + (10 * (1 - t)),
-                    offset: Offset(0, 5 + (5 * (1 - t))),
+                    color: Color(0x1A000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
                   ),
                 ],
               ),

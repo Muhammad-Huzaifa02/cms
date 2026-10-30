@@ -22,7 +22,7 @@ class GrowthChart extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.ink.withValues(alpha: 0.06)),
         boxShadow: [
-          BoxShadow(color: AppColors.ink.withValues(alpha: 0.07), blurRadius: 16, offset: const Offset(0, 6)),
+          BoxShadow(color: AppColors.ink.withValues(alpha: 0.055), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(

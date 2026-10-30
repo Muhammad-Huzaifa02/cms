@@ -29,13 +29,6 @@ class CustomerService {
         .map((s) => s.docs.map(Customer.fromDoc).toList());
   }
 
-  /// Streams every customer for the permission-gated management screen.
-  Stream<List<Customer>> allCustomers() => _col.snapshots().map((snapshot) {
-        final customers = snapshot.docs.map(Customer.fromDoc).toList();
-        customers.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-        return customers;
-      });
-
   /// Loads a bounded page for Customer Management. Search uses indexed
   /// keywords, so it doesn't download the full collection.
   Future<CustomerPage> managementPage({
@@ -50,8 +43,11 @@ class CustomerService {
     } else {
       final tokens = <String>{cleanQuery, ...cleanQuery.split(RegExp(r'\s+'))}
         ..removeWhere((token) => token.isEmpty);
+      final compactQuery = cleanQuery.replaceAll(RegExp(r'[^a-z0-9]'), '');
+      if (compactQuery.length >= 2) tokens.add(compactQuery);
       final digitQuery = cleanQuery.replaceAll(RegExp(r'[^0-9]'), '');
-      if (digitQuery.length >= 2) tokens.add(digitQuery);
+      final hasLetters = RegExp(r'[a-z]').hasMatch(cleanQuery);
+      if (!hasLetters && digitQuery.length >= 2) tokens.add(digitQuery);
       request = request.where('searchKeywords', arrayContainsAny: tokens.take(30).toList());
     }
     if (startAfter != null) request = request.startAfterDocument(startAfter);
@@ -59,11 +55,13 @@ class CustomerService {
     var customers = snapshot.docs.map(Customer.fromDoc).toList();
     if (cleanQuery.isNotEmpty) {
       final digits = cleanQuery.replaceAll(RegExp(r'[^0-9]'), '');
+      final hasLetters = RegExp(r'[a-z]').hasMatch(cleanQuery);
+      final compactIbnQuery = cleanQuery.replaceAll(RegExp(r'[^a-z0-9]'), '');
       customers = customers.where((customer) {
         final textMatch = customer.name.toLowerCase().contains(cleanQuery) ||
             customer.accountTitle.toLowerCase().contains(cleanQuery) ||
-            customer.ibnNo.toLowerCase().contains(cleanQuery);
-        final digitMatch = digits.length >= 2 && (customer.accountNumber.contains(digits) ||
+            (compactIbnQuery.length >= 2 && customer.ibnNo.toLowerCase().contains(compactIbnQuery));
+        final digitMatch = !hasLetters && digits.length >= 2 && (customer.accountNumber.contains(digits) ||
             customer.phone.replaceAll(RegExp(r'[^0-9]'), '').contains(digits) ||
             customer.cnic.replaceAll(RegExp(r'[^0-9]'), '').contains(digits));
         return textMatch || digitMatch;
@@ -241,6 +239,7 @@ class CustomerService {
         final customer = Customer.fromDoc(doc);
         final updates = <String, dynamic>{
           'accountTitleSearchWords': customer.buildAccountTitleSearchWords(),
+          'searchKeywords': customer.buildSearchKeywords(),
           'phoneLast4': customer.phoneLast4,
           'cnicLast4': customer.cnicLast4,
           'accountNumberLast4': customer.accountNumberLast4,
@@ -358,6 +357,3 @@ class CustomerService {
     });
   }
 }
-
-
-

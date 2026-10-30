@@ -70,6 +70,7 @@ service cloud.firestore {
       allow update: if isAdmin()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'accountTitleSearchWords',
+          'searchKeywords',
           'phoneLast4',
           'cnicLast4',
           'accountNumberLast4',

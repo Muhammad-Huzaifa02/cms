@@ -69,9 +69,9 @@ class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 4,
+        elevation: 2,
         color: const Color(0xEFFFFFFF),
-        shadowColor: AppColors.brandDeep.withValues(alpha: 0.10),
+        shadowColor: AppColors.brandDeep.withValues(alpha: 0.07),
         surfaceTintColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),

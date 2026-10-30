@@ -16,10 +16,19 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   late final AuthService _auth = widget.authService ?? AuthService();
+  late final Future<bool> _adminExistsFuture = _auth.adminAlreadyExists();
   final _identifierCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _loading = false;
+  bool _obscurePassword = true;
   String? _error;
+
+  @override
+  void dispose() {
+    _identifierCtrl.dispose();
+    _passwordCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _signIn() async {
     setState(() {
@@ -198,8 +207,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 10),
                             TextField(
                               controller: _passwordCtrl,
-                              obscureText: true,
-                              decoration: const InputDecoration(hintText: 'Password', prefixIcon: Icon(Icons.lock_outline, size: 19)),
+                              obscureText: _obscurePassword,
+                              decoration: InputDecoration(
+                                hintText: 'Password',
+                                prefixIcon: const Icon(Icons.lock_outline, size: 19),
+                                suffixIcon: IconButton(
+                                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                  icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                                ),
+                              ),
                             ),
                             Align(
                               alignment: Alignment.centerRight,
@@ -232,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     FadeInSlide(
                       delay: const Duration(milliseconds: 500),
                       child: FutureBuilder<bool>(
-                        future: _auth.adminAlreadyExists(),
+                        future: _adminExistsFuture,
                         builder: (context, snap) {
                           // While loading, or once an Admin exists, show nothing —
                           // this link is only for the very first setup.

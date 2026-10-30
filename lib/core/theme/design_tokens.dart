@@ -44,20 +44,20 @@ class Motion {
 ///   Level 4: primary floating action
 class Depth {
   static List<BoxShadow> get card => [
-        BoxShadow(color: AppColors.ink.withValues(alpha: 0.06), blurRadius: 14, offset: const Offset(0, 5)),
-        BoxShadow(color: AppColors.ink.withValues(alpha: 0.04), blurRadius: 2, offset: const Offset(0, 1)),
+        BoxShadow(color: AppColors.ink.withValues(alpha: 0.055), blurRadius: 9, offset: const Offset(0, 3)),
+        BoxShadow(color: AppColors.ink.withValues(alpha: 0.035), blurRadius: 1, offset: const Offset(0, 1)),
       ];
 
   static List<BoxShadow> get raised => [
-        BoxShadow(color: AppColors.ink.withValues(alpha: 0.12), blurRadius: 20, offset: const Offset(0, 8)),
+        BoxShadow(color: AppColors.ink.withValues(alpha: 0.10), blurRadius: 14, offset: const Offset(0, 5)),
       ];
 
   static List<BoxShadow> get dock => [
-        BoxShadow(color: AppColors.ink.withValues(alpha: 0.18), blurRadius: 28, offset: const Offset(0, 10)),
-        BoxShadow(color: AppColors.ink.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 2)),
+        BoxShadow(color: AppColors.ink.withValues(alpha: 0.14), blurRadius: 20, offset: const Offset(0, 7)),
+        BoxShadow(color: AppColors.ink.withValues(alpha: 0.05), blurRadius: 2, offset: const Offset(0, 1)),
       ];
 
   static List<BoxShadow> get primaryAction => [
-        BoxShadow(color: AppColors.gold.withValues(alpha: 0.5), blurRadius: 22, offset: const Offset(0, 10)),
+        BoxShadow(color: AppColors.gold.withValues(alpha: 0.38), blurRadius: 16, offset: const Offset(0, 6)),
       ];
 }

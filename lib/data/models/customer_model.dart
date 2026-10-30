@@ -96,29 +96,28 @@ class Customer {
   List<String> buildSearchKeywords() {
     final keywords = <String>{};
 
-    // 1. Individual words from name AND account title (e.g. "Ali Traders"
-    // is searchable the same way a person's name is)
+    // 1. Substrings from name AND account title (e.g. searching "ders"
+    // can still find "Traders") without downloading every customer.
     for (final w in [...name.toLowerCase().split(_whitespace), ...accountTitle.toLowerCase().split(_whitespace)]) {
-      if (w.length > 1) {
-        // Add full word
-        keywords.add(w);
-        // Add prefixes for partial name search (e.g., "huz" finds "huzaifa")
-        for (int i = 2; i <= w.length; i++) {
-          keywords.add(w.substring(0, i));
+      if (w.isNotEmpty) {
+        for (int start = 0; start < w.length; start++) {
+          for (int end = start + 1; end <= w.length; end++) {
+            keywords.add(w.substring(start, end));
+          }
         }
       }
     }
 
     // 2. Phone number partials (from the end and start to catch common search patterns)
     final cleanPhone = phone.replaceAll(_nonDigits, '');
-    for (int i = 3; i <= cleanPhone.length; i++) {
+    for (int i = 1; i <= cleanPhone.length; i++) {
       keywords.add(cleanPhone.substring(0, i));
       keywords.add(cleanPhone.substring(cleanPhone.length - i));
     }
 
     // 3. CNIC partials (usually people search for the last 5 digits)
     final cleanCnic = cnic.replaceAll(_nonDigits, '');
-    for (int i = 4; i <= cleanCnic.length; i++) {
+    for (int i = 1; i <= cleanCnic.length; i++) {
       keywords.add(cleanCnic.substring(0, i));
       keywords.add(cleanCnic.substring(cleanCnic.length - i));
     }
@@ -126,14 +125,14 @@ class Customer {
     // IBN is alphanumeric; store substrings to search it without loading the
     // full customer collection into the app.
     final cleanIbn = ibnNo.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-    for (int length = 2; length <= cleanIbn.length; length++) {
+    for (int length = 1; length <= cleanIbn.length; length++) {
       for (int start = 0; start + length <= cleanIbn.length; start++) {
         keywords.add(cleanIbn.substring(start, start + length));
       }
     }
 
     // 4. Account Number partials
-    for (int i = 3; i <= accountNumber.length; i++) {
+    for (int i = 1; i <= accountNumber.length; i++) {
       keywords.add(accountNumber.substring(0, i).toLowerCase());
       keywords.add(accountNumber.substring(accountNumber.length - i).toLowerCase());
     }
