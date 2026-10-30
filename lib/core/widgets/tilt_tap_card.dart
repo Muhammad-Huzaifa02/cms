@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Wraps any widget (customer cards, buttons) with a physical "press down"
-/// 3D animation on tap — slight scale-down + shadow flattening, then
-/// spring back on release. Matches the embossed-card look from the UI
-/// concept doc.
 class TiltTapCard extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -20,7 +16,8 @@ class TiltTapCard extends StatefulWidget {
   State<TiltTapCard> createState() => _TiltTapCardState();
 }
 
-class _TiltTapCardState extends State<TiltTapCard> with SingleTickerProviderStateMixin {
+class _TiltTapCardState extends State<TiltTapCard>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 110),
@@ -28,8 +25,8 @@ class _TiltTapCardState extends State<TiltTapCard> with SingleTickerProviderStat
     upperBound: 1.0,
   );
 
-  void _down(_) => _ctrl.forward();
-  void _up(_) => _ctrl.reverse();
+  void _down(TapDownDetails _) => _ctrl.forward();
+  void _up(TapUpDetails _) => _ctrl.reverse();
   void _cancel() => _ctrl.reverse();
 
   @override
@@ -49,9 +46,10 @@ class _TiltTapCardState extends State<TiltTapCard> with SingleTickerProviderStat
         animation: _ctrl,
         child: widget.child,
         builder: (context, child) {
-          final t = _ctrl.value; // 0 = resting, 1 = pressed
+          final t = _ctrl.value;
           final scale = 1.0 - (0.025 * t);
           final tiltY = 0.01 * t;
+
           return Transform(
             alignment: Alignment.center,
             transform: Matrix4.identity()
