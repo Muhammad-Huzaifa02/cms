@@ -139,7 +139,16 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
     final key = (ids.toList()..sort()).join(',');
     if (_favoriteCustomersFuture == null || key != _favoriteCustomersKey) {
       _favoriteCustomersKey = key;
-      _favoriteCustomersFuture = _customers.customersByIds(ids.toList());
+      final alreadyLoaded = _loadedCustomers
+          .where((customer) => ids.contains(customer.accountNumber))
+          .toList();
+      final loadedIds = alreadyLoaded.map((customer) => customer.accountNumber).toSet();
+      final missingIds = ids.difference(loadedIds).toList();
+      _favoriteCustomersFuture = _customers.customersByIds(missingIds).then((missing) {
+        final customers = [...alreadyLoaded, ...missing];
+        customers.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        return customers;
+      });
     }
     return _favoriteCustomersFuture!;
   }

@@ -93,12 +93,13 @@ class CustomerService {
 
   Future<List<Customer>> customersByIds(List<String> ids) async {
     if (ids.isEmpty) return [];
-    final result = <Customer>[];
-    for (var i = 0; i < ids.length; i += 30) {
-      final chunk = ids.skip(i).take(30).toList();
-      final snapshot = await _col.where(FieldPath.documentId, whereIn: chunk).get();
-      result.addAll(snapshot.docs.map(Customer.fromDoc));
-    }
+    final chunks = [
+      for (var i = 0; i < ids.length; i += 30) ids.skip(i).take(30).toList(),
+    ];
+    final snapshots = await Future.wait(chunks.map(
+      (chunk) => _col.where(FieldPath.documentId, whereIn: chunk).get(),
+    ));
+    final result = snapshots.expand((snapshot) => snapshot.docs).map(Customer.fromDoc).toList();
     result.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return result;
   }
