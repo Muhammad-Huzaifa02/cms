@@ -14,3 +14,7 @@
 
 # Biometrics & Secure Storage
 -keep class androidx.biometric.** { *; }
+
+# Play Core / Deferred Components
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }
