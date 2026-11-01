@@ -1,11 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/services/staff_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/perspective_page_route.dart';
 import 'add_staff_screen.dart';
-import 'staff_detail_screen.dart';
 
 class StaffManagementScreen extends StatefulWidget {
   final AppUser currentUser;
@@ -17,7 +15,6 @@ class StaffManagementScreen extends StatefulWidget {
 
 class _StaffManagementScreenState extends State<StaffManagementScreen> {
   final _service = StaffService();
-  late final Stream<List<AppUser>> _staffStream = _service.staffList();
 
   Future<void> _togglePermission(AppUser staff, String perm, bool value) async {
     final updated = staff.permissions.copyWith(
@@ -37,7 +34,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Staff accounts')),
       body: StreamBuilder<List<AppUser>>(
-        stream: _staffStream,
+        stream: _service.staffList(),
         builder: (context, snap) {
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
           final staff = snap.data!;
@@ -64,20 +61,13 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () => push3D(context, StaffDetailScreen(staff: s)),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 6),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                    Text(s.active ? 'Active' : 'Deactivated',
-                                        style: TextStyle(fontSize: 14, color: s.active ? AppColors.brand : AppColors.danger)),
-                                  ],
-                                ),
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                                Text(s.active ? 'Active' : 'Deactivated',
+                                    style: TextStyle(fontSize: 11, color: s.active ? AppColors.brand : AppColors.danger)),
+                              ],
                             ),
                           ),
                           Switch(
@@ -87,6 +77,11 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                         ],
                       ),
                       const Divider(height: 22),
+                      Text(
+                        'Role: ${s.permissions.roleCategory.label}',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.ink),
+                      ),
+                      const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 6,
@@ -115,7 +110,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
 
   Widget _permChip(String label, bool value, ValueChanged<bool> onChanged) {
     return FilterChip(
-      label: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+      label: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
       selected: value,
       onSelected: onChanged,
       selectedColor: const Color(0xFFE3F0EC),

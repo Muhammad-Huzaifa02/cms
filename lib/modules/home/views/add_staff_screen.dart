@@ -23,11 +23,38 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  StaffRoleCategory _selectedRole = StaffRoleCategory.viewer;
   bool _view = true, _add = false, _edit = false, _delete = false;
   bool _saving = false;
   String? _error;
 
   bool get _emailLooksValid => RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(_emailCtrl.text.trim());
+
+  Permissions get _permissions => Permissions(view: _view, add: _add, edit: _edit, delete: _delete);
+
+  void _updatePermissions({bool? view, bool? add, bool? edit, bool? delete}) {
+    setState(() {
+      if (view != null) _view = view;
+      if (add != null) _add = add;
+      if (edit != null) _edit = edit;
+      if (delete != null) _delete = delete;
+      _selectedRole = _permissions.roleCategory;
+    });
+  }
+
+  void _selectRole(StaffRoleCategory? role) {
+    if (role == null) return;
+    setState(() {
+      _selectedRole = role;
+      if (role != StaffRoleCategory.custom) {
+        final permissions = role.permissions;
+        _view = permissions.view;
+        _add = permissions.add;
+        _edit = permissions.edit;
+        _delete = permissions.delete;
+      }
+    });
+  }
 
   Future<void> _create() async {
     final missing = <String>[];
@@ -65,7 +92,7 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
         email: _emailCtrl.text.trim(),
         phone: _phoneCtrl.text.trim(),
         password: _passwordCtrl.text,
-        permissions: Permissions(view: _view, add: _add, edit: _edit, delete: _delete),
+        permissions: _permissions,
         createdByUid: widget.currentUser.uid,
       );
       if (!mounted) return;
@@ -105,11 +132,32 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
           const Text('* All fields required — staff can login with either their email or phone number.',
               style: TextStyle(fontSize: 14, color: AppColors.muted)),
           const SizedBox(height: 18),
+          const Text('Staff role', style: TextStyle(fontSize: 16, color: AppColors.ink, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          InputDecorator(
+            decoration: const InputDecoration(),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<StaffRoleCategory>(
+                value: _selectedRole,
+                isExpanded: true,
+                items: StaffRoleCategory.values
+                    .map((role) => DropdownMenuItem(value: role, child: Text(role.label)))
+                    .toList(),
+                onChanged: _selectRole,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(_selectedRole.description, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+          const SizedBox(height: 6),
+          const Text('Admin access is managed separately and cannot be assigned here.',
+              style: TextStyle(fontSize: 12, color: AppColors.muted)),
+          const SizedBox(height: 14),
           const Text('Permissions', style: TextStyle(fontSize: 16, color: AppColors.ink, fontWeight: FontWeight.w700)),
-          SwitchListTile(title: const Text('View customers'), value: _view, onChanged: (v) => setState(() => _view = v)),
-          SwitchListTile(title: const Text('Add customers'), value: _add, onChanged: (v) => setState(() => _add = v)),
-          SwitchListTile(title: const Text('Edit customers'), value: _edit, onChanged: (v) => setState(() => _edit = v)),
-          SwitchListTile(title: const Text('Delete customers'), value: _delete, onChanged: (v) => setState(() => _delete = v)),
+          SwitchListTile(title: const Text('View customers'), value: _view, onChanged: (v) => _updatePermissions(view: v)),
+          SwitchListTile(title: const Text('Add customers'), value: _add, onChanged: (v) => _updatePermissions(add: v)),
+          SwitchListTile(title: const Text('Edit customers'), value: _edit, onChanged: (v) => _updatePermissions(edit: v)),
+          SwitchListTile(title: const Text('Delete customers'), value: _delete, onChanged: (v) => _updatePermissions(delete: v)),
           if (_error != null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),

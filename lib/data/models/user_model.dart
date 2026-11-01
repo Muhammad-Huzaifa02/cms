@@ -42,6 +42,48 @@ class Permissions {
   }
 }
 
+/// Named staff access categories are presets for the existing customer
+/// permissions. Admin remains a separate account role.
+enum StaffRoleCategory { viewer, dataEntry, editor, manager, custom }
+
+extension StaffRoleCategoryX on StaffRoleCategory {
+  String get label => switch (this) {
+        StaffRoleCategory.viewer => 'Viewer',
+        StaffRoleCategory.dataEntry => 'Data Entry',
+        StaffRoleCategory.editor => 'Editor',
+        StaffRoleCategory.manager => 'Manager',
+        StaffRoleCategory.custom => 'Custom',
+      };
+
+  String get description => switch (this) {
+        StaffRoleCategory.viewer => 'Can view customer records.',
+        StaffRoleCategory.dataEntry => 'Can view and add customer records.',
+        StaffRoleCategory.editor => 'Can view, add, and edit customer records.',
+        StaffRoleCategory.manager => 'Can view, add, edit, and delete customer records.',
+        StaffRoleCategory.custom => 'Set the individual permissions below.',
+      };
+
+  Permissions get permissions => switch (this) {
+        StaffRoleCategory.viewer => const Permissions(view: true),
+        StaffRoleCategory.dataEntry => const Permissions(view: true, add: true),
+        StaffRoleCategory.editor => const Permissions(view: true, add: true, edit: true),
+        StaffRoleCategory.manager => const Permissions(view: true, add: true, edit: true, delete: true),
+        StaffRoleCategory.custom => const Permissions(),
+      };
+}
+
+extension PermissionsRoleCategoryX on Permissions {
+  StaffRoleCategory get roleCategory {
+    for (final role in StaffRoleCategory.values.where((r) => r != StaffRoleCategory.custom)) {
+      final preset = role.permissions;
+      if (view == preset.view && add == preset.add && edit == preset.edit && delete == preset.delete) {
+        return role;
+      }
+    }
+    return StaffRoleCategory.custom;
+  }
+}
+
 class AppUser {
   final String uid;
   final String name;
