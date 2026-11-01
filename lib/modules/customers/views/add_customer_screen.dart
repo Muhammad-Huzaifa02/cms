@@ -24,7 +24,71 @@ class AddCustomerScreen extends StatefulWidget {
 }
 
 class _AddCustomerScreenState extends State<AddCustomerScreen> {
-  static const _accountTypes = ['Current', 'Savings', 'Current Plus', 'Business'];
+  static const _accountCategories = [
+    'Current Accounts',
+    'Savings Accounts',
+    'Special Savings Accounts',
+    'Asaan Accounts',
+    'Digital Accounts',
+    'Roshan Resident Accounts',
+    'Home Remittance Accounts',
+    'Meezan Smart Accounts',
+    'Business / Entity Accounts',
+  ];
+
+  static const Map<String, List<String>> _accountTypesByCategory = {
+    'Current Accounts': [
+      'Meezan Rupee Current Account',
+      'Meezan Dollar Current Account',
+      'Meezan Euro Current Account',
+      'Meezan GBP Current Account',
+      'Meezan Express Current Account',
+    ],
+    'Savings Accounts': [
+      'Meezan Rupee Savings Account',
+      'Meezan Dollar Savings Account',
+      'Meezan Euro Savings Account',
+      'Meezan GBP Savings Account',
+      'Meezan Express Savings Account',
+    ],
+    'Special Savings Accounts': [
+      'Meezan Bachat Account',
+      'Meezan Labbaik Saving Aasaan',
+      'Meezan Senior Citizen Account',
+      'Meezan Plus Account',
+      'Meezan Teens Club Account',
+      'Meezan Kids Club Account',
+    ],
+    'Asaan Accounts': [
+      'Meezan Asaan Current Account',
+      'Meezan Asaan Savings Account',
+    ],
+    'Digital Accounts': [
+      'Digital Student Account',
+      'Digital Asaan Account',
+      'Digital Freelancer Account',
+    ],
+    'Roshan Resident Accounts': [
+      'Meezan Roshan Resident Current Account',
+      'Meezan Roshan Resident Savings Account',
+    ],
+    'Home Remittance Accounts': [
+      'Sohni Dharti Remittance Account',
+      'Smart Remittance Wallet',
+      'Roshan Digital Account',
+    ],
+    'Meezan Smart Accounts': [
+      'Smart Wallet Current',
+      'Smart Wallet Savings',
+      'Smart Asaan Mobile Account',
+    ],
+    'Business / Entity Accounts': [
+      'Business / Entity Current Account',
+      'Business / Entity Savings Account',
+      'Karobari Munafa Account',
+      'Karobari Munafa Account Plus',
+    ],
+  };
 
   final _formKey = GlobalKey<FormState>();
   final _service = CustomerService();
@@ -33,10 +97,10 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final _phoneCtrl = TextEditingController();
   final _cnicCtrl = TextEditingController();
   final _accountCtrl = TextEditingController();
-  final _ibnCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
-  String _accountType = _accountTypes.first;
+  String _accountCategory = _accountCategories.first;
+  String _accountType = _accountTypesByCategory[_accountCategories.first]!.first;
   bool _saving = false;
   String? _error;
 
@@ -47,7 +111,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     _phoneCtrl.dispose();
     _cnicCtrl.dispose();
     _accountCtrl.dispose();
-    _ibnCtrl.dispose();
     _addressCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
@@ -66,7 +129,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
         phone: _phoneCtrl.text.trim(),
         cnic: _cnicCtrl.text.trim(),
         accountType: _accountType,
-        ibnNo: _ibnCtrl.text.trim(),
         address: _addressCtrl.text.trim(),
         notes: _notesCtrl.text.trim(),
         createdBy: widget.currentUser.uid,
@@ -144,41 +206,28 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(14)],
                 ),
                 const SizedBox(height: 16),
-                AccountField(
-                  label: 'IBN No.',
-                  controller: _ibnCtrl,
-                  hintText: '24 uppercase letters or digits',
-                  keyboardType: TextInputType.text,
-                  validator: Validators.ibnNo,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-                    TextInputFormatter.withFunction((oldValue, newValue) => newValue.copyWith(
-                          text: newValue.text.toUpperCase(),
-                          selection: newValue.selection,
-                        )),
-                    LengthLimitingTextInputFormatter(24),
-                  ],
+                const Text('Account Category', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                const SizedBox(height: 6),
+                _accountDropdown(
+                  value: _accountCategory,
+                  options: _accountCategories,
+                  onChanged: (category) {
+                    if (category == null) return;
+                    setState(() {
+                      _accountCategory = category;
+                      _accountType = _accountTypesByCategory[category]!.first;
+                    });
+                  },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 const Text('Account Type', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
                 const SizedBox(height: 6),
-                // DropdownButton inside an InputDecorator (rather than
-                // DropdownButtonFormField) so it picks up the app's themed
-                // input look without relying on `value`, which newer
-                // Flutter SDKs have deprecated on the FormField variant.
-                InputDecorator(
-                  decoration: const InputDecoration(),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _accountType,
-                      isExpanded: true,
-                      isDense: true,
-                      items: _accountTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                      onChanged: (v) {
-                        if (v != null) setState(() => _accountType = v);
-                      },
-                    ),
-                  ),
+                _accountDropdown(
+                  value: _accountType,
+                  options: _accountTypesByCategory[_accountCategory]!,
+                  onChanged: (type) {
+                    if (type != null) setState(() => _accountType = type);
+                  },
                 ),
               ],
             ),
@@ -193,6 +242,31 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
             const SizedBox(height: 18),
             PrimaryButton(label: 'Save Customer', loading: _saving, onPressed: _save),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _accountDropdown({
+    required String value,
+    required List<String> options,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return InputDecorator(
+      decoration: const InputDecoration(),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          isDense: true,
+          menuMaxHeight: 360,
+          items: options
+              .map((option) => DropdownMenuItem(
+                    value: option,
+                    child: Text(option, overflow: TextOverflow.ellipsis),
+                  ))
+              .toList(),
+          onChanged: onChanged,
         ),
       ),
     );
