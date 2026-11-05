@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 /// Fades and slides [child] into place. [delay] genuinely staggers the
@@ -27,6 +28,7 @@ class _FadeInSlideState extends State<FadeInSlide> with SingleTickerProviderStat
       AnimationController(vsync: this, duration: widget.duration);
   late final Animation<double> _animation =
       CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+  Timer? _delayTimer;
 
   @override
   void initState() {
@@ -34,7 +36,7 @@ class _FadeInSlideState extends State<FadeInSlide> with SingleTickerProviderStat
     if (widget.delay == Duration.zero) {
       _controller.forward();
     } else {
-      Future.delayed(widget.delay, () {
+      _delayTimer = Timer(widget.delay, () {
         if (mounted) _controller.forward();
       });
     }
@@ -42,6 +44,7 @@ class _FadeInSlideState extends State<FadeInSlide> with SingleTickerProviderStat
 
   @override
   void dispose() {
+    _delayTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

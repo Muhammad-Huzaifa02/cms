@@ -11,10 +11,26 @@ import 'package:cms/routes/app_routes.dart';
 import 'package:cms/data/services/biometric_service.dart';
 import 'package:cms/core/widgets/biometric_lock_screen.dart';
 import 'package:cms/core/widgets/inactivity_watcher.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:cms/core/utils/device_integrity_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize Firebase App Check with Play Integrity (Android) and Debug provider (development)
+  if (!kIsWeb) {
+    try {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: kReleaseMode ? AndroidProvider.playIntegrity : AndroidProvider.debug,
+        appleProvider: kReleaseMode ? AppleProvider.deviceCheck : AppleProvider.debug,
+      );
+    } catch (e) {
+      debugPrint('App Check initialization: $e');
+    }
+  }
+
   // Offline persistence (SRS 5.5 / Data Model §6) is on by default for
   // mobile; nothing extra to enable here for Android/iOS.
   runApp(const CmsApp());
@@ -58,40 +74,66 @@ class CmsApp extends StatelessWidget {
 /// Routes to Login or Dashboard based on Firebase Auth state, and loads
 /// the matching `users/{uid}` document (role/permissions) before landing
 /// on the Dashboard.
-class _AuthGate extends StatelessWidget {
+class _AuthGate extends StatefulWidget {
   final AuthService authService;
   const _AuthGate({required this.authService});
 
   @override
+  State<_AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<_AuthGate> {
+  late final Future<bool> _integrityCheck = DeviceIntegrityService.instance.isDeviceCompromised();
+
+  @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: authService.authStateChanges,
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
+    return FutureBuilder<bool>(
+      future: _integrityCheck,
+      builder: (context, integritySnap) {
+        if (integritySnap.connectionState != ConnectionState.done) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.brand)));
+        }
+
+        // If device is rooted or jailbroken, block execution to protect customer financial data
+        if (integritySnap.data == true) {
           return Scaffold(
+            backgroundColor: AppColors.brandDeep,
             body: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset('assets/icon/app_logo.png', width: 80, height: 80),
-                  const SizedBox(height: 24),
-                  const CircularProgressIndicator(color: AppColors.brand),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.security_outlined, color: AppColors.danger, size: 54),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Security Alert',
+                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'For security compliance, this banking customer management application cannot run on a rooted or modified device.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13, height: 1.4),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
         }
-        final firebaseUser = snap.data;
-        if (firebaseUser == null) return LoginScreen(authService: authService);
 
-        return StreamBuilder<AppUser?>(
-          stream: authService.appUserStream(firebaseUser.uid),
-          builder: (context, userSnap) {
-            // We show a spinner while waiting for the stream's first value
-            // OR if the document doesn't exist yet (appUser == null). This
-            // handles the race condition where Auth creation fires before
-            // the Firestore record is written.
-            if (userSnap.connectionState == ConnectionState.waiting || userSnap.data == null) {
+        return StreamBuilder<User?>(
+          stream: widget.authService.authStateChanges,
+          builder: (context, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
               return Scaffold(
                 body: Center(
                   child: Column(
@@ -105,17 +147,43 @@ class _AuthGate extends StatelessWidget {
                 ),
               );
             }
+            final firebaseUser = snap.data;
+            if (firebaseUser == null) return LoginScreen(authService: widget.authService);
 
-            final appUser = userSnap.data;
-            if (appUser == null || !appUser.active) {
-              if (appUser != null && !appUser.active) {
-                // Deactivated user: sign them out AFTER the current build frame
-                // to avoid side-effects during build.
-                WidgetsBinding.instance.addPostFrameCallback((_) => authService.signOut());
-              }
-              return LoginScreen(authService: authService);
-            }
-            return _LockGate(currentUser: appUser, authService: authService);
+            return StreamBuilder<AppUser?>(
+              stream: widget.authService.appUserStream(firebaseUser.uid),
+              builder: (context, userSnap) {
+                // We show a spinner while waiting for the stream's first value
+                // OR if the document doesn't exist yet (appUser == null). This
+                // handles the race condition where Auth creation fires before
+                // the Firestore record is written.
+                if (userSnap.connectionState == ConnectionState.waiting || userSnap.data == null) {
+                  return Scaffold(
+                    body: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Image.asset('assets/icon/app_logo.png', width: 80, height: 80),
+                          const SizedBox(height: 24),
+                          const CircularProgressIndicator(color: AppColors.brand),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final appUser = userSnap.data;
+                if (appUser == null || !appUser.active) {
+                  if (appUser != null && !appUser.active) {
+                    // Deactivated user: sign them out AFTER the current build frame
+                    // to avoid side-effects during build.
+                    WidgetsBinding.instance.addPostFrameCallback((_) => widget.authService.signOut());
+                  }
+                  return LoginScreen(authService: widget.authService);
+                }
+                return _LockGate(currentUser: appUser, authService: widget.authService);
+              },
+            );
           },
         );
       },
