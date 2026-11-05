@@ -35,6 +35,21 @@ class CmsApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       onGenerateRoute: AppRoutes.onGenerateRoute,
+      builder: (context, child) {
+        // Clamps system font scale factor between 0.85 and 1.15 so if the user
+        // increases their device font size dramatically in OS accessibility settings,
+        // the app layout automatically preserves balanced proportions without
+        // overflow errors, broken cards, or clipped text.
+        final mediaQuery = MediaQuery.of(context);
+        final clampedScale = mediaQuery.textScaler.clamp(
+          minScaleFactor: 0.85,
+          maxScaleFactor: 1.15,
+        );
+        return MediaQuery(
+          data: mediaQuery.copyWith(textScaler: clampedScale),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: _AuthGate(authService: authService ?? AuthService()),
     );
   }
