@@ -63,24 +63,48 @@ class AuthService {
     if (isEmail) {
       loginEmail = trimmed;
     } else {
-      final phoneDoc = await _db.collection('phoneIndex').doc(normalizePhone(trimmed)).get();
-      final resolvedEmail = phoneDoc.data()?['email'] as String?;
-      if (resolvedEmail == null) {
-        throw Exception('No account found for that phone number.');
+      try {
+        final phoneDoc = await _db
+            .collection('phoneIndex')
+            .doc(normalizePhone(trimmed))
+            .get()
+            .timeout(const Duration(seconds: 12), onTimeout: () {
+          throw Exception(
+              'Connection timed out looking up phone number. Check your internet connection or try logging in with email.');
+        });
+        final resolvedEmail = phoneDoc.data()?['email'] as String?;
+        if (resolvedEmail == null) {
+          throw Exception('No account found for that phone number.');
+        }
+        loginEmail = resolvedEmail;
+      } on FirebaseException catch (e) {
+        throw Exception(
+            'Firestore error (${e.code}): ${e.message ?? 'Permission denied or network issue'}.');
       }
-      loginEmail = resolvedEmail;
     }
 
     try {
-      final cred = await _auth.signInWithEmailAndPassword(email: loginEmail, password: password);
+      final cred = await _auth
+          .signInWithEmailAndPassword(email: loginEmail, password: password)
+          .timeout(const Duration(seconds: 15), onTimeout: () {
+        throw Exception(
+            'Sign-in timed out. Please check your internet connection and try again.');
+      });
       final user = cred.user;
       if (user == null) throw Exception('Authentication failed — no user returned.');
       
       final uid = user.uid;
-      final doc = await _db.collection('users').doc(uid).get();
+      final doc = await _db
+          .collection('users')
+          .doc(uid)
+          .get()
+          .timeout(const Duration(seconds: 12), onTimeout: () {
+        throw Exception(
+            'Timed out loading user account data. Please check your connection.');
+      });
       if (!doc.exists) {
         await _auth.signOut();
-        throw Exception('No account record found for this login. Contact your Admin.');
+        throw Exception('No account record found for this login in Firestore. Contact your Admin.');
       }
       final appUser = AppUser.fromDoc(doc);
       if (!appUser.active) {
@@ -90,6 +114,9 @@ class AuthService {
       return appUser;
     } on FirebaseAuthException catch (e) {
       throw Exception(_friendlyAuthError(e));
+    } on FirebaseException catch (e) {
+      throw Exception(
+          'Database error (${e.code}): ${e.message ?? 'Access denied. Please check Firestore security rules.'}');
     }
   }
 

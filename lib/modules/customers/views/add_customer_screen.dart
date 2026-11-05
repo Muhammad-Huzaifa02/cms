@@ -90,15 +90,22 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     ],
   };
 
+  static const _genderOptions = ['Male', 'Female', 'Other'];
+  static const _statusOptions = ['Active', 'Inactive', 'Dormant', 'Blocked'];
+
   final _formKey = GlobalKey<FormState>();
   final _service = CustomerService();
   final _nameCtrl = TextEditingController();
   final _accountTitleCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _cnicCtrl = TextEditingController();
   final _accountCtrl = TextEditingController();
+  final _ibnCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
+  String _gender = 'Male';
+  String _status = 'Active';
   String _accountCategory = _accountCategories.first;
   String _accountType = _accountTypesByCategory[_accountCategories.first]!.first;
   bool _saving = false;
@@ -109,8 +116,10 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     _nameCtrl.dispose();
     _accountTitleCtrl.dispose();
     _phoneCtrl.dispose();
+    _emailCtrl.dispose();
     _cnicCtrl.dispose();
     _accountCtrl.dispose();
+    _ibnCtrl.dispose();
     _addressCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
@@ -129,6 +138,10 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
         phone: _phoneCtrl.text.trim(),
         cnic: _cnicCtrl.text.trim(),
         accountType: _accountType,
+        ibnNo: _ibnCtrl.text.trim().toUpperCase(),
+        status: _status,
+        gender: _gender,
+        email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
         address: _addressCtrl.text.trim(),
         notes: _notesCtrl.text.trim(),
         createdBy: widget.currentUser.uid,
@@ -166,6 +179,16 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   hintText: 'e.g. Ali Traders',
                   validator: Validators.accountTitle,
                 ),
+                const SizedBox(height: 16),
+                const Text('Gender', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                const SizedBox(height: 6),
+                _accountDropdown(
+                  value: _gender,
+                  options: _genderOptions,
+                  onChanged: (val) {
+                    if (val != null) setState(() => _gender = val);
+                  },
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -179,6 +202,20 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   keyboardType: TextInputType.phone,
                   validator: Validators.phone,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+                ),
+                const SizedBox(height: 16),
+                AccountField(
+                  label: 'Email Address (optional)',
+                  controller: _emailCtrl,
+                  hintText: 'customer@example.com',
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (val) {
+                    final trimmed = (val ?? '').trim();
+                    if (trimmed.isNotEmpty && (!trimmed.contains('@') || !trimmed.contains('.'))) {
+                      return 'Enter a valid email address.';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
                 AccountField(label: 'Address (optional)', controller: _addressCtrl),
@@ -204,6 +241,31 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   keyboardType: TextInputType.number,
                   validator: Validators.accountNumber,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(14)],
+                ),
+                const SizedBox(height: 16),
+                AccountField(
+                  label: 'IBN No.',
+                  controller: _ibnCtrl,
+                  hintText: 'e.g. PK36MEZN0001234567890123',
+                  validator: Validators.ibnNo,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                    TextInputFormatter.withFunction((oldValue, newValue) => newValue.copyWith(
+                          text: newValue.text.toUpperCase(),
+                          selection: newValue.selection,
+                        )),
+                    LengthLimitingTextInputFormatter(24),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text('Account Status', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                const SizedBox(height: 6),
+                _accountDropdown(
+                  value: _status,
+                  options: _statusOptions,
+                  onChanged: (val) {
+                    if (val != null) setState(() => _status = val);
+                  },
                 ),
                 const SizedBox(height: 16),
                 const Text('Account Category', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),

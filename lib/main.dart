@@ -10,6 +10,7 @@ import 'package:cms/modules/home/views/dashboard_screen.dart';
 import 'package:cms/routes/app_routes.dart';
 import 'package:cms/data/services/biometric_service.dart';
 import 'package:cms/core/widgets/biometric_lock_screen.dart';
+import 'package:cms/core/widgets/inactivity_watcher.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -124,23 +125,51 @@ class _LockGate extends StatefulWidget {
 
 class _LockGateState extends State<_LockGate> {
   late final Future<bool> _lockEnabledFuture = BiometricService().isLockEnabled(widget.currentUser.uid);
+  bool _timedOut = false;
+
+  void _handleInactivityTimeout() {
+    if (!mounted || _timedOut) return;
+    setState(() => _timedOut = true);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Session locked due to 5 minutes of inactivity to protect customer data.'),
+        duration: Duration(seconds: 4),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
       future: _lockEnabledFuture,
       builder: (context, snap) {
-        final dashboard = DashboardScreen(currentUser: widget.currentUser);
         if (snap.connectionState != ConnectionState.done) {
           // Don't reveal Dashboard until we actually know whether it
           // should be locked — a brief unlocked flash would defeat the
           // point of the lock.
           return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.brand)));
         }
-        if (snap.data != true) return dashboard;
-        return BiometricLockScreen(
-          uid: widget.currentUser.uid,
-          onSignOut: widget.authService.signOut,
+
+        final lockEnabled = snap.data == true;
+        final dashboard = DashboardScreen(currentUser: widget.currentUser);
+
+        // If inactive or biometric lock is enabled:
+        if (lockEnabled || _timedOut) {
+          return BiometricLockScreen(
+            uid: widget.currentUser.uid,
+            onSignOut: widget.authService.signOut,
+            child: InactivityWatcher(
+              timeoutDuration: const Duration(minutes: 5),
+              onTimeout: _handleInactivityTimeout,
+              child: dashboard,
+            ),
+          );
+        }
+
+        // Auto-lock when inactive even if biometric lock is not manually configured:
+        return InactivityWatcher(
+          timeoutDuration: const Duration(minutes: 5),
+          onTimeout: _handleInactivityTimeout,
           child: dashboard,
         );
       },

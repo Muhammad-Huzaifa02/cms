@@ -37,6 +37,8 @@ class Customer {
   final String accountType;
   final String ibnNo;
   final String status;
+  final String? gender;
+  final String? email;
   final DateTime? dateOpened;
   final String? address;
   final String? notes;
@@ -54,6 +56,8 @@ class Customer {
     required this.accountType,
     this.ibnNo = '',
     this.status = 'Active',
+    this.gender,
+    this.email,
     this.dateOpened,
     this.address,
     this.notes,
@@ -190,6 +194,8 @@ class Customer {
       accountType: data['accountType'] ?? 'Current',
       ibnNo: data['ibnNo'] ?? '',
       status: data['status'] ?? 'Active',
+      gender: data['gender'],
+      email: data['email'],
       dateOpened: (data['dateOpened'] as Timestamp?)?.toDate(),
       address: data['address'],
       notes: data['notes'],
@@ -211,6 +217,8 @@ class Customer {
       'accountType': accountType,
       'ibnNo': ibnNo.trim().toUpperCase(),
       'status': status,
+      'gender': gender,
+      'email': email,
       'dateOpened': openedDate != null ? Timestamp.fromDate(openedDate) : null,
       'address': address,
       'notes': notes,

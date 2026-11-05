@@ -18,7 +18,15 @@ import '../../../core/widgets/feedback_text.dart';
 class CustomerDetailScreen extends StatefulWidget {
   final Customer customer;
   final AppUser currentUser;
-  const CustomerDetailScreen({super.key, required this.customer, required this.currentUser});
+  final bool isEditable;
+  final bool allowEditAction;
+  const CustomerDetailScreen({
+    super.key,
+    required this.customer,
+    required this.currentUser,
+    this.isEditable = false,
+    this.allowEditAction = false,
+  });
 
   @override
   State<CustomerDetailScreen> createState() => _CustomerDetailScreenState();
@@ -27,9 +35,14 @@ class CustomerDetailScreen extends StatefulWidget {
 class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _service = CustomerService();
-  late TextEditingController _nameCtrl, _accountTitleCtrl, _phoneCtrl, _cnicCtrl, _addressCtrl, _notesCtrl, _ibnCtrl;
+  static const _genderOptions = ['Male', 'Female', 'Other'];
+  static const _statusOptions = ['Active', 'Inactive', 'Dormant', 'Blocked'];
+
+  late TextEditingController _nameCtrl, _accountTitleCtrl, _phoneCtrl, _cnicCtrl, _addressCtrl, _notesCtrl, _ibnCtrl, _emailCtrl;
   late final TextEditingController _accountTypeDisplayCtrl;
   late final TextEditingController _accountNumberDisplayCtrl;
+  late String _gender;
+  late String _status;
   bool _saving = false;
   String? _error;
 
@@ -40,12 +53,15 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     _nameCtrl = TextEditingController(text: c.name);
     _accountTitleCtrl = TextEditingController(text: c.accountTitle);
     _phoneCtrl = TextEditingController(text: c.phone);
+    _emailCtrl = TextEditingController(text: c.email ?? '');
     _cnicCtrl = TextEditingController(text: c.cnic);
     _addressCtrl = TextEditingController(text: c.address ?? '');
     _notesCtrl = TextEditingController(text: c.notes ?? '');
     _ibnCtrl = TextEditingController(text: c.ibnNo);
     _accountTypeDisplayCtrl = TextEditingController(text: c.accountType);
     _accountNumberDisplayCtrl = TextEditingController(text: c.accountNumber);
+    _gender = _genderOptions.contains(c.gender) ? c.gender! : _genderOptions.first;
+    _status = _statusOptions.contains(c.status) ? c.status : _statusOptions.first;
   }
 
   @override
@@ -53,6 +69,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     _nameCtrl.dispose();
     _accountTitleCtrl.dispose();
     _phoneCtrl.dispose();
+    _emailCtrl.dispose();
     _cnicCtrl.dispose();
     _addressCtrl.dispose();
     _notesCtrl.dispose();
@@ -62,8 +79,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     super.dispose();
   }
 
-  bool get _canEdit => widget.currentUser.can('edit');
-  bool get _canDelete => widget.currentUser.can('delete');
+  bool get _canEdit => widget.isEditable && widget.currentUser.can('edit');
+  bool get _canDelete => widget.isEditable && widget.currentUser.can('delete');
 
   Future<void> _save() async {
     setState(() => _error = null);
@@ -78,8 +95,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         phone: _phoneCtrl.text.trim(),
         cnic: _cnicCtrl.text.trim(),
         accountType: widget.customer.accountType,
-        ibnNo: _ibnCtrl.text.trim(),
-        status: widget.customer.status,
+        ibnNo: _ibnCtrl.text.trim().toUpperCase(),
+        status: _status,
+        gender: _gender,
+        email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
         dateOpened: widget.customer.dateOpened,
         address: _addressCtrl.text.trim(),
         notes: _notesCtrl.text.trim(),
@@ -127,7 +146,28 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Customer Details')),
+      appBar: AppBar(
+        title: Text(widget.isEditable ? 'Edit Customer' : 'Customer Details'),
+        actions: [
+          if (!widget.isEditable && widget.allowEditAction && widget.currentUser.can('edit'))
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit Customer',
+              onPressed: () {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => CustomerDetailScreen(
+                      customer: widget.customer,
+                      currentUser: widget.currentUser,
+                      isEditable: true,
+                      allowEditAction: true,
+                    ),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
       body: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -140,6 +180,17 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 AccountField(label: 'Full Name', controller: _nameCtrl, readOnly: !_canEdit, validator: Validators.requiredName),
                 const SizedBox(height: 16),
                 AccountField(label: 'Account Title', controller: _accountTitleCtrl, readOnly: !_canEdit, validator: Validators.accountTitle),
+                const SizedBox(height: 16),
+                const Text('Gender', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                const SizedBox(height: 6),
+                _dropdown(
+                  value: _gender,
+                  options: _genderOptions,
+                  enabled: _canEdit,
+                  onChanged: (val) {
+                    if (val != null) setState(() => _gender = val);
+                  },
+                ),
                 const SizedBox(height: 16),
                 AccountField(
                   label: 'Account Number',
@@ -162,6 +213,17 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
+                const Text('Account Status', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                const SizedBox(height: 6),
+                _dropdown(
+                  value: _status,
+                  options: _statusOptions,
+                  enabled: _canEdit,
+                  onChanged: (val) {
+                    if (val != null) setState(() => _status = val);
+                  },
+                ),
+                const SizedBox(height: 16),
                 AccountField(label: 'Account Type', controller: _accountTypeDisplayCtrl, readOnly: true),
                 const SizedBox(height: 16),
                 AccountField(
@@ -180,6 +242,20 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   validator: Validators.phone,
                   keyboardType: TextInputType.phone,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+                ),
+                const SizedBox(height: 16),
+                AccountField(
+                  label: 'Email Address (optional)',
+                  controller: _emailCtrl,
+                  readOnly: !_canEdit,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (val) {
+                    final trimmed = (val ?? '').trim();
+                    if (trimmed.isNotEmpty && (!trimmed.contains('@') || !trimmed.contains('.'))) {
+                      return 'Enter a valid email address.';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
                 AccountField(label: 'Address', controller: _addressCtrl, readOnly: !_canEdit),
@@ -201,6 +277,32 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _dropdown({
+    required String value,
+    required List<String> options,
+    required bool enabled,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return InputDecorator(
+      decoration: const InputDecoration(),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          isDense: true,
+          menuMaxHeight: 360,
+          items: options
+              .map((option) => DropdownMenuItem(
+                    value: option,
+                    child: Text(option, overflow: TextOverflow.ellipsis),
+                  ))
+              .toList(),
+          onChanged: enabled ? onChanged : null,
         ),
       ),
     );

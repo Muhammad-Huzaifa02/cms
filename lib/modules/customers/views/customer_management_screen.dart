@@ -210,7 +210,11 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
                 maxLines: 2, overflow: TextOverflow.ellipsis),
             onTap: () => push3D(
               context,
-              CustomerDetailScreen(customer: customer, currentUser: widget.currentUser),
+              CustomerDetailScreen(
+                customer: customer,
+                currentUser: widget.currentUser,
+                allowEditAction: true,
+              ),
             ),
             trailing: IconButton(
               tooltip: favorite ? 'Remove from favorites' : 'Add to favorites',

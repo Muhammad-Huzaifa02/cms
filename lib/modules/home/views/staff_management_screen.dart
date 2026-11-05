@@ -4,6 +4,7 @@ import '../../../data/services/staff_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/perspective_page_route.dart';
 import 'add_staff_screen.dart';
+import 'staff_profile_screen.dart';
 
 class StaffManagementScreen extends StatefulWidget {
   final AppUser currentUser;
@@ -48,35 +49,43 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
               final s = staff[i];
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: AppColors.brand,
-                            child: Text(s.name.isNotEmpty ? s.name[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white)),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
-                                Text(s.active ? 'Active' : 'Deactivated',
-                                    style: TextStyle(fontSize: 11, color: s.active ? AppColors.brand : AppColors.danger)),
-                              ],
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () => push3D(
+                    context,
+                    StaffProfileScreen(staff: s, currentUser: widget.currentUser),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: AppColors.brand,
+                              child: Text(s.name.isNotEmpty ? s.name[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white)),
                             ),
-                          ),
-                          Switch(
-                            value: s.active,
-                            onChanged: (v) => _service.setActive(staffUid: s.uid, active: v, actor: widget.currentUser),
-                          ),
-                        ],
-                      ),
-                      const Divider(height: 22),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                                  Text(s.active ? 'Active' : 'Deactivated',
+                                      style: TextStyle(fontSize: 11, color: s.active ? AppColors.brand : AppColors.danger)),
+                                ],
+                              ),
+                            ),
+                            Switch(
+                              value: s.active,
+                              onChanged: (v) => _service.setActive(staffUid: s.uid, active: v, actor: widget.currentUser),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.chevron_right, color: AppColors.muted, size: 20),
+                          ],
+                        ),
+                        const Divider(height: 22),
                       Text(
                         'Role: ${s.permissions.roleCategory.label}',
                         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.ink),
@@ -94,6 +103,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                       ),
                     ],
                   ),
+                ),
                 ),
               );
             },

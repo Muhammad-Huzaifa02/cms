@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/perspective_page_route.dart';
+import '../../../core/utils/login_rate_limiter.dart';
 import '../../../core/widgets/fade_in_slide.dart';
 import '../../home/views/dashboard_screen.dart';
 import 'create_admin_screen.dart';
@@ -19,18 +21,65 @@ class _LoginScreenState extends State<LoginScreen> {
   late final Future<bool> _adminExistsFuture = _auth.adminAlreadyExists();
   final _identifierCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _rateLimiter = LoginRateLimiter.instance;
+  Timer? _countdownTimer;
+  int _lockoutSecondsLeft = 0;
   bool _loading = false;
   bool _obscurePassword = true;
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    _checkInitialLockout();
+  }
+
+  void _checkInitialLockout() {
+    if (_rateLimiter.isLockedOut) {
+      _startLockoutTimer(_rateLimiter.remainingLockoutSeconds);
+    }
+  }
+
+  void _startLockoutTimer(int seconds) {
+    _countdownTimer?.cancel();
+    setState(() {
+      _lockoutSecondsLeft = seconds;
+      _error = 'Too many failed login attempts. Please wait $_lockoutSecondsLeft seconds.';
+    });
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final remaining = _rateLimiter.remainingLockoutSeconds;
+      if (remaining <= 0) {
+        timer.cancel();
+        setState(() {
+          _lockoutSecondsLeft = 0;
+          _error = null;
+        });
+      } else {
+        setState(() {
+          _lockoutSecondsLeft = remaining;
+          _error = 'Too many failed login attempts. Please wait $_lockoutSecondsLeft seconds.';
+        });
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    _countdownTimer?.cancel();
     _identifierCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _signIn() async {
+    if (_rateLimiter.isLockedOut) {
+      _startLockoutTimer(_rateLimiter.remainingLockoutSeconds);
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
@@ -40,12 +89,23 @@ class _LoginScreenState extends State<LoginScreen> {
         identifier: _identifierCtrl.text.trim(),
         password: _passwordCtrl.text,
       );
+      _rateLimiter.recordSuccessfulLogin();
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         Perspective3DRoute(page: DashboardScreen(currentUser: user)),
       );
     } catch (e) {
-      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      final lockoutTime = _rateLimiter.recordFailedAttempt();
+      if (lockoutTime > 0) {
+        _startLockoutTimer(lockoutTime);
+      } else {
+        final remainingTries = LoginRateLimiter.maxAllowedAttempts - _rateLimiter.failedAttempts;
+        final baseMsg = e.toString().replaceFirst('Exception: ', '');
+        final warningMsg = remainingTries <= 2
+            ? '$baseMsg ($remainingTries attempts remaining before temporary lockout).'
+            : baseMsg;
+        setState(() => _error = warningMsg);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -234,10 +294,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: _loading ? null : _signIn,
+                                onPressed: (_loading || _lockoutSecondsLeft > 0) ? null : _signIn,
                                 child: _loading
                                     ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                    : const Text('Login'),
+                                    : Text(_lockoutSecondsLeft > 0 ? 'Locked ($_lockoutSecondsLeft s)' : 'Login'),
                               ),
                             ),
                           ],
