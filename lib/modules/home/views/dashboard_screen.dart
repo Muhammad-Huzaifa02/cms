@@ -540,9 +540,12 @@ class _CustomerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initials = customer.name.trim().isEmpty
+    final titleText = customer.accountTitle.trim().isNotEmpty
+        ? customer.accountTitle.trim()
+        : customer.name.trim();
+    final initials = titleText.isEmpty
         ? '?'
-        : customer.name.trim().split(RegExp(r'\s+')).map((w) => w[0]).take(2).join().toUpperCase();
+        : titleText.split(RegExp(r'\s+')).map((w) => w.isNotEmpty ? w[0] : '').take(2).join().toUpperCase();
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TiltTapCard(
@@ -568,7 +571,7 @@ class _CustomerTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        customer.name,
+                        titleText,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
