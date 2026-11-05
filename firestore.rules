@@ -200,8 +200,7 @@ service cloud.firestore {
     }
 
     match /phoneIndex/{phone} {
-      allow get: if true;
-      allow list: if false;
+      allow get, list: if signedIn();
       allow create: if signedIn() && (
         (request.resource.data.uid == request.auth.uid
           && request.resource.data.keys().hasOnly(['email', 'uid'])

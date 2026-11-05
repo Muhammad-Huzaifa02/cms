@@ -243,26 +243,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             const Text('Login', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.brandDeep)),
                             const SizedBox(height: 4),
-                            const Text('Use either your email or phone number', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                            const Text('Enter your registered email address', style: TextStyle(fontSize: 11, color: AppColors.muted)),
                             const SizedBox(height: 16),
-                            AnimatedBuilder(
-                              animation: _identifierCtrl,
-                              builder: (context, _) {
-                                final text = _identifierCtrl.text.trim();
-                                final isEmail = text.contains('@');
-                                return TextField(
-                                  controller: _identifierCtrl,
-                                  keyboardType: TextInputType.emailAddress,
-                                  decoration: InputDecoration(
-                                    hintText: 'Email or phone number',
-                                    prefixIcon: Icon(
-                                      text.isEmpty ? Icons.person_outline : (isEmail ? Icons.email_outlined : Icons.phone_outlined),
-                                      size: 19,
-                                      color: AppColors.muted,
-                                    ),
-                                  ),
-                                );
-                              },
+                            TextField(
+                              controller: _identifierCtrl,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: const InputDecoration(
+                                hintText: 'Email address',
+                                prefixIcon: Icon(
+                                  Icons.email_outlined,
+                                  size: 19,
+                                  color: AppColors.muted,
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 10),
                             TextField(

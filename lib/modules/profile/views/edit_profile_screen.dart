@@ -351,7 +351,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: SectionHeader('Security'),
               ),
               SectionCard(
-                title: 'Biometric Login',
+                title: 'Biometric App Lock',
                 children: [
                   LayoutBuilder(builder: (context, constraints) {
                     final compact = constraints.maxWidth < 420 || MediaQuery.textScalerOf(context).scale(1) > 1.25;
@@ -359,19 +359,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _biometricEnabled ? 'Enabled' : 'Disabled',
+                          _biometricEnabled ? 'Active Protection' : 'Disabled',
                           style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w600,
-                            color: _biometricEnabled ? AppColors.brand : AppColors.muted,
+                            color: _biometricEnabled ? AppColors.success : AppColors.muted,
                           ),
                         ),
                         const SizedBox(height: 3),
                         Text(
                           _biometricEnabled
-                              ? 'You can log in with your fingerprint next time'
-                              : 'Log in with your fingerprint instead of typing your password',
-                          style: const TextStyle(fontSize: 14, color: AppColors.muted, height: 1.4),
+                              ? 'Fingerprint/Face ID required whenever app resumes or inactivity timeout occurs'
+                              : 'Enable fingerprint or Face ID to quickly unlock CMS without typing your password each time',
+                          style: const TextStyle(fontSize: 13, color: AppColors.muted, height: 1.4),
                         ),
                       ],
                     );

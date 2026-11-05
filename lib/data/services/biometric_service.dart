@@ -70,13 +70,16 @@ class BiometricService {
 
   /// Never throws — every PlatformException case Android/iOS can raise
   /// here is mapped to a [BiometricResult] instead of crashing the caller.
-  Future<BiometricResult> authenticate({String reason = 'Unlock CMS'}) async {
+  Future<BiometricResult> authenticate({
+    String reason = 'Authenticate with fingerprint or Face ID',
+    bool biometricOnly = false,
+  }) async {
     try {
       final success = await _auth.authenticate(
         localizedReason: reason,
-        options: const AuthenticationOptions(
+        options: AuthenticationOptions(
           stickyAuth: true,
-          biometricOnly: true,
+          biometricOnly: biometricOnly,
         ),
       );
       return success ? BiometricResult.success : BiometricResult.cancelled;

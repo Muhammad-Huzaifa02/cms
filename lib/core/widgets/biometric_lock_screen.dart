@@ -100,52 +100,123 @@ class _BiometricLockScreenState extends State<BiometricLockScreen> with WidgetsB
         ),
         child: SafeArea(
           child: Center(
-            child: SingleChildScrollView(child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Shield + Biometric Glowing Hub
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.1),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.brandDeep.withValues(alpha: 0.3),
+                            blurRadius: 24,
+                            spreadRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.fingerprint_rounded,
+                          color: Colors.white.withValues(alpha: 0.95),
+                          size: 56,
+                        ),
+                      ),
                     ),
-                    child: const Icon(Icons.fingerprint, color: Colors.white, size: 40),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text('Welcome back', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Tap below to continue with fingerprint',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 12.5),
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 14),
-                    Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.amber, fontSize: 12)),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Session Locked',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Touch fingerprint sensor to unlock CMS banking portal',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.75),
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.danger.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.info_outline, color: Colors.amber, size: 16),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                _error!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.amber, fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: _checking ? null : _tryBiometricLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: AppColors.brandDeep,
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: _checking
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.brand),
+                              )
+                            : const Icon(Icons.fingerprint, size: 22),
+                        label: Text(
+                          _checking ? 'Verifying…' : 'Unlock with Biometrics',
+                          style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton.icon(
+                      onPressed: widget.onSignOut,
+                      icon: Icon(Icons.logout, color: Colors.white.withValues(alpha: 0.8), size: 16),
+                      label: Text(
+                        'Sign in with password instead',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   ],
-                  const SizedBox(height: 28),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _checking ? null : _tryBiometricLogin,
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: AppColors.brandDeep),
-                      icon: _checking
-                          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.brand))
-                          : const Icon(Icons.fingerprint),
-                      label: Text(_checking ? 'Checking…' : 'Login with Fingerprint'),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  TextButton(
-                    onPressed: widget.onSignOut,
-                    child: Text('Use password instead', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12.5)),
-                  ),
-                ],
+                ),
               ),
-            )),
+            ),
           ),
         ),
       ),

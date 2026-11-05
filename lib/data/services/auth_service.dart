@@ -51,36 +51,14 @@ class AuthService {
     }
   }
 
-  /// [identifier] is either a real email or a phone number — auto-detected.
+  /// Standard banking sign-in with verified email and password.
   Future<AppUser> signIn({
     required String identifier,
     required String password,
   }) async {
-    final trimmed = identifier.trim();
-    final isEmail = trimmed.contains('@');
-    String loginEmail;
-
-    if (isEmail) {
-      loginEmail = trimmed;
-    } else {
-      try {
-        final phoneDoc = await _db
-            .collection('phoneIndex')
-            .doc(normalizePhone(trimmed))
-            .get()
-            .timeout(const Duration(seconds: 12), onTimeout: () {
-          throw Exception(
-              'Connection timed out looking up phone number. Check your internet connection or try logging in with email.');
-        });
-        final resolvedEmail = phoneDoc.data()?['email'] as String?;
-        if (resolvedEmail == null) {
-          throw Exception('No account found for that phone number.');
-        }
-        loginEmail = resolvedEmail;
-      } on FirebaseException catch (e) {
-        throw Exception(
-            'Firestore error (${e.code}): ${e.message ?? 'Permission denied or network issue'}.');
-      }
+    final loginEmail = identifier.trim();
+    if (!loginEmail.contains('@')) {
+      throw Exception('Please enter a valid email address.');
     }
 
     try {
