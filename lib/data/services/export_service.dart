@@ -25,16 +25,35 @@ class ExportService {
     final sheet = book['Customers'];
     book.setDefaultSheet('Customers');
 
-    final headers = ['Name', 'Phone', 'CNIC', 'Account Number', 'Account Type', 'Date Opened', 'Address', 'Notes'];
+    final headers = [
+      'Name',
+      'Account Title',
+      'Phone',
+      'Email',
+      'CNIC',
+      'Account Number',
+      'IBN No.',
+      'Account Type',
+      'Gender',
+      'Status',
+      'Date Opened',
+      'Address',
+      'Notes'
+    ];
     sheet.appendRow(headers.map((h) => xls.TextCellValue(h)).toList());
 
     for (final c in customers) {
       sheet.appendRow([
         xls.TextCellValue(c.name),
+        xls.TextCellValue(c.accountTitle),
         xls.TextCellValue(c.phone),
+        xls.TextCellValue(c.email ?? ''),
         xls.TextCellValue(c.cnic),
         xls.TextCellValue(c.accountNumber),
+        xls.TextCellValue(c.ibnNo),
         xls.TextCellValue(c.accountType),
+        xls.TextCellValue(c.gender ?? ''),
+        xls.TextCellValue(c.status),
         xls.TextCellValue(c.dateOpened != null ? DateFormat('yyyy-MM-dd').format(c.dateOpened!) : ''),
         xls.TextCellValue(c.address ?? ''),
         xls.TextCellValue(c.notes ?? ''),
@@ -54,7 +73,7 @@ class ExportService {
     if (!actor.isAdmin) throw Exception('Only Admin can export customer data.');
 
     final doc = pw.Document();
-    const headers = ['Name', 'Phone', 'CNIC', 'Account No.', 'Type'];
+    const headers = ['Name', 'Account Title', 'Phone', 'CNIC', 'Account No.', 'IBN No.', 'Status'];
 
     doc.addPage(
       pw.MultiPage(
@@ -67,7 +86,7 @@ class ExportService {
           pw.TableHelper.fromTextArray(
             headers: headers,
             data: customers
-                .map((c) => [c.name, c.phone, c.cnic, c.accountNumber, c.accountType])
+                .map((c) => [c.name, c.accountTitle, c.phone, c.cnic, c.accountNumber, c.ibnNo, c.status])
                 .toList(),
             headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
             headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFF0A6B57)),
