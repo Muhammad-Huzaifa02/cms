@@ -130,3 +130,37 @@ CNIC is editable. An earlier fix briefly showed CNIC unmasked to every
 editor and, via a disabled field, to view-only staff; that was
 corrected.
 
+## Account Title on Recent Customers — settled
+
+Dashboard recent customer cards display **Account Title** as the prominent
+card header rather than the customer's personal name. The personal name is
+visible on the detail card upon inspection.
+
+## View-Only on Search & Dashboard — settled
+
+Opening customer records from Search Results or Dashboard recent lists passes
+`allowEditAction: false`, forcing view-only mode and suppressing the Edit action.
+Customer editing is strictly accessible through the dedicated Customer Management
+screen (`allowEditAction: true`). This protects customer records from accidental
+modification during routine branch lookups.
+
+## IBAN placement & format — settled
+
+IBAN (`ibnNo`) is placed directly after Account Number on forms and detail
+screens. It must be strictly 24 alphanumeric characters starting with `PK`.
+
+## Responsive Font Scaling Clamp (0.85 - 1.15) — settled
+
+In `main.dart`, `MaterialApp.builder` clamps `textScaler` between `0.85` and `1.15`.
+Extreme OS-level text scaling breaks card layouts and causes horizontal/vertical
+render overflow. This range satisfies accessibility needs while guaranteeing layout
+predictability across device sizes.
+
+## Cybersecurity Guards Fail-Closed — settled
+
+`DeviceIntegrityService` (root/jailbreak/hook detection) and Firebase App Check
+are evaluated before `_AuthGate` renders the authenticated interface. If a device
+is compromised, the app halts at a hard Security Alert screen. Do not weaken or
+bypass this check.
+
+

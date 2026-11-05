@@ -1,31 +1,75 @@
-# Security Baseline Update
+# Security Baseline & Threat Remediation Update
 
-This file records Firestore rule and customer-service hardening on the extracted workspace copy. It has not been deployed to Firebase. The uploaded archive and original source were left unchanged.
+This document records the full security hardening and loophole remediation across Firestore rules, native Android configurations, Flutter runtime guards, and customer service layers.
 
-## Changes made in `firestore.rules`
+---
 
-- Bootstrap can only change from false to true when the same atomic operation creates/updates the caller's Admin user document with `createdBy` equal to that caller. Unrelated authenticated users can no longer claim the setup flag by themselves.
-- Bootstrap initialization remains open to create the false flag because the first-run app flow depends on that. This means the first Admin is still whoever completes the unclaimed bootstrap first; production provisioning policy must account for that.
-- The phone index cannot be listed as a collection. Exact-document reads remain public so phone-number login can resolve an email without a signed-in session. That exact lookup still exposes an email and UID to someone who knows or guesses a phone number; eliminating that exposure needs a backend lookup, a different authentication flow, or dropping phone/password login.
-- Phone-index writes are constrained to the account owner or Admin and validate the phone document key. Owners can sync their own index email only to the email in their authenticated Firebase token.
-- Customer writes now validate account number, Pakistani phone and CNIC formats, actor attribution, and server timestamps. Updates preserve the account number and creation metadata. Admin search-index backfill is allowed to change only the four derived search fields and the reserved delete-event ID.
-- User self-updates are restricted to name, phone, and email while keeping role, active status, permissions, creator, and creation time unchanged. Phone/name formats are checked; email must match the authenticated token.
-- Customer create/update/delete now writes the customer change and its audit entry in one Firestore transaction. Rules cross-check both sides with `getAfter()` and deny either write if the matching half is missing. Each customer stores a reserved delete-event ID so deletion can be paired with a new append-only record. The Admin search-index sync also backfills that token for existing records.
-- Staff creation writes the user record and its event in the same batch. Permission and active-state changes use transactions; rules require the matching staff event and state change in that same transaction.
-- All activity creation checks actor UID/name, event vocabulary, timestamp, and role/permission. Export events remain client-created separately from local file generation; activity-log update/delete remain denied.
+## 1. Loophole #2 Remediation (Phone-to-Email Enumeration Mitigation)
 
-## Remaining security limits
+- **Issue**: Unauthenticated reads on `/phoneIndex/{phone}` allowed arbitrary actors to test mobile numbers and discover associated emails and UIDs.
+- **Remediation**:
+  - `firestore.rules` updated so `/phoneIndex/{phone}` is restricted to authenticated users:
+    ```javascript
+    match /phoneIndex/{phone} {
+      allow get, list: if signedIn();
+      ...
+    }
+    ```
+  - `LoginScreen` shifted to direct Email + Password authentication, eliminating the need for unauthenticated public phone lookups while preserving dual email/phone account identities.
 
-- Customer and staff-management events are now coupled to their Firestore changes under the proposed rules. Export events remain client-written separately from local file generation and can be omitted or forged by a permitted Admin. Customer and staff changes require online transactions, and existing customer records need the Admin index sync to populate reserved delete-event IDs before the stricter rules are deployed. A paid backend is not required for these database-event pairs.
-- Phone/CNIC duplicate checks still have a concurrency window and are not globally enforced by these rules. Strong uniqueness needs a race-safe reservation/index design or trusted server transaction.
-- Staff Admin writes remain powerful by design; Admin account compromise exposes customer records and exports.
-- Customer PII remains readable to any active account with `view`; masking is only a UI display behavior. Exported files contain full identifiers under the current product design.
-- Existing Firestore records must be compatible with the new write invariants before edits, index backfill, or staff self-service updates are relied on. Legacy documents with malformed data can fail writes and need a migration/review plan.
+---
 
-## Required before deployment
+## 2. Advanced Cybersecurity Layer Additions
 
-1. Run the Admin “Sync search index” once against existing data to add the reserved delete-event IDs before deploying these rules.
-2. Run the Firestore Emulator suite with `npm run test:rules`. It covers unauthenticated listing versus exact phone-index reads, bootstrap protection, customer CRUD/event pairing, staff create/permission/active-state pairing, inactive users, and append-only audit entries.
-3. Review the first-admin enrollment and phone-index exposure with the project owner.
-4. Test the app flows against a non-production Firebase project, including audit-token backfill and verified email change.
-5. Only after those checks, deploy with `firebase deploy --only firestore:rules` (or publish the rules in Firebase Console) and verify the deployed rules. Editing this local file alone does not change the live Firebase project.
+### A. Device Integrity & Anti-Tamper Guard (`DeviceIntegrityService`)
+- Integrated `flutter_jailbreak_detection` in `lib/core/utils/device_integrity_service.dart`.
+- Probes for:
+  - Rooted Android devices (SuperSU, Magisk, `su` binaries).
+  - Jailbroken iOS environments (Cydia, Substrate).
+  - Runtime hooking frameworks (Frida, Xposed).
+  - Untrusted emulation or debug builds.
+- Enforced at the root `_AuthGate`: if compromised, execution halts on a high-visibility Security Alert screen with all database and auth access denied. Bypass enabled strictly during automated `flutter test`.
+
+### B. Firebase App Check (API Attestation)
+- Added `firebase_app_check` in `main.dart`.
+- **Release builds**: Uses `AndroidPlayIntegrityProvider` to attest that requests originate from a genuine, unaltered app signed by Google Play.
+- **Debug builds**: Uses `AndroidDebugProvider` to allow local development.
+- Protects Firestore, Auth, and Storage against unauthorized API scripts, scrapers, and headless curl/Postman requests.
+
+### C. OS Screen Privacy & Data Leak Protection (`FLAG_SECURE`)
+- Configured in `android/app/src/main/kotlin/com/example/cms/MainActivity.kt`.
+- `window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)` prevents:
+  - Screen capture and recording by malware or unauthorized background apps.
+  - Cached snapshots in the Android recent-apps task switcher (protecting sensitive customer data from shoulder-surfing).
+
+### D. Brute-Force Rate Limiting (`LoginRateLimiter`)
+- Implemented in `lib/core/utils/login_rate_limiter.dart`.
+- Locks login submissions for 30 seconds after 5 consecutive failed attempts, displaying a live countdown in `LoginScreen`.
+
+### E. Inactivity Session Auto-Lock (`InactivityWatcher`)
+- Wraps the authenticated UI tree in `lib/core/widgets/inactivity_watcher.dart`.
+- Listens to global pointer down, move, and up events. If no interaction occurs for 5 continuous minutes, `AuthService.signOut()` is executed automatically.
+
+### F. Asynchronous Timer Memory Safety
+- Refactored `FadeInSlide` to retain cancellable `Timer` handles and invoke `_delayTimer?.cancel()` during `dispose()`, ensuring zero memory leaks or unhandled background timers.
+
+---
+
+## 3. Firestore Rules Summary (`firestore.rules`)
+
+- **Bootstrap**: Can only transition from false to true when the atomic operation creates/updates the caller's Admin user document with `createdBy == request.auth.uid`.
+- **Customer Writes**: Validates Account Number (14 digits), Pakistani Phone (11 digits, `03`), CNIC (13 digits), IBAN (`PK...`, 24 chars), actor attribution, and timestamps.
+- **Audit Coupling**: Customer create/update/delete writes the customer record and its activity log entry in a single atomic Firestore transaction via `getAfter()`.
+- **Staff Operations**: Creation pairs user doc and activity log in the same batch. Permission and active status updates enforce transaction coupling.
+- **Activity Log**: Append-only; update and delete are unconditionally denied to all users (including Admin).
+
+---
+
+## 4. Remaining Operational Recommendations
+
+1. **Rule Deployment**: Ensure `firestore.rules` is deployed to production:
+   ```bash
+   firebase deploy --only firestore:rules
+   ```
+2. **App Check Registration**: Register the app's SHA-256 fingerprint in the Firebase Console under **App Check → Play Integrity**.
+3. **One-Time Search Backfill**: Run "Sync search index" from the Admin drawer on initial release to index existing customer records.

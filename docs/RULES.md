@@ -2,10 +2,9 @@
 
 ## Validation (strict Pakistani formats — do not loosen these)
 
-All three live in `core/utils/validators.dart` as the single source of
+All field formats live in `core/utils/validators.dart` as the single source of
 truth. Customer forms AND Staff forms must use the same `Validators`
-class — do not write a second, slightly-different phone check
-somewhere else.
+class — do not write a second, slightly-different check somewhere else.
 
 - **Phone**: exactly 11 digits, digits only, must start with `03`.
   Error: *"Phone number must be a valid Pakistani mobile number with
@@ -16,6 +15,9 @@ somewhere else.
   digits."*
 - **Account Number**: exactly 14 digits, digits only. Error: *"Account
   number must contain exactly 14 digits."*
+- **IBAN (IBN No.)**: exactly 24 characters, must start with `PK`,
+  alphanumeric uppercase. Placed directly after Account Number in forms.
+  Error: *"IBAN must be exactly 24 characters and start with PK."*
 - **Account Title**: required, must contain at least one letter (not
   purely numeric/symbols). Error: *"Account Title is required."*
 
@@ -32,62 +34,57 @@ only check fields that actually *changed* (compare against
 `originalPhone`/`originalCnic`) — don't flag a customer's own unchanged
 value as a duplicate of itself.
 
-## Search — field isolation is a hard rule
+## Search & Navigation — view-only vs edit gating is a hard rule
 
-User-facing customer search must only ever query the single field the
-user picked (Account Title, Account Number, Phone, or CNIC). Never add a
-"search everything" box and never route user search through the shared
-`searchKeywords` array: last-4 digits routinely coincide across different
-fields for different customers, so a combined search returns the wrong
-person. Phone/CNIC/Account Number search takes exactly 4 digits and
-queries its own dedicated `*Last4` field. `SearchResultsScreen` requires
-a `CustomerSearchField` on purpose — keep it required so a global search
-can't be reached by accident.
-
-Any change to how phone, CNIC, account number or account title are
-stored must keep `Customer.toMap()` writing the matching `*Last4` /
-`accountTitleSearchWords` fields, and existing customers then need
-"Sync search index" run once.
+- **User-facing customer search** must only ever query the single field the
+  user picked (Account Title, Account Number, Phone, or CNIC). Never add a
+  "search everything" box and never route user search through the shared
+  `searchKeywords` array.
+- **View-Only from Search & Dashboard**: Opening customer details from Search
+  Results or Dashboard Recent Customer cards must pass `allowEditAction: false`.
+  The Edit action must never be exposed from these lookup paths.
+- **Editing is restricted to Customer Management**: Only `CustomerManagementScreen`
+  supplies `allowEditAction: true` to `CustomerDetailScreen`, ensuring intentional,
+  permission-checked customer modifications.
 
 ## Data integrity
 
 - **Account Number is never editable after creation.** It's the
   Firestore document ID. "Changing" it would mean delete-old-doc +
   create-new-doc, which orphans every `activityLog` entry that
-  references the old ID. If this is ever genuinely needed, it must be
-  a deliberate, explicit Admin action with its own confirmation and
-  log entry — not a side effect of an edit form.
+  references the old ID.
 - **`activityLog` is append-only.** Never add an update or delete path
   for it, in code or in rules, for any reason, including for Admin.
-- **CNIC and Account Number are masked (last 4 digits) by default**
+- **CNIC, Account Number, and Phone are masked (last 4 digits) by default**
   everywhere they're displayed — detail screens, search results,
   recent-customer lists. Reveal is an explicit tap, never automatic.
 
-## Security
+## Cybersecurity Hardening
 
+- **Device Integrity Guard**: The app must fail closed if rooted, jailbroken,
+  or hooked. Do not bypass or remove `DeviceIntegrityService` checks.
+- **Window Privacy Protection**: `FLAG_SECURE` in `MainActivity.kt` must remain
+  active to block screen capture, malware video recording, and OS app switcher caching.
+- **Session Auto-Lock**: `InactivityWatcher` must wrap authenticated sessions with
+  a 5-minute timeout.
+- **Brute-Force Rate Limiting**: `LoginRateLimiter` must enforce a 30-second lockout
+  after 5 failed credential submissions.
+- **Phone Index Security**: `/phoneIndex` reads must remain restricted to authenticated
+  users (`signedIn()`) in `firestore.rules` to prevent unauthenticated enumeration.
 - **Never store a password anywhere** except transiently in memory to
-  send to Firebase Auth. This includes biometric login — see
-  ARCHITECTURE.md's biometric section. If a future change proposes
-  storing a password "to make login easier," it should be treated as a
-  suggestion to reconsider, not implemented as asked.
+  send to Firebase Auth. This includes biometric login.
 - Every permission check in the UI (`AppUser.can('edit')` etc.) must
-  have a matching, independent check in `firestore.rules`. The UI check
-  prevents bad UX; the rule prevents a bad actor. Neither replaces the
-  other.
+  have a matching, independent check in `firestore.rules`.
 - Firebase project stays on the **free Spark plan** — no Cloud
-  Functions, no feature that requires the Blaze (pay-as-you-go) plan.
-  If a future request seems to need server-side/Admin-SDK logic, look
-  for a client-side alternative first (e.g. the secondary-app-instance
-  pattern for staff creation) before reaching for Cloud Functions.
+  Functions, no feature that requires the Blaze plan.
 
-## Process
+## Process & UI Consistency
 
+- **Responsive Font Scale Clamping**: Global `textScaler` in `MaterialApp.builder`
+  must remain clamped to `0.85–1.15` to ensure UI stability across devices.
 - Don't downgrade Flutter, Gradle, the Android Gradle Plugin, or
-  Kotlin to fix a dependency issue — find a compatible version instead.
-- After any change, do a full brace/paren balance pass and a search
-  for stale references (renamed methods, removed imports) across the
-  *whole* project, not just the files touched — this project has hit
-  compile-breaking regressions before from a change in one file not
-  being propagated to a caller in another.
+  Kotlin. Keep modern toolchain versions (Gradle 9.1.0+, AGP 9.0.1+, Kotlin 2.3.20+).
+- Always clean up asynchronous timers (`Timer.cancel()`) on widget disposal
+  (e.g., in `FadeInSlide` or `InactivityWatcher`) to prevent memory leaks and flaky test runs.
 - `firestore.rules` changes require a deploy to take effect. Say so
   explicitly whenever the rules file changes.

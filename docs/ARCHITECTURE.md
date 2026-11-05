@@ -4,36 +4,41 @@
 
 ```
 lib/
-  main.dart                     # entry point, auth-state routing
+  main.dart                     # entry point, App Check, integrity guard, auth-state routing
   firebase_options.dart
   core/
     theme/app_theme.dart        # brand colors, global widget theming
     utils/
-      validators.dart           # Pakistani-format field validation
-      perspective_page_route.dart  # 3D screen-transition route
+      validators.dart           # Pakistani-format field validation (phone, CNIC, account, IBAN)
+      device_integrity_service.dart # root, jailbreak, Frida/Xposed hooks detection
+      login_rate_limiter.dart   # 5-attempt rate limiter with 30s lockout countdown
+      perspective_page_route.dart # 3D screen-transition route
     widgets/                    # reusable, cross-screen components:
       section_card.dart, account_field.dart, primary_button.dart,
       feedback_text.dart, tilt_tap_card.dart, fade_in_slide.dart,
       shimmer_loading.dart, biometric_lock_screen.dart,
       dashboard_stat_card.dart, quick_action_card.dart,
-      growth_chart.dart, error_state.dart
+      growth_chart.dart, error_state.dart, inactivity_watcher.dart
   data/
     models/                     # AppUser, Customer, ActivityLogEntry
     services/                   # AuthService, CustomerService,
-                                 # StaffService, ActivityService,
-                                 # ExportService, BiometricService
+                                # StaffService, ActivityService,
+                                # ExportService, BiometricService
   modules/
     authentication/views/       # Login, Create Admin (first-run)
-    home/views/                 # Dashboard, Staff mgmt, Add staff,
-                                 # Activity log
+    home/views/                 # Dashboard, Staff mgmt, Staff profile,
+                                # Add staff, Activity log
     customers/views/            # Add customer, Customer details/edit,
-                                 # Search-by-field, Search results
+                                # Customer management, Search-by-field,
+                                # Search results
     profile/views/              # Edit own account (My Account)
   routes/app_routes.dart
+android/                        # Gradle 9.1.0, AGP 9.0.1, Kotlin 2.3.20, FLAG_SECURE
 firestore.rules
 assets/icon/                    # app_logo.png/.svg
 tools/create_first_admin.js     # backup path for seeding an Admin
-docs/                           # this folder
+docs/                           # documentation suite
+test/                           # 29 unit and widget tests
 ```
 
 ## Firestore data model
@@ -47,14 +52,15 @@ Five collections:
 - **`customers/{accountNumber}`** — doc ID **is** the account number
   (guarantees no duplicate account numbers structurally, no extra
   lookup needed). Fields: `name`, `accountTitle`, `phone`, `cnic`,
-  `accountType`, `dateOpened`, `address`, `notes`, `searchKeywords`
-  (see below), `createdBy/At`, `updatedBy/At`.
+  `accountType`, `ibnNo`, `gender`, `status`, `email`, `dateOpened`,
+  `address`, `notes`, `searchKeywords`, `phoneLast4`, `cnicLast4`,
+  `accountNumberLast4`, `accountTitleSearchWords`, `createdBy/At`, `updatedBy/At`.
 - **`activityLog`** — append-only. Nothing is ever updated or deleted
   here, including by Admin (enforced by rules) — that's what makes it
   trustworthy as an audit trail.
-- **`phoneIndex/{normalizedPhone}`** — `{email, uid}`. Public-read,
-  used to resolve a phone-number login to the account's real email
-  before calling Firebase Auth (see "Auth" below).
+- **`phoneIndex/{normalizedPhone}`** — `{email, uid}`. Locked behind
+  `signedIn()` in `firestore.rules` to prevent unauthenticated enumeration.
+  Used to resolve a phone-number login to the account's real email.
 - **`system/bootstrap`** — single doc, `{adminExists: bool}`. Gates the
   one-time self-serve Admin creation flow.
 
@@ -76,84 +82,92 @@ dispatches to one of four methods that each query exactly one field:
 
 `phoneLast4`, `cnicLast4`, `accountNumberLast4` and
 `accountTitleSearchWords` are written by `Customer.toMap()` on every add
-and edit. They are separate fields (never merged into one array) because a
-shared array cannot tell fields apart: a phone ending 4567 and a different
-customer's CNIC ending 4567 produce the same keyword.
+and edit.
 
-No Firestore composite index is needed — every query is single-field
-equality or array-contains-any, which Firestore indexes automatically.
+**Existing customers need a one-time backfill.** Admin runs "Sync search index"
+in the drawer (`CustomerService.backfillSearchFields`) once; it is idempotent.
 
-**Existing customers need a one-time backfill.** Customers saved before
-these fields existed don't have them, so they don't appear in field search
-until re-saved. Admin runs "Sync search index" in the drawer
-(`CustomerService.backfillSearchFields`) once; it is idempotent.
-
-`searchKeywords` (from `buildSearchKeywords()`) is still written and is
-still used by `findByPhone`/`findByCnic` for duplicate detection — those
-re-check the normalized full number client-side, so a keyword collision
-across fields can't produce a false duplicate. It is NOT used for user
-search any more. Do not reintroduce a combined search over it.
-
-### Dashboard statistics
+### Dashboard statistics & Recent Customers
 
 Total Customers and New This Month use Firestore `count()` aggregation
 queries (no documents downloaded). The growth chart is a fixed last-7-days
-view built from per-day counts, deliberately not a period dropdown (each
-extra period multiplies query cost for a rarely-used control). There are
-no Active/Inactive customer stats: customers have no such field, and one
-was deliberately not invented. Staff accounts have `active`; customers do
-not.
+view built from per-day counts. Recent customer cards prominently display
+`accountTitle` as the primary heading (above `accountNumber` and masked
+phone/CNIC).
+
+### View-Only vs Editable Context Isolation
+
+To eliminate accidental customer modification during routine lookup:
+- **Dashboard recent cards** and **Search Results** open `CustomerDetailScreen`
+  with `allowEditAction: false`. The screen renders fields in read-only mode,
+  and the Edit button is completely suppressed.
+- **Customer Management** (`CustomerManagementScreen`) is the dedicated
+  administrative hub for customer operations and opens `CustomerDetailScreen`
+  with `allowEditAction: true` (subject to the user's `can('edit')` permission).
+
+## Cybersecurity Architecture
+
+The application adopts a defense-in-depth model across device, network,
+application, and database layers:
+
+1. **Hardware & Environment Attestation**:
+   - `DeviceIntegrityService` checks on launch whether the device is rooted,
+     jailbroken, running under an untrusted emulator, or hooked by binary
+     instrumentation frameworks (Frida, Xposed). If compromised, the app halts
+     at an enforced Security Alert screen, refusing all database/auth interactions.
+2. **Backend API Attestation (Firebase App Check)**:
+   - Initialized in `main.dart` with `AndroidPlayIntegrityProvider` (release)
+     and `AndroidDebugProvider` (debug). Ensures only genuine, un-tampered
+     app binaries can query Firebase services.
+3. **OS-Level Window Privacy (`FLAG_SECURE`)**:
+   - Enabled in `MainActivity.kt`. Blocks screen recordings, screenshots,
+     and masks the app window in Android's recent apps switcher.
+4. **Brute-Force Attack Mitigation**:
+   - `LoginRateLimiter` enforces a 30-second lockout after 5 consecutive failed
+     login attempts, displaying a live countdown in `LoginScreen`.
+5. **Inactivity Session Auto-Lock**:
+   - `InactivityWatcher` wraps the authenticated UI tree. Any continuous 5-minute
+     span without touch or gesture events automatically triggers `signOut()`.
+6. **Phone Index Protection**:
+   - `firestore.rules` restricts `/phoneIndex/{phone}` access to authenticated
+     sessions (`signedIn()`), closing enumeration loopholes.
+7. **Responsive Font Scaling Guard**:
+   - In `main.dart`, `MaterialApp.builder` clamps `textScaler` between `0.85`
+     and `1.15`, maintaining accessibility compliance while preventing severe
+     UI overflow and text clipping on extreme OS font settings.
 
 ## Auth — the tricky parts, and why
 
 **Every account has a real, mandatory email AND phone.** Email is the
 actual Firebase Auth identity. Phone-number login works by looking up
-`phoneIndex` to resolve the real email, THEN signing in normally — not
-a "fake email" trick. Both are mandatory specifically so this always
-resolves.
+`phoneIndex` to resolve the real email, THEN signing in normally.
 
-**Creating a staff account without logging Admin out of their own
-session.** Firebase's client SDK signs you in as whichever account you
-just created — calling `createUserWithEmailAndPassword` as Admin to
-make a staff account would silently swap Admin's own session for the
-new staff member's. Fixed by creating the new Auth user on a
+**Creating a staff account without logging Admin out of their own session.**
+`AuthService.createStaffAccount` creates the new Auth user on a
 **temporary, second Firebase app instance** (`Firebase.initializeApp(name:
 ..., options: DefaultFirebaseOptions.currentPlatform)`), which is
 immediately torn down after. The Firestore writes for the new
 user/phoneIndex/activityLog docs happen on the *default* app, under
-Admin's still-valid session. See `AuthService.createStaffAccount`.
-
-We deliberately do **not** use Cloud Functions for this (the "correct"
-Admin-SDK-based fix) — Cloud Functions requires Firebase's Blaze
-(pay-as-you-go) plan, which needs a billing card on file even to stay
-within free quota. This project intentionally stays 100% free-tier.
+Admin's still-valid session. Stays 100% on the free Spark tier without Cloud Functions.
 
 **Email changes** use Firebase's verify-then-sync flow, not the
 deprecated direct `updateEmail()`: `requestEmailChange()` re-authenticates
-with the current password, then calls `verifyBeforeUpdateEmail(newEmail)`
-— nothing in Firestore changes yet. `confirmEmailChangeIfVerified()` is
-a separate, explicit step (a "sync now" button) that reloads the Auth
-user and only then updates Firestore's `users.email` and `phoneIndex` —
-this avoids ever having Firestore's copy of the email diverge from what
-Firebase Auth actually has.
+with the current password, then calls `verifyBeforeUpdateEmail(newEmail)`.
+`confirmEmailChangeIfVerified()` updates Firestore's `users.email` and
+`phoneIndex` only after verified reload.
 
-## Biometric login — app-lock, not password replacement
+## Biometric vault — app-lock, not password replacement
 
 Biometric does **not** store a password anywhere, ever. Firebase Auth
-already persists a session across app restarts on its own (unrelated to
-biometrics). When enabled, biometrics is a manual-tap gate in front of
-that already-valid session — see `BiometricLockScreen` /
-`BiometricService`. Enabled/disabled state is stored **per-uid**
-(`biometric_lock_enabled_<uid>` in `flutter_secure_storage`), not
-globally — so multiple staff sharing one physical device don't inherit
-each other's lock state. A `NotEnrolled` platform error (device's
-fingerprint/Face ID enrollment changed) auto-disables the stored flag,
-forcing re-enable rather than leaving a dead, un-satisfiable lock.
+already persists a session across app restarts on its own. Biometrics is a
+circular vault gate in front of that already-valid session.
+Enabled/disabled state is stored **per-uid** (`biometric_lock_enabled_<uid>`
+in `flutter_secure_storage`). A `NotEnrolled` platform error auto-disables
+the stored flag, forcing re-enable rather than leaving a dead lock.
 
 ## Firestore Security Rules — the actual enforcement layer
 
-`firestore.rules` re-checks everything the app's UI already checks,
-because client-side permission checks are a UX nicety, not security.
+`firestore.rules` re-checks everything the app's UI already checks.
 Key points: `isAdmin()`/`isActive()`/`can(perm)` helpers read the
 CALLER's own `users/{uid}` doc; `activityLog` blocks all update/delete
 unconditionally; a user can update their own `users` doc's basic fields
@@ -163,6 +177,4 @@ Admin can create their own doc only while `system/bootstrap.adminExists
 
 **Whenever `firestore.rules` changes, it must be redeployed**
 (`firebase deploy --only firestore:rules` or paste into Firebase
-Console → Firestore → Rules → Publish) — editing the file locally does
-nothing to the live project until deployed. This has caused real
-`permission-denied` bugs in this project before.
+Console → Firestore → Rules → Publish).
