@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:excel/excel.dart' as xls;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -103,6 +104,55 @@ class ExportService {
     await file.writeAsBytes(await doc.save());
 
     await _activity.log(action: ActivityAction.export, targetId: 'pdf:${customers.length}_records', actor: actor);
+    return file;
+  }
+
+  /// Full-fidelity JSON database backup for disaster recovery.
+  /// Captures all customer records, timestamps, and fields in structured JSON.
+  Future<File> exportToJsonBackup(List<Customer> customers, AppUser actor) async {
+    if (!actor.isAdmin) throw Exception('Only Admin can export database backups.');
+
+    final backupPayload = {
+      'system': 'CMS Customer Management System',
+      'version': '1.0.0',
+      'backupTimestamp': DateTime.now().toIso8601String(),
+      'exportedBy': actor.email ?? actor.name,
+      'actorUid': actor.uid,
+      'totalRecords': customers.length,
+      'customers': customers
+          .map((c) => {
+                'accountNumber': c.accountNumber,
+                'accountTitle': c.accountTitle,
+                'name': c.name,
+                'phone': c.phone,
+                'cnic': c.cnic,
+                'ibnNo': c.ibnNo,
+                'accountType': c.accountType,
+                'status': c.status,
+                'gender': c.gender,
+                'email': c.email,
+                'address': c.address,
+                'notes': c.notes,
+                'dateOpened': c.dateOpened?.toIso8601String(),
+                'createdBy': c.createdBy,
+                'createdAt': c.createdAt?.toIso8601String(),
+                'updatedBy': c.updatedBy,
+                'updatedAt': c.updatedAt?.toIso8601String(),
+              })
+          .toList(),
+    };
+
+    final jsonContent = const JsonEncoder.withIndent('  ').convert(backupPayload);
+    final dir = await getApplicationDocumentsDirectory();
+    final path = '${dir.path}/cms_backup_vault_${DateTime.now().millisecondsSinceEpoch}.json';
+    final file = File(path);
+    await file.writeAsString(jsonContent);
+
+    await _activity.log(
+      action: ActivityAction.export,
+      targetId: 'backup_json:${customers.length}_records',
+      actor: actor,
+    );
     return file;
   }
 

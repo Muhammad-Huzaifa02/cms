@@ -120,8 +120,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final customers = await _customerService.recentCustomers(limit: 5000).first;
       final file = format == 'excel'
           ? await _exportService.exportToExcel(customers, widget.currentUser)
-          : await _exportService.exportToPdf(customers, widget.currentUser);
-      await _exportService.shareFile(file, subject: 'CMS customer export');
+          : format == 'pdf'
+              ? await _exportService.exportToPdf(customers, widget.currentUser)
+              : await _exportService.exportToJsonBackup(customers, widget.currentUser);
+      await _exportService.shareFile(
+        file,
+        subject: format == 'json' ? 'CMS Database Backup Vault' : 'CMS customer export',
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -376,6 +381,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       onTap: () {
                         Navigator.pop(context);
                         _export('pdf');
+                      },
+                    ),
+                    _drawerTile(
+                      icon: Icons.backup_outlined,
+                      iconColor: const Color(0xFF2563EB),
+                      title: 'Backup Database (.json)',
+                      subtitle: 'Full-fidelity disaster recovery snapshot',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _export('json');
                       },
                     ),
 

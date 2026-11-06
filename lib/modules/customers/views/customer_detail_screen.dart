@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../data/models/user_model.dart';
@@ -155,8 +156,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     _accountCategory = matchedCategory;
   }
 
+  Timer? _clipboardTimer;
+
   @override
   void dispose() {
+    _clipboardTimer?.cancel();
     _accountTitleCtrl.dispose();
     _accountNumberCtrl.dispose();
     _ibnCtrl.dispose();
@@ -172,12 +176,31 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
   void _copyToClipboard(String label, String value) {
     if (value.trim().isEmpty || value == 'Not provided') return;
-    Clipboard.setData(ClipboardData(text: value.trim()));
+    final textToCopy = value.trim();
+    Clipboard.setData(ClipboardData(text: textToCopy));
     HapticFeedback.lightImpact();
+
+    // Banking Security: Auto-clear sensitive customer data from clipboard after 60s
+    _clipboardTimer?.cancel();
+    _clipboardTimer = Timer(const Duration(seconds: 60), () async {
+      try {
+        final currentData = await Clipboard.getData(Clipboard.kTextPlain);
+        if (currentData?.text == textToCopy) {
+          await Clipboard.setData(const ClipboardData(text: ''));
+        }
+      } catch (_) {}
+    });
+
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$label copied to clipboard'),
+        content: Row(
+          children: [
+            const Icon(Icons.shield_outlined, size: 16, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text('$label copied (auto-clears in 60s)')),
+          ],
+        ),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),

@@ -85,6 +85,8 @@
       - Lifecycle awareness: Seamlessly re-locks on `paused` (backgrounded) and re-prompts on `resumed` without false triggers during native biometric sheets.
       - Executive Vault UI: Midnight banking gradient (`#011814`), bank branding badge, glowing concentric biometric sensor hub, dynamic status banners, primary unlock button, and password fallback signout.
       - Expanded unit/widget tests in `test/biometric_lock_screen_test.dart` (32/32 tests passing).
+- [x] Clipboard Financial Data Sanitization: Sensitive customer banking values (Account Number, IBAN, CNIC, Phone) copied to the OS clipboard are automatically cleared after 60 seconds with security toast notifications to prevent leakage to unauthorized background apps.
+- [x] 1-Tap Disaster Recovery Database Backup (.json vault export): Captures full-fidelity customer records, audit timestamps, and field-level metadata for off-site backup.
 - [x] Responsive font scale clamping (`textScaler.clamp(0.85, 1.15)`) in
       `MaterialApp.builder` to preserve layouts on high accessibility font settings.
 - [x] Modern build toolchain upgrade: Gradle 9.1.0, AGP 9.0.1, Kotlin 2.3.20.
