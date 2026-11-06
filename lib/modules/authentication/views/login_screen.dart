@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../data/services/auth_service.dart';
+import '../../../data/services/biometric_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/perspective_page_route.dart';
 import '../../../core/utils/login_rate_limiter.dart';
 import '../../../core/widgets/fade_in_slide.dart';
-import '../../home/views/dashboard_screen.dart';
 import 'create_admin_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -22,16 +22,35 @@ class _LoginScreenState extends State<LoginScreen> {
   final _identifierCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _rateLimiter = LoginRateLimiter.instance;
+  final _biometricService = BiometricService();
   Timer? _countdownTimer;
   int _lockoutSecondsLeft = 0;
   bool _loading = false;
+  bool _loggingInWithBiometric = false;
   bool _obscurePassword = true;
   String? _error;
+  Map<String, String>? _savedBiometricAccount;
+  bool _biometricAvailable = false;
 
   @override
   void initState() {
     super.initState();
     _checkInitialLockout();
+    _loadBiometricLogin();
+  }
+
+  Future<void> _loadBiometricLogin() async {
+    final available = await _biometricService.isBiometricAvailable();
+    final account = await _biometricService.getSavedBiometricCredentials();
+    if (mounted) {
+      setState(() {
+        _biometricAvailable = available;
+        _savedBiometricAccount = account;
+        if (account != null && _identifierCtrl.text.isEmpty) {
+          _identifierCtrl.text = account['email'] ?? '';
+        }
+      });
+    }
   }
 
   void _checkInitialLockout() {
@@ -85,15 +104,23 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
     try {
+      AuthSessionState.markFreshLogin();
       final user = await _auth.signIn(
         identifier: _identifierCtrl.text.trim(),
         password: _passwordCtrl.text,
       );
       _rateLimiter.recordSuccessfulLogin();
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        Perspective3DRoute(page: DashboardScreen(currentUser: user)),
-      );
+
+      // Remember credentials in secure hardware vault if biometric lock is enabled
+      final lockEnabled = await _biometricService.isLockEnabled(user.uid);
+      if (lockEnabled) {
+        await _biometricService.saveBiometricCredentials(
+          uid: user.uid,
+          email: _identifierCtrl.text.trim(),
+          password: _passwordCtrl.text,
+          name: user.name,
+        );
+      }
     } catch (e) {
       final lockoutTime = _rateLimiter.recordFailedAttempt();
       if (lockoutTime > 0) {
@@ -109,6 +136,38 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _loginWithBiometrics() async {
+    if (_savedBiometricAccount == null || _loggingInWithBiometric) return;
+    final email = _savedBiometricAccount!['email']!;
+    final password = _savedBiometricAccount!['password']!;
+    final name = _savedBiometricAccount!['name']!;
+
+    setState(() {
+      _loggingInWithBiometric = true;
+      _error = null;
+    });
+
+    final result = await _biometricService.authenticate(
+      reason: 'Authenticate with fingerprint to log in as $name',
+    );
+
+    if (!mounted) return;
+
+    if (result == BiometricResult.success) {
+      try {
+        AuthSessionState.markFreshLogin();
+        await _auth.signIn(identifier: email, password: password);
+        _rateLimiter.recordSuccessfulLogin();
+      } catch (e) {
+        setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      }
+    } else if (result != BiometricResult.cancelled) {
+      setState(() => _error = result.message);
+    }
+
+    if (mounted) setState(() => _loggingInWithBiometric = false);
   }
 
   Future<void> _showForgotPasswordDialog() async {
@@ -293,6 +352,57 @@ class _LoginScreenState extends State<LoginScreen> {
                                     : Text(_lockoutSecondsLeft > 0 ? 'Locked ($_lockoutSecondsLeft s)' : 'Login'),
                               ),
                             ),
+                            if (_savedBiometricAccount != null && _biometricAvailable) ...[
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  const Expanded(child: Divider(color: AppColors.border, height: 1)),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                                    child: Text(
+                                      'OR',
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.8,
+                                        color: AppColors.muted.withValues(alpha: 0.8),
+                                      ),
+                                    ),
+                                  ),
+                                  const Expanded(child: Divider(color: AppColors.border, height: 1)),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 46,
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.brandDeep,
+                                    side: const BorderSide(color: AppColors.brand, width: 1.5),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                  icon: _loggingInWithBiometric
+                                      ? const SizedBox(
+                                          height: 18,
+                                          width: 18,
+                                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.brand),
+                                        )
+                                      : const Icon(Icons.fingerprint_rounded, size: 24, color: AppColors.brand),
+                                  label: Text(
+                                    _loggingInWithBiometric
+                                        ? 'Verifying…'
+                                        : 'Log in with Biometrics (${_savedBiometricAccount!['name']})',
+                                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  onPressed: (_loading || _loggingInWithBiometric || _lockoutSecondsLeft > 0)
+                                      ? null
+                                      : _loginWithBiometrics,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),

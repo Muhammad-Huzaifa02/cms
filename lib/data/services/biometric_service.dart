@@ -28,9 +28,30 @@ enum BiometricResult {
 /// Staff B signs into the same physical device, B would silently inherit
 /// A's "locked" state despite never having enabled it themselves — a real
 /// problem on a shared branch device with multiple staff accounts.
+class AuthSessionState {
+  static bool freshLogin = false;
+
+  static void markFreshLogin() {
+    freshLogin = true;
+  }
+
+  static bool consumeFreshLogin() {
+    if (freshLogin) {
+      freshLogin = false;
+      return true;
+    }
+    return false;
+  }
+}
+
 class BiometricService {
   final LocalAuthentication _auth = LocalAuthentication();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  static const _kSavedUid = 'biometric_saved_uid';
+  static const _kSavedEmail = 'biometric_saved_email';
+  static const _kSavedPassword = 'biometric_saved_password';
+  static const _kSavedName = 'biometric_saved_name';
 
   String _keyFor(String uid) => 'biometric_lock_enabled_$uid';
 
@@ -58,13 +79,70 @@ class BiometricService {
       if (enabled) {
         await _storage.write(key: _keyFor(uid), value: 'true');
       } else {
-        // Delete rather than write 'false' — "removes the local
-        // biometric-login configuration" per spec, leaving nothing behind
-        // for this account rather than an explicit off-flag.
         await _storage.delete(key: _keyFor(uid));
+        final savedUid = await _storage.read(key: _kSavedUid);
+        if (savedUid == uid) {
+          await clearSavedBiometricCredentials();
+        }
       }
     } catch (e) {
       debugPrint('Error saving biometric lock setting: $e');
+    }
+  }
+
+  /// Encrypts and stores credentials in device hardware vault so the user can
+  /// use 1-tap biometric login from the Login screen.
+  Future<void> saveBiometricCredentials({
+    required String uid,
+    required String email,
+    required String password,
+    required String name,
+  }) async {
+    try {
+      await _storage.write(key: _kSavedUid, value: uid);
+      await _storage.write(key: _kSavedEmail, value: email);
+      await _storage.write(key: _kSavedPassword, value: password);
+      await _storage.write(key: _kSavedName, value: name);
+      await setLockEnabled(uid, true);
+    } catch (e) {
+      debugPrint('Error saving biometric credentials: $e');
+    }
+  }
+
+  /// Retrieves saved credentials for 1-tap login on LoginScreen if enabled.
+  Future<Map<String, String>?> getSavedBiometricCredentials() async {
+    try {
+      final uid = await _storage.read(key: _kSavedUid);
+      final email = await _storage.read(key: _kSavedEmail);
+      final password = await _storage.read(key: _kSavedPassword);
+      final name = await _storage.read(key: _kSavedName);
+      if (uid != null && email != null && password != null) {
+        final enabled = await isLockEnabled(uid);
+        if (enabled) {
+          return {
+            'uid': uid,
+            'email': email,
+            'password': password,
+            'name': name ?? 'Staff',
+          };
+        }
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error reading saved biometric credentials: $e');
+      return null;
+    }
+  }
+
+  /// Clears saved biometric credentials from hardware storage.
+  Future<void> clearSavedBiometricCredentials() async {
+    try {
+      await _storage.delete(key: _kSavedUid);
+      await _storage.delete(key: _kSavedEmail);
+      await _storage.delete(key: _kSavedPassword);
+      await _storage.delete(key: _kSavedName);
+    } catch (e) {
+      debugPrint('Error clearing saved biometric credentials: $e');
     }
   }
 

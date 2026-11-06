@@ -91,6 +91,11 @@
       - Lifecycle awareness: Seamlessly re-locks on `paused` (backgrounded) and re-prompts on `resumed` without false triggers during native biometric sheets.
       - Executive Vault UI: Midnight banking gradient (`#011814`), bank branding badge, glowing concentric biometric sensor hub, dynamic status banners, primary unlock button, and password fallback signout.
       - Expanded unit/widget tests in `test/biometric_lock_screen_test.dart` (32/32 tests passing).
+- [x] Biometric Login directly on Login Screen & Duplicate Prompt Elimination:
+      - Direct 1-tap Biometric Login button displayed inside the card on `LoginScreen` for enrolled users.
+      - Biometric credentials securely encrypted and stored in device hardware vault (`FlutterSecureStorage`).
+      - Added `AuthSessionState.markFreshLogin()` and `AuthSessionState.consumeFreshLogin()` to distinguish fresh login from session resumption or backgrounding.
+      - Fresh password or biometric logins bypass the redundant lock screen and enter the dashboard immediately; `BiometricLockScreen` only engages on inactivity timeouts (5 mins), app resume from background, or opening an existing cached session.
 - [x] Clipboard Financial Data Sanitization: Sensitive customer banking values (Account Number, IBAN, CNIC, Phone) copied to the OS clipboard are automatically cleared after 60 seconds with security toast notifications to prevent leakage to unauthorized background apps.
 - [x] 1-Tap Disaster Recovery Database Backup (.json vault export): Captures full-fidelity customer records, audit timestamps, and field-level metadata for off-site backup.
 - [x] Responsive font scale clamping (`textScaler.clamp(0.85, 1.15)`) in

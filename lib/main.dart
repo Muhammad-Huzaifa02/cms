@@ -204,11 +204,14 @@ class _LockGateState extends State<_LockGate> with WidgetsBindingObserver {
   bool _lockEnabled = false;
   bool _loadingLock = true;
   bool _timedOut = false;
+  bool _isUnlockedSession = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // If the user just completed a fresh login on the Login screen, they are already authenticated.
+    _isUnlockedSession = AuthSessionState.consumeFreshLogin();
     _checkLockStatus();
   }
 
@@ -220,7 +223,12 @@ class _LockGateState extends State<_LockGate> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.paused) {
+      // Re-lock when app is backgrounded
+      if (mounted) {
+        setState(() => _isUnlockedSession = false);
+      }
+    } else if (state == AppLifecycleState.resumed) {
       _checkLockStatus();
     }
   }
@@ -237,7 +245,10 @@ class _LockGateState extends State<_LockGate> with WidgetsBindingObserver {
 
   void _handleInactivityTimeout() {
     if (!mounted || _timedOut) return;
-    setState(() => _timedOut = true);
+    setState(() {
+      _timedOut = true;
+      _isUnlockedSession = false;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Session locked due to 5 minutes of inactivity to protect customer data.'),
@@ -247,8 +258,11 @@ class _LockGateState extends State<_LockGate> with WidgetsBindingObserver {
   }
 
   void _handleUnlocked() {
-    if (mounted && _timedOut) {
-      setState(() => _timedOut = false);
+    if (mounted) {
+      setState(() {
+        _timedOut = false;
+        _isUnlockedSession = true;
+      });
     }
   }
 
@@ -263,8 +277,10 @@ class _LockGateState extends State<_LockGate> with WidgetsBindingObserver {
 
     final dashboard = DashboardScreen(currentUser: widget.currentUser);
 
-    // If biometric lock is enabled OR the session timed out from 5 min of inactivity:
-    if (_lockEnabled || _timedOut) {
+    // If biometric lock is enabled and the session is locked, OR if timed out:
+    final needsLock = (_lockEnabled && !_isUnlockedSession) || _timedOut;
+
+    if (needsLock) {
       return BiometricLockScreen(
         uid: widget.currentUser.uid,
         isTimedOut: _timedOut,
