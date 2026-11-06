@@ -392,7 +392,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   label: Text(
                                     _loggingInWithBiometric
                                         ? 'Verifying…'
-                                        : 'Log in with Biometrics (${_savedBiometricAccount!['name']})',
+                                        : 'Log in with Biometrics',
                                     style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
