@@ -318,7 +318,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 children: [
-                  _drawerSectionHeader('OVERVIEW & ACCOUNT'),
+                  _drawerSectionHeader('OVERVIEW'),
                   _drawerTile(
                     icon: Icons.dashboard_rounded,
                     title: 'Dashboard',
@@ -335,25 +335,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         push3D(context, CustomerManagementScreen(currentUser: user));
                       },
                     ),
-                  if (user.can('add'))
-                    _drawerTile(
-                      icon: Icons.person_add_alt_1_outlined,
-                      title: 'Add New Customer',
-                      subtitle: 'Onboard new account',
-                      onTap: () {
-                        Navigator.pop(context);
-                        push3D(context, AddCustomerScreen(currentUser: user));
-                      },
-                    ),
-                  _drawerTile(
-                    icon: Icons.person_outline_rounded,
-                    title: 'My Profile',
-                    subtitle: 'Account & security credentials',
-                    onTap: () {
-                      Navigator.pop(context);
-                      push3D(context, EditProfileScreen(currentUser: user));
-                    },
-                  ),
 
                   if (user.isAdmin) ...[
                     const SizedBox(height: 10),

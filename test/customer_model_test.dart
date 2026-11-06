@@ -9,6 +9,10 @@ void main() {
     phone: '03001234567',
     cnic: '3520212345671',
     accountType: 'Current',
+    ibnNo: 'PK36SCBL0000001234567801',
+    gender: 'Male',
+    status: 'Active',
+    email: 'huzaifa@example.com',
     address: 'Lahore, Pakistan',
     notes: 'VIP Customer',
     createdBy: 'admin_uid',
@@ -73,6 +77,10 @@ void main() {
       expect(map['accountTitle'], equals('Huzaifa Enterprises'));
       expect(map['phone'], equals('03001234567'));
       expect(map['cnic'], equals('3520212345671'));
+      expect(map['ibnNo'], equals('PK36SCBL0000001234567801'));
+      expect(map['gender'], equals('Male'));
+      expect(map['status'], equals('Active'));
+      expect(map['email'], equals('huzaifa@example.com'));
       expect(map['phoneLast4'], equals('4567'));
       expect(map['cnicLast4'], equals('5671'));
       expect(map['accountNumberLast4'], equals('1234'));
