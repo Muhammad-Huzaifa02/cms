@@ -48,6 +48,7 @@
       - Customer card status indicator with colored dot (`Active`, `Dormant`, `Blocked`, `Inactive`).
       - Dual identifier preview on cards (masked account number `•` masked phone).
       - Account-type dynamic gradient avatars (`Savings`, `Current`, `Business`).
+      - Interactive expandable 7-day customer onboarding growth trend card (`GrowthChart`) with tap-to-inspect bar highlights and weekly totals.
 - [x] Customer Details and Add Customer use the same sectioned layout
       and shared components as My Account.
 - [x] CNIC/Account Number/Phone masked by default, tap-to-reveal.
