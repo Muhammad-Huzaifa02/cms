@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/services/customer_service.dart';
@@ -260,16 +259,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           slivers: [
             SliverAppBar(
-              expandedHeight: 140,
+              expandedHeight: 152,
               floating: false,
               pinned: true,
               stretch: true,
               backgroundColor: AppColors.brandDeep,
-              leading: IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
-                tooltip: 'Menu',
-                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+              leading: Container(
+                margin: const EdgeInsets.only(left: 12),
+                child: Center(
+                  child: Material(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => _scaffoldKey.currentState?.openDrawer(),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.menu_rounded, color: Colors.white, size: 22),
+                      ),
+                    ),
+                  ),
+                ),
               ),
+              actions: [
+                if (_exporting)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                  )
+                else
+                  Container(
+                    margin: const EdgeInsets.only(right: 14),
+                    child: Center(
+                      child: Tooltip(
+                        message: 'Logout & Exit',
+                        child: Material(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: _logoutAndExit,
+                            child: const Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Icon(Icons.power_settings_new_rounded, color: Colors.white, size: 20),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
               flexibleSpace: FlexibleSpaceBar(
                 stretchModes: const [StretchMode.zoomBackground, StretchMode.blurBackground],
                 background: Container(
@@ -277,68 +316,109 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [AppColors.brandDeep, AppColors.brand],
+                      colors: [
+                        Color(0xFF022B24),
+                        AppColors.brandDeep,
+                        AppColors.brand,
+                      ],
+                      stops: [0.0, 0.45, 1.0],
                     ),
                   ),
                   child: Stack(
                     children: [
+                      // Subtle decorative banking watermark
                       Positioned(
-                        right: -10,
+                        right: -15,
                         top: -10,
                         child: Opacity(
-                          opacity: 0.14,
-                          child: Transform.rotate(
-                            angle: -0.2,
-                            child: Image.asset('assets/icon/app_logo.png', width: 90, height: 90, fit: BoxFit.contain),
+                          opacity: 0.08,
+                          child: Image.asset(
+                            'assets/icon/app_logo.png',
+                            width: 130,
+                            height: 130,
+                            fit: BoxFit.contain,
                           ),
                         ),
                       ),
-                      // Content sits below the top row (hamburger/logout, which
-                      // the SliverAppBar itself lays out at
-                      // kToolbarHeight + status-bar-height) — computed from
-                      // MediaQuery rather than a fixed number, so it lands
-                      // correctly on every device instead of guessing a value
-                      // that happens to work on one screen size.
+                      // Soft ambient light
+                      Positioned(
+                        left: -35,
+                        top: -35,
+                        child: Container(
+                          width: 130,
+                          height: 130,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.04),
+                          ),
+                        ),
+                      ),
+                      // Executive Profile Header Row
                       Padding(
-                        padding: EdgeInsets.fromLTRB(22, MediaQuery.of(context).padding.top + kToolbarHeight - 8, 60, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        padding: EdgeInsets.fromLTRB(
+                          20,
+                          MediaQuery.of(context).padding.top + kToolbarHeight - 2,
+                          20,
+                          0,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              duration: const Duration(milliseconds: 260),
-                              builder: (context, value, child) {
-                                return Opacity(
-                                  opacity: value.clamp(0.0, 1.0),
-                                  child: Transform.translate(
-                                    offset: Offset(0, 20 * (1 - value)),
-                                    child: child,
+                            // User Initials Avatar
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: user.isAdmin
+                                      ? [const Color(0xFFD4AF37), AppColors.gold]
+                                      : [AppColors.brandLight, AppColors.brand],
+                                ),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.65),
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.18),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
                                   ),
-                                );
-                              },
+                                ],
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                user.name.trim().isNotEmpty
+                                    ? user.name.trim().split(RegExp(r'\s+')).map((w) => w[0]).take(2).join().toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            // User Greeting, Name & Role Badge
+                            Expanded(
                               child: Column(
+                                mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        _getTimeGreeting(),
-                                        style: TextStyle(
-                                          color: Colors.white.withValues(alpha: 0.92),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      Text(
-                                        '  •  ${DateFormat('EEE, d MMM').format(DateTime.now())}',
-                                        style: TextStyle(
-                                          color: Colors.white.withValues(alpha: 0.72),
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ],
+                                  Text(
+                                    _getTimeGreeting(),
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.85),
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 0.3,
+                                    ),
                                   ),
-                                  const SizedBox(height: 3),
+                                  const SizedBox(height: 2),
                                   Row(
                                     children: [
                                       Flexible(
@@ -348,23 +428,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
                                             color: Colors.white,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.w800,
                                             letterSpacing: 0.2,
                                           ),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                         decoration: BoxDecoration(
                                           color: user.isAdmin
-                                              ? AppColors.gold.withValues(alpha: 0.28)
-                                              : Colors.white.withValues(alpha: 0.18),
+                                              ? AppColors.gold.withValues(alpha: 0.25)
+                                              : Colors.white.withValues(alpha: 0.16),
                                           borderRadius: BorderRadius.circular(10),
                                           border: Border.all(
-                                            color: user.isAdmin ? AppColors.gold : Colors.white.withValues(alpha: 0.45),
-                                            width: 0.8,
+                                            color: user.isAdmin ? AppColors.gold : Colors.white.withValues(alpha: 0.4),
+                                            width: 1,
                                           ),
                                         ),
                                         child: Row(
@@ -372,15 +452,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           children: [
                                             Icon(
                                               user.isAdmin ? Icons.shield_rounded : Icons.badge_outlined,
-                                              size: 11,
+                                              size: 11.5,
                                               color: user.isAdmin ? AppColors.gold : Colors.white,
                                             ),
-                                            const SizedBox(width: 3.5),
+                                            const SizedBox(width: 4),
                                             Text(
                                               user.isAdmin ? 'ADMIN' : 'STAFF',
                                               style: TextStyle(
                                                 color: user.isAdmin ? AppColors.gold : Colors.white,
-                                                fontSize: 9.5,
+                                                fontSize: 10,
                                                 fontWeight: FontWeight.w800,
                                                 letterSpacing: 0.6,
                                               ),
@@ -400,20 +480,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
-              actions: [
-                if (_exporting)
-                  const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-                  )
-                else
-                  IconButton(
-                    icon: const Icon(Icons.power_settings_new, color: Colors.white, size: 26),
-                    tooltip: 'Logout & Exit',
-                    onPressed: _logoutAndExit,
-                  ),
-                const SizedBox(width: 8),
-              ],
             ),
           SliverToBoxAdapter(
             child: Stack(

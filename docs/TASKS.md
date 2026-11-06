@@ -42,8 +42,8 @@
 - [x] Dashboard recent customer cards display Account Title as the primary heading.
 - [x] Dashboard UI design enhancements:
       - Native pull-to-refresh (`RefreshIndicator`) for stats and recent customer streams.
-      - Time-aware dynamic header greeting ("Good Morning/Afternoon/Evening") with live date banner.
-      - Header role badge (gold `ADMIN` shield vs `STAFF` badge pill).
+      - Redesigned executive banking header: User avatar circle with dynamic gradient, time-aware greeting ("Good Morning/Afternoon/Evening"), prominent user name, and polished role badge (`ADMIN` gold vs `STAFF` badge pill).
+      - Removed Today's Date Banner from header for a clean, focused executive layout.
       - "RECENT CUSTOMERS" section header with intake count badge and direct "View All →" link to Customer Management.
       - Customer card status indicator with colored dot (`Active`, `Dormant`, `Blocked`, `Inactive`).
       - Dual identifier preview on cards (masked account number `•` masked phone).
