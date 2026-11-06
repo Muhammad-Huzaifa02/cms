@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/services/customer_service.dart';
@@ -34,7 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _exportService = ExportService();
   final _authService = AuthService();
   bool _exporting = false;
-  late final Stream<List<Customer>> _recentCustomersStream = _customerService.recentCustomers();
+  late Stream<List<Customer>> _recentCustomersStream = _customerService.recentCustomers();
 
   // Fetched once per Dashboard visit (not per rebuild) — both use
   // Firestore COUNT aggregation, so this is two small server-side counts,
@@ -45,6 +46,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _customerService.getTotalCustomersCount(),
         _customerService.getNewCustomersThisMonthCount(),
       ]);
+
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _statsFuture = _loadStats();
+      _recentCustomersStream = _customerService.recentCustomers();
+    });
+    try {
+      await _statsFuture;
+      await Future.delayed(const Duration(milliseconds: 250));
+    } catch (_) {}
+  }
+
+  String _getTimeGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
 
   Future<void> _confirmSignOut() async {
     final ok = await showDialog<bool>(
@@ -233,102 +252,169 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 138,
-            floating: false,
-            pinned: true,
-            stretch: true,
-            backgroundColor: AppColors.brandDeep,
-            leading: IconButton(
-              icon: const Icon(Icons.menu, color: Colors.white),
-              tooltip: 'Menu',
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            ),
-            flexibleSpace: FlexibleSpaceBar(
-              stretchModes: const [StretchMode.zoomBackground, StretchMode.blurBackground],
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.brandDeep, AppColors.brand],
+      body: RefreshIndicator(
+        color: AppColors.brand,
+        backgroundColor: Colors.white,
+        onRefresh: _handleRefresh,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 140,
+              floating: false,
+              pinned: true,
+              stretch: true,
+              backgroundColor: AppColors.brandDeep,
+              leading: IconButton(
+                icon: const Icon(Icons.menu, color: Colors.white),
+                tooltip: 'Menu',
+                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+              ),
+              flexibleSpace: FlexibleSpaceBar(
+                stretchModes: const [StretchMode.zoomBackground, StretchMode.blurBackground],
+                background: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.brandDeep, AppColors.brand],
+                    ),
                   ),
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      right: -10,
-                      top: -10,
-                      child: Opacity(
-                        opacity: 0.14,
-                        child: Transform.rotate(
-                          angle: -0.2,
-                          child: Image.asset('assets/icon/app_logo.png', width: 90, height: 90, fit: BoxFit.contain),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        right: -10,
+                        top: -10,
+                        child: Opacity(
+                          opacity: 0.14,
+                          child: Transform.rotate(
+                            angle: -0.2,
+                            child: Image.asset('assets/icon/app_logo.png', width: 90, height: 90, fit: BoxFit.contain),
+                          ),
                         ),
                       ),
-                    ),
-                    // Content sits below the top row (hamburger/logout, which
-                    // the SliverAppBar itself lays out at
-                    // kToolbarHeight + status-bar-height) — computed from
-                    // MediaQuery rather than a fixed number, so it lands
-                    // correctly on every device instead of guessing a value
-                    // that happens to work on one screen size.
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(22, MediaQuery.of(context).padding.top + kToolbarHeight - 6, 60, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TweenAnimationBuilder<double>(
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            duration: const Duration(milliseconds: 260),
-                            builder: (context, value, child) {
-                              return Opacity(
-                                opacity: value.clamp(0.0, 1.0),
-                                child: Transform.translate(
-                                  offset: Offset(0, 20 * (1 - value)),
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Welcome back', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
-                                const SizedBox(height: 3),
-                                Text(
-                                  user.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold, letterSpacing: 0.2),
-                                ),
-                              ],
+                      // Content sits below the top row (hamburger/logout, which
+                      // the SliverAppBar itself lays out at
+                      // kToolbarHeight + status-bar-height) — computed from
+                      // MediaQuery rather than a fixed number, so it lands
+                      // correctly on every device instead of guessing a value
+                      // that happens to work on one screen size.
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(22, MediaQuery.of(context).padding.top + kToolbarHeight - 8, 60, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 260),
+                              builder: (context, value, child) {
+                                return Opacity(
+                                  opacity: value.clamp(0.0, 1.0),
+                                  child: Transform.translate(
+                                    offset: Offset(0, 20 * (1 - value)),
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        _getTimeGreeting(),
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(alpha: 0.92),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Text(
+                                        '  •  ${DateFormat('EEE, d MMM').format(DateTime.now())}',
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(alpha: 0.72),
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          user.name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.2,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: user.isAdmin
+                                              ? AppColors.gold.withValues(alpha: 0.28)
+                                              : Colors.white.withValues(alpha: 0.18),
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: user.isAdmin ? AppColors.gold : Colors.white.withValues(alpha: 0.45),
+                                            width: 0.8,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              user.isAdmin ? Icons.shield_rounded : Icons.badge_outlined,
+                                              size: 11,
+                                              color: user.isAdmin ? AppColors.gold : Colors.white,
+                                            ),
+                                            const SizedBox(width: 3.5),
+                                            Text(
+                                              user.isAdmin ? 'ADMIN' : 'STAFF',
+                                              style: TextStyle(
+                                                color: user.isAdmin ? AppColors.gold : Colors.white,
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.w800,
+                                                letterSpacing: 0.6,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
+              actions: [
+                if (_exporting)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(Icons.power_settings_new, color: Colors.white, size: 26),
+                    tooltip: 'Logout & Exit',
+                    onPressed: _logoutAndExit,
+                  ),
+                const SizedBox(width: 8),
+              ],
             ),
-            actions: [
-              if (_exporting)
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-                )
-              else
-                IconButton(
-                  icon: const Icon(Icons.power_settings_new, color: Colors.white, size: 26),
-                  tooltip: 'Logout & Exit',
-                  onPressed: _logoutAndExit,
-                ),
-              const SizedBox(width: 8),
-            ],
-          ),
           SliverToBoxAdapter(
             child: Stack(
               clipBehavior: Clip.none,
@@ -494,9 +580,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       if (index == 0) {
-                        return const Padding(
-                          padding: EdgeInsets.only(bottom: 12, top: 10),
-                          child: Text('RECENT CUSTOMERS', style: TextStyle(fontSize: 11, letterSpacing: 1.2, color: AppColors.muted, fontWeight: FontWeight.bold)),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12, top: 10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Row(
+                                children: [
+                                  const Text(
+                                    'RECENT CUSTOMERS',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      letterSpacing: 1.2,
+                                      color: AppColors.muted,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.brand.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '${customers.length}',
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.brand,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (user.can('view'))
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(6),
+                                  onTap: () => push3D(context, CustomerManagementScreen(currentUser: user)),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'View All',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.brand,
+                                          ),
+                                        ),
+                                        SizedBox(width: 2),
+                                        Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.brand),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         );
                       }
                       final c = customers[index - 1];
@@ -513,7 +656,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      floatingActionButton: user.can('add')
+    ),
+    floatingActionButton: user.can('add')
           ? TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 240),
@@ -538,6 +682,48 @@ class _CustomerTile extends StatelessWidget {
   final VoidCallback onTap;
   const _CustomerTile({required this.customer, required this.onTap});
 
+  LinearGradient _getAvatarGradient(String accountType) {
+    final lower = accountType.toLowerCase();
+    if (lower.contains('saving')) {
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [AppColors.brandDeep, AppColors.brand],
+      );
+    } else if (lower.contains('current')) {
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
+      );
+    } else if (lower.contains('business') || lower.contains('corporate')) {
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF78350F), Color(0xFFD97706)],
+      );
+    }
+    return const LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [AppColors.brandDeep, AppColors.brandLight],
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return const Color(0xFF16A34A);
+      case 'dormant':
+        return const Color(0xFFD97706);
+      case 'blocked':
+        return AppColors.danger;
+      case 'inactive':
+      default:
+        return const Color(0xFF64748B);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final titleText = customer.accountTitle.trim().isNotEmpty
@@ -546,6 +732,9 @@ class _CustomerTile extends StatelessWidget {
     final initials = titleText.isEmpty
         ? '?'
         : titleText.split(RegExp(r'\s+')).map((w) => w.isNotEmpty ? w[0] : '').take(2).join().toUpperCase();
+    final statusColor = _getStatusColor(customer.status);
+    final statusText = customer.status.trim().isNotEmpty ? customer.status.trim() : 'Active';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TiltTapCard(
@@ -560,9 +749,30 @@ class _CustomerTile extends StatelessWidget {
               children: [
                 Hero(
                   tag: 'avatar-${customer.accountNumber}',
-                  child: CircleAvatar(
-                    backgroundColor: AppColors.brand,
-                    child: Text(initials, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: _getAvatarGradient(customer.accountType),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      initials,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -570,18 +780,54 @@ class _CustomerTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        titleText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              titleText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 5.5,
+                                  height: 5.5,
+                                  decoration: BoxDecoration(
+                                    color: statusColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  statusText,
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: statusColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 5),
                       Row(
                         children: [
                           Flexible(
                             child: Text(
-                              customer.maskedAccountNumber,
+                              '${customer.maskedAccountNumber}  •  ${customer.maskedPhone}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(fontSize: 11.5, color: AppColors.muted),
@@ -596,7 +842,11 @@ class _CustomerTile extends StatelessWidget {
                             ),
                             child: Text(
                               customer.accountType,
-                              style: const TextStyle(fontSize: 10, color: AppColors.brand, fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.brand,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],

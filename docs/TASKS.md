@@ -40,6 +40,14 @@
 - [x] Dashboard: Total Customers, New This Month, 7-day growth chart,
       Admin quick actions, skeleton loading, and error-with-retry states.
 - [x] Dashboard recent customer cards display Account Title as the primary heading.
+- [x] Dashboard UI design enhancements:
+      - Native pull-to-refresh (`RefreshIndicator`) for stats and recent customer streams.
+      - Time-aware dynamic header greeting ("Good Morning/Afternoon/Evening") with live date banner.
+      - Header role badge (gold `ADMIN` shield vs `STAFF` badge pill).
+      - "RECENT CUSTOMERS" section header with intake count badge and direct "View All →" link to Customer Management.
+      - Customer card status indicator with colored dot (`Active`, `Dormant`, `Blocked`, `Inactive`).
+      - Dual identifier preview on cards (masked account number `•` masked phone).
+      - Account-type dynamic gradient avatars (`Savings`, `Current`, `Business`).
 - [x] Customer Details and Add Customer use the same sectioned layout
       and shared components as My Account.
 - [x] CNIC/Account Number/Phone masked by default, tap-to-reveal.
