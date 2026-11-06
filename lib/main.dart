@@ -52,17 +52,14 @@ class CmsApp extends StatelessWidget {
       theme: AppTheme.light(),
       onGenerateRoute: AppRoutes.onGenerateRoute,
       builder: (context, child) {
-        // Clamps system font scale factor between 0.85 and 1.15 so if the user
-        // increases their device font size dramatically in OS accessibility settings,
-        // the app layout automatically preserves balanced proportions without
-        // overflow errors, broken cards, or clipped text.
+        // Normalizes font scaling to standard normal size (1.0) across all devices.
+        // If a user has enabled extra small or extra large font scaling in their
+        // phone OS accessibility settings, the app automatically normalizes to the
+        // standard, crisp, professional banking font size so UI layouts remain
+        // perfectly proportioned without overflows or text distortions.
         final mediaQuery = MediaQuery.of(context);
-        final clampedScale = mediaQuery.textScaler.clamp(
-          minScaleFactor: 0.85,
-          maxScaleFactor: 1.15,
-        );
         return MediaQuery(
-          data: mediaQuery.copyWith(textScaler: clampedScale),
+          data: mediaQuery.copyWith(textScaler: TextScaler.noScaling),
           child: child ?? const SizedBox.shrink(),
         );
       },

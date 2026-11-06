@@ -37,8 +37,8 @@
       Title plus all three masked identifiers.
 - [x] "Sync search index" (Admin, drawer) backfills the new search
       fields for customers saved before field-isolated search existed.
-- [x] Dashboard: Total Customers, New This Month, 7-day growth chart,
-      Admin quick actions, skeleton loading, and error-with-retry states.
+- [x] Dashboard: Total Customers, New This Month count cards,
+      Admin quick actions, skeleton loading, and error-with-retry states (Growth Trend Chart removed per design).
 - [x] Dashboard recent customer cards display Account Title as the primary heading.
 - [x] Dashboard UI design enhancements:
       - Native pull-to-refresh (`RefreshIndicator`) for stats and recent customer streams.
@@ -48,9 +48,14 @@
       - Customer card status indicator with colored dot (`Active`, `Dormant`, `Blocked`, `Inactive`).
       - Dual identifier preview on cards (masked account number `•` masked phone).
       - Account-type dynamic gradient avatars (`Savings`, `Current`, `Business`).
-      - Interactive expandable 7-day customer onboarding growth trend card (`GrowthChart`) with tap-to-inspect bar highlights and weekly totals.
 - [x] Customer Details and Add Customer use the standardized 9-field sequence:
       1. Account Title, 2. Account Number, 3. IBAN No, 4. Account Type, 5. Account Status, 6. CNIC, 7. Phone Number, 8. Email, 9. Address.
+- [x] Unlocked customer editing: Account Number and Account Type (Category & Type selectors) fully editable in Edit Customer screen.
+- [x] Upgraded Staff Management:
+      - Real-time search across staff name, email, and phone number.
+      - Status filter chips (All, Active, Deactivated) with live counter badges.
+      - Elevated staff cards with avatar gradient, contact details, status pill, and live permission chips.
+- [x] Standardized font scaling: `TextScaler.noScaling` (1.0) applied globally to auto-normalize UI typography across all mobile devices regardless of OS font size settings.
 - [x] High-readability customer view mode:
       - Crystal-clear typography and high-contrast ink (`AppColors.ink`) replacing faint muted text in read-only states.
       - Profile Header with dynamic account-type gradient avatar, large Account Title, and real-time status pill.

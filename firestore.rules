@@ -42,7 +42,7 @@ service cloud.firestore {
     match /customers/{accountNumber} {
       allow read: if can('view');
 
-      allow create: if can('add')
+      allow create: if (can('add')
         && isAccountNumber(accountNumber)
         && request.resource.data.accountNumber == accountNumber
         && isPakistaniPhone(request.resource.data.phone)
@@ -52,7 +52,16 @@ service cloud.firestore {
         && request.resource.data.updatedBy == request.auth.uid
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time
-        && activityMatches(request.resource.data.lastActivityId, 'customer_created', accountNumber);
+        && activityMatches(request.resource.data.lastActivityId, 'customer_created', accountNumber))
+      || (can('edit')
+        && isAccountNumber(accountNumber)
+        && request.resource.data.accountNumber == accountNumber
+        && isPakistaniPhone(request.resource.data.phone)
+        && isCnic(request.resource.data.cnic)
+        && isIbnNo(request.resource.data.ibnNo)
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && activityMatches(request.resource.data.lastActivityId, 'customer_updated', accountNumber));
 
       allow update: if can('edit')
         && isAccountNumber(accountNumber)
@@ -77,8 +86,10 @@ service cloud.firestore {
           'deleteActivityId'
         ]);
 
-      allow delete: if can('delete')
-        && activityMatches(resource.data.deleteActivityId, 'customer_deleted', accountNumber);
+      allow delete: if (can('delete')
+        && activityMatches(resource.data.deleteActivityId, 'customer_deleted', accountNumber))
+      || (can('edit')
+        && activityMatches(resource.data.deleteActivityId, 'customer_updated', accountNumber));
     }
 
     match /users/{uid} {

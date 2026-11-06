@@ -314,6 +314,7 @@ class CustomerService {
     Customer customer,
     AppUser actor, {
     String? details,
+    String? originalAccountNumber,
     String? originalPhone,
     String? originalCnic,
   }) async {
@@ -330,8 +331,18 @@ class CustomerService {
         throw Exception('A customer with this CNIC already exists (${cnicMatch.name}).');
       }
     }
-    final customerRef = _col.doc(customer.accountNumber);
+    final isAccountNumberChanged = originalAccountNumber != null && originalAccountNumber != customer.accountNumber;
+    if (isAccountNumberChanged) {
+      final existingAccount = await _col.doc(customer.accountNumber).get();
+      if (existingAccount.exists) {
+        throw Exception('A customer with account number ${customer.accountNumber} already exists.');
+      }
+    }
+
+    final oldAccountNum = originalAccountNumber ?? customer.accountNumber;
+    final customerRef = _col.doc(oldAccountNum);
     final eventId = _db.collection('activityLog').doc().id;
+
     await _db.runTransaction((transaction) async {
       final current = await transaction.get(customerRef);
       if (!current.exists) throw Exception('Customer no longer exists. Refresh and try again.');
@@ -342,14 +353,24 @@ class CustomerService {
       final data = customer.toMap(actingUid: actor.uid, isNew: false)
         ..['lastActivityId'] = eventId
         ..['deleteActivityId'] = deleteEventId;
-      transaction.update(customerRef, data);
+
+      if (isAccountNumberChanged) {
+        final newCustomerRef = _col.doc(customer.accountNumber);
+        transaction.set(newCustomerRef, data);
+        transaction.delete(customerRef);
+      } else {
+        transaction.update(customerRef, data);
+      }
+
       _activity.stageInTransaction(
         transaction,
         logId: eventId,
         action: ActivityAction.customerUpdated,
         targetId: customer.accountNumber,
         actor: actor,
-        details: details,
+        details: isAccountNumberChanged
+            ? 'Account Number updated from $oldAccountNum to ${customer.accountNumber}'
+            : details,
       );
     });
   }

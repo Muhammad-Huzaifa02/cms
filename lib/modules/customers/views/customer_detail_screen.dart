@@ -15,8 +15,8 @@ import '../../../core/widgets/feedback_text.dart';
 /// Designed with priority on readability, high contrast, and rapid data access:
 /// - In View Mode: Displays a prominent customer profile header, quick-action
 ///   copy buttons, and crystal-clear high-contrast detail tiles with 1-tap clipboard copy.
-/// - In Edit Mode: Formatted in the exact standardized 9-field sequence with
-///   deep ink inputs and full validation.
+/// - In Edit Mode: Fully unlocked inputs for all fields including Account Number
+///   and Account Type, arranged in the exact standardized 9-field sequence.
 ///
 /// Exact 9-Field Standard Sequence:
 /// 1. Account Title
@@ -47,19 +47,86 @@ class CustomerDetailScreen extends StatefulWidget {
 }
 
 class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
+  static const _accountCategories = [
+    'Current Accounts',
+    'Savings Accounts',
+    'Special Savings Accounts',
+    'Asaan Accounts',
+    'Digital Accounts',
+    'Roshan Resident Accounts',
+    'Home Remittance Accounts',
+    'Meezan Smart Accounts',
+    'Business / Entity Accounts',
+  ];
+
+  static const Map<String, List<String>> _accountTypesByCategory = {
+    'Current Accounts': [
+      'Meezan Rupee Current Account',
+      'Meezan Dollar Current Account',
+      'Meezan Euro Current Account',
+      'Meezan GBP Current Account',
+      'Meezan Express Current Account',
+    ],
+    'Savings Accounts': [
+      'Meezan Rupee Savings Account',
+      'Meezan Dollar Savings Account',
+      'Meezan Euro Savings Account',
+      'Meezan GBP Savings Account',
+      'Meezan Express Savings Account',
+    ],
+    'Special Savings Accounts': [
+      'Meezan Bachat Account',
+      'Meezan Labbaik Saving Aasaan',
+      'Meezan Senior Citizen Account',
+      'Meezan Plus Account',
+      'Meezan Teens Club Account',
+      'Meezan Kids Club Account',
+    ],
+    'Asaan Accounts': [
+      'Meezan Asaan Current Account',
+      'Meezan Asaan Savings Account',
+    ],
+    'Digital Accounts': [
+      'Digital Student Account',
+      'Digital Asaan Account',
+      'Digital Freelancer Account',
+    ],
+    'Roshan Resident Accounts': [
+      'Meezan Roshan Resident Current Account',
+      'Meezan Roshan Resident Savings Account',
+    ],
+    'Home Remittance Accounts': [
+      'Sohni Dharti Remittance Account',
+      'Smart Remittance Wallet',
+      'Roshan Digital Account',
+    ],
+    'Meezan Smart Accounts': [
+      'Smart Wallet Current',
+      'Smart Wallet Savings',
+      'Smart Asaan Mobile Account',
+    ],
+    'Business / Entity Accounts': [
+      'Business / Entity Current Account',
+      'Business / Entity Savings Account',
+      'Karobari Munafa Account',
+      'Karobari Munafa Account Plus',
+    ],
+  };
+
   final _formKey = GlobalKey<FormState>();
   final _service = CustomerService();
   static const _statusOptions = ['Active', 'Inactive', 'Dormant', 'Blocked'];
 
   late TextEditingController _accountTitleCtrl;
-  late final TextEditingController _accountNumberDisplayCtrl;
+  late TextEditingController _accountNumberCtrl;
   late TextEditingController _ibnCtrl;
-  late final TextEditingController _accountTypeDisplayCtrl;
   late TextEditingController _cnicCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _emailCtrl;
   late TextEditingController _addressCtrl;
   late String _status;
+  late String _accountCategory;
+  late String _accountType;
   bool _saving = false;
   String? _error;
 
@@ -68,22 +135,31 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     super.initState();
     final c = widget.customer;
     _accountTitleCtrl = TextEditingController(text: c.accountTitle);
-    _accountNumberDisplayCtrl = TextEditingController(text: c.accountNumber);
+    _accountNumberCtrl = TextEditingController(text: c.accountNumber);
     _ibnCtrl = TextEditingController(text: c.ibnNo);
-    _accountTypeDisplayCtrl = TextEditingController(text: c.accountType);
     _cnicCtrl = TextEditingController(text: c.cnic);
     _phoneCtrl = TextEditingController(text: c.phone);
     _emailCtrl = TextEditingController(text: c.email ?? '');
     _addressCtrl = TextEditingController(text: c.address ?? '');
     _status = _statusOptions.contains(c.status) ? c.status : _statusOptions.first;
+
+    // Resolve initial category from customer's account type
+    _accountType = c.accountType;
+    String matchedCategory = _accountCategories.first;
+    for (final entry in _accountTypesByCategory.entries) {
+      if (entry.value.contains(c.accountType)) {
+        matchedCategory = entry.key;
+        break;
+      }
+    }
+    _accountCategory = matchedCategory;
   }
 
   @override
   void dispose() {
     _accountTitleCtrl.dispose();
-    _accountNumberDisplayCtrl.dispose();
+    _accountNumberCtrl.dispose();
     _ibnCtrl.dispose();
-    _accountTypeDisplayCtrl.dispose();
     _cnicCtrl.dispose();
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
@@ -156,13 +232,14 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
     setState(() => _saving = true);
     try {
+      final newAccountNum = _accountNumberCtrl.text.trim();
       final updated = Customer(
-        accountNumber: widget.customer.accountNumber,
+        accountNumber: newAccountNum,
         name: _accountTitleCtrl.text.trim(),
         accountTitle: _accountTitleCtrl.text.trim(),
         phone: _phoneCtrl.text.trim(),
         cnic: _cnicCtrl.text.trim(),
-        accountType: widget.customer.accountType,
+        accountType: _accountType,
         ibnNo: _ibnCtrl.text.trim().toUpperCase(),
         status: _status,
         gender: widget.customer.gender,
@@ -177,6 +254,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       await _service.updateCustomer(
         updated,
         widget.currentUser,
+        originalAccountNumber: widget.customer.accountNumber,
         originalPhone: widget.customer.phone,
         originalCnic: widget.customer.cnic,
       );
@@ -578,7 +656,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  /// High-contrast Edit Form with exact 9-field sequence.
+  /// High-contrast Edit Form with unlocked Account Number and Account Type.
   Widget _buildEditForm() {
     return Form(
       key: _formKey,
@@ -597,11 +675,17 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 validator: Validators.accountTitle,
               ),
               const SizedBox(height: 16),
-              // 2. Account Number
+              // 2. Account Number (UNLOCKED)
               AccountField(
                 label: 'Account Number',
-                controller: _accountNumberDisplayCtrl,
-                readOnly: true,
+                controller: _accountNumberCtrl,
+                readOnly: !_canEdit,
+                validator: Validators.accountNumber,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(14),
+                ],
               ),
               const SizedBox(height: 16),
               // 3. IBAN No
@@ -620,11 +704,31 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              // 4. Account Type
-              AccountField(
-                label: 'Account Type',
-                controller: _accountTypeDisplayCtrl,
-                readOnly: true,
+              // 4. Account Type (UNLOCKED: Category + Type Dropdowns)
+              const Text('Account Category', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
+              const SizedBox(height: 6),
+              _dropdown(
+                value: _accountCategory,
+                options: _accountCategories,
+                enabled: _canEdit,
+                onChanged: (category) {
+                  if (category == null) return;
+                  setState(() {
+                    _accountCategory = category;
+                    _accountType = _accountTypesByCategory[category]!.first;
+                  });
+                },
+              ),
+              const SizedBox(height: 14),
+              const Text('Account Type', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
+              const SizedBox(height: 6),
+              _dropdown(
+                value: _accountType,
+                options: _accountTypesByCategory[_accountCategory] ?? [_accountType],
+                enabled: _canEdit,
+                onChanged: (type) {
+                  if (type != null) setState(() => _accountType = type);
+                },
               ),
               const SizedBox(height: 16),
               // 5. Account Status
@@ -707,11 +811,13 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     required bool enabled,
     required ValueChanged<String?> onChanged,
   }) {
+    // Ensure value is present in options list to avoid dropdown assertion error
+    final safeValue = options.contains(value) ? value : options.first;
     return InputDecorator(
       decoration: const InputDecoration(),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: value,
+          value: safeValue,
           isExpanded: true,
           isDense: true,
           menuMaxHeight: 360,
