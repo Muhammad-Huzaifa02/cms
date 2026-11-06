@@ -17,6 +17,7 @@ class AccountField extends StatelessWidget {
   final bool readOnly;
   final String? helperText;
   final TextInputType? keyboardType;
+  final Widget? prefixIcon;
   final Widget? suffixIcon;
   final bool obscureText;
   final String? Function(String?)? validator;
@@ -31,6 +32,7 @@ class AccountField extends StatelessWidget {
     this.readOnly = false,
     this.helperText,
     this.keyboardType,
+    this.prefixIcon,
     this.suffixIcon,
     this.obscureText = false,
     this.validator,
@@ -44,6 +46,7 @@ class AccountField extends StatelessWidget {
     final decoration = InputDecoration(
       isDense: false,
       hintText: hintText,
+      prefixIcon: prefixIcon,
       suffixIcon: suffixIcon ??
           (readOnly ? const Icon(Icons.lock_outline, size: 16, color: AppColors.muted) : null),
       fillColor: readOnly ? const Color(0xFFF7FAF9) : Colors.white,

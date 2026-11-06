@@ -380,10 +380,16 @@ class CustomerService {
     await _db.runTransaction((transaction) async {
       final current = await transaction.get(customerRef);
       if (!current.exists) throw Exception('Customer no longer exists.');
-      final deleteEventId = current.data()?['deleteActivityId'] as String?;
+      final data = current.data();
+      final deleteEventId = data?['deleteActivityId'] as String?;
       if (deleteEventId == null || deleteEventId.isEmpty) {
         throw Exception('Run the Admin search-index sync once before deleting existing customers.');
       }
+      final title = data?['accountTitle'] ?? data?['name'] ?? '';
+      final phone = data?['phone'] ?? '';
+      final cnic = data?['cnic'] ?? '';
+      final iban = data?['ibnNo'] ?? '';
+
       transaction.delete(customerRef);
       _activity.stageInTransaction(
         transaction,
@@ -391,6 +397,7 @@ class CustomerService {
         action: ActivityAction.customerDeleted,
         targetId: accountNumber,
         actor: actor,
+        details: 'Deleted Record: Title: $title, Phone: $phone, CNIC: $cnic, IBAN: $iban',
       );
     });
   }

@@ -76,8 +76,14 @@
 - [x] Activity log — append-only, Admin-only visibility.
 - [x] Export to Excel/PDF (Admin-only), updated with IBAN, Account Title, Gender,
       Status, and Email, logged to activity log.
-- [x] My Account: edit own name/phone, change password, change login
-      email (verify-then-sync flow), biometric app-lock toggle.
+- [x] Executive Banking Account & Security Center (`My Account` / `EditProfileScreen`):
+      - Hero Profile Card with user avatar initials gradient, name, role badge (`ADMINISTRATOR` / `BANKING STAFF`), and active session pill.
+      - Personal details management with strict phone validation and input icons.
+      - Login email management with verify-then-sync security workflow and instant status badge.
+      - Hardware Biometric Vault controls with responsive switch layout and inactivity policy details.
+      - Password change with show/hide eye toggle and strength validation.
+      - Secure sign out action with modal confirmation.
+- [x] Immutable Deletion Audit Snapshot: Full customer details (Title, Phone, CNIC, IBAN) are permanently recorded inside the immutable `activityLog` on deletion, ensuring recovery trail even if a record is deleted.
 - [x] Redesigned biometric app-lock & session lock architecture:
       - Automatic prompt: Automatically initiates biometric authentication prompt on app launch and upon returning from background.
       - Responsive inactivity re-lock: `BiometricLockScreen` handles live inactivity timeout events via `didUpdateWidget`, re-locking and prompting immediately.

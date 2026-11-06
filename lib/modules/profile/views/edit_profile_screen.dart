@@ -8,11 +8,11 @@ import '../../../core/widgets/account_field.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/feedback_text.dart';
 
-/// Lets the signed-in user edit their OWN name, phone number, and email,
-/// and optionally change their password. Email uses a verify-then-sync
-/// flow (see AuthService.requestEmailChange/confirmEmailChangeIfVerified)
-/// since Firebase only actually swaps the login email once the person
-/// clicks a verification link sent to the new address.
+/// Executive Banking Account & Security Center.
+///
+/// Allows the signed-in user to view and update their profile details (Name, Phone),
+/// manage login email with a secure verify-then-sync flow, update passwords,
+/// configure biometric hardware app-lock, and review session credentials.
 class EditProfileScreen extends StatefulWidget {
   final AppUser currentUser;
   const EditProfileScreen({super.key, required this.currentUser});
@@ -83,7 +83,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
     if (!_phoneLooksValid) {
       setState(() {
-        _detailsError = 'Enter a valid phone number.';
+        _detailsError = 'Enter a valid Pakistani mobile number (e.g. 03xx...).';
         _detailsSuccess = null;
       });
       return;
@@ -100,7 +100,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         previousPhone: widget.currentUser.phone ?? '',
       );
       if (!mounted) return;
-      setState(() => _detailsSuccess = 'Details saved.');
+      setState(() => _detailsSuccess = 'Personal details updated successfully.');
     } catch (e) {
       setState(() => _detailsError = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -119,26 +119,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Change email'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Change Login Email', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                "We'll send a verification link to the new address. Your login email only actually changes once you click that link.",
-                style: TextStyle(fontSize: 12.5, color: AppColors.muted),
+                "A secure verification link will be sent to the new address. Your login email only updates once you tap the confirmation link.",
+                style: TextStyle(fontSize: 12.5, color: AppColors.muted, height: 1.4),
               ),
               const SizedBox(height: 14),
               TextField(
                 controller: newEmailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(hintText: 'New email address'),
+                decoration: InputDecoration(
+                  hintText: 'New email address',
+                  prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               TextField(
                 controller: passwordCtrl,
                 obscureText: obscure,
                 decoration: InputDecoration(
                   hintText: 'Current password',
+                  prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   suffixIcon: IconButton(
                     icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 19),
                     onPressed: () => setDialogState(() => obscure = !obscure),
@@ -146,14 +153,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               if (dialogError != null) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(dialogError!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
               ],
             ],
           ),
           actions: [
-            TextButton(onPressed: sending ? null : () => Navigator.pop(context, false), child: const Text('Cancel')),
             TextButton(
+              onPressed: sending ? null : () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.brand,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
               onPressed: sending
                   ? null
                   : () async {
@@ -172,7 +186,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       }
                     },
               child: sending
-                  ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Text('Send verification link'),
             ),
           ],
@@ -200,12 +214,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final freshEmail = _auth.currentUser?.email ?? '';
         setState(() {
           _emailDisplayCtrl.text = freshEmail;
-          _emailStatus = 'Email updated.';
+          _emailStatus = 'Email updated successfully.';
           _emailStatusIsError = false;
         });
       } else {
         setState(() {
-          _emailStatus = "Not verified yet — click the link in your new inbox first.";
+          _emailStatus = "Not verified yet — please open the verification email link first.";
           _emailStatusIsError = true;
         });
       }
@@ -236,7 +250,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       await _auth.changeOwnPassword(_newPasswordCtrl.text);
       if (!mounted) return;
       _newPasswordCtrl.clear();
-      setState(() => _passwordSuccess = 'Password changed.');
+      setState(() => _passwordSuccess = 'Password updated successfully.');
     } catch (e) {
       setState(() => _passwordError = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -254,12 +268,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         if (mounted) {
           setState(() => _biometricEnabled = true);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Biometric login enabled successfully.')),
+            const SnackBar(content: Text('Biometric app-lock enabled.')),
           );
         }
       } else if (result != BiometricResult.cancelled && mounted) {
-        // Cancellation is silent — a real failure gets a message, and the
-        // toggle stays off either way (never enable on failure/cancel).
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result.message)),
         );
@@ -269,125 +281,329 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (mounted) {
         setState(() => _biometricEnabled = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Biometric login disabled.')),
+          const SnackBar(content: Text('Biometric app-lock disabled.')),
         );
       }
     }
   }
 
+  Future<void> _confirmSignOut() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Sign out of CMS?', style: TextStyle(fontWeight: FontWeight.w700)),
+        content: const Text('You will need your password or verified biometrics to log back in.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            child: const Text('Sign out'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && mounted) {
+      Navigator.of(context).pop();
+      await _auth.signOut();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = widget.currentUser;
+    final initials = user.name.trim().isNotEmpty
+        ? user.name.trim().split(RegExp(r'\s+')).map((w) => w[0]).take(2).join().toUpperCase()
+        : '?';
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: const Text('My Account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        title: const Text('My Account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
         centerTitle: false,
-        titleSpacing: 0,
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
           children: [
+            // ── HERO EXECUTIVE PROFILE CARD ──
+            Card(
+              elevation: 1.5,
+              margin: const EdgeInsets.only(bottom: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: user.isAdmin
+                              ? [const Color(0xFFD4AF37), AppColors.gold]
+                              : [AppColors.brandLight, AppColors.brand],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.12),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        initials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            user.email ?? user.phone ?? '',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                decoration: BoxDecoration(
+                                  color: user.isAdmin
+                                      ? AppColors.gold.withValues(alpha: 0.18)
+                                      : AppColors.brand.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: user.isAdmin ? AppColors.gold : AppColors.brand.withValues(alpha: 0.3),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      user.isAdmin ? Icons.shield_rounded : Icons.badge_outlined,
+                                      size: 11,
+                                      color: user.isAdmin ? const Color(0xFFB45309) : AppColors.brand,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      user.isAdmin ? 'ADMINISTRATOR' : 'BANKING STAFF',
+                                      style: TextStyle(
+                                        color: user.isAdmin ? const Color(0xFFB45309) : AppColors.brand,
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF16A34A).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.check_circle_rounded, size: 10, color: Color(0xFF16A34A)),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      'ACTIVE',
+                                      style: TextStyle(
+                                        color: Color(0xFF16A34A),
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── PERSONAL PROFILE SECTION ──
             SectionCard(
-              title: 'Details',
+              title: 'Personal Information',
               children: [
-                AccountField(label: 'Full Name', controller: _nameCtrl),
+                AccountField(
+                  label: 'Full Name',
+                  controller: _nameCtrl,
+                  prefixIcon: const Icon(Icons.person_outline_rounded, size: 20, color: AppColors.brand),
+                ),
                 const SizedBox(height: 16),
                 AccountField(
                   label: 'Phone Number',
                   controller: _phoneCtrl,
                   keyboardType: TextInputType.phone,
+                  helperText: 'Pakistani format (11 digits, starts with 03).',
+                  prefixIcon: const Icon(Icons.phone_outlined, size: 20, color: AppColors.brand),
                 ),
                 if (_detailsError != null) FeedbackText(_detailsError!, isError: true),
                 if (_detailsSuccess != null) FeedbackText(_detailsSuccess!),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 PrimaryButton(
-                  label: 'Save Details',
+                  label: 'Save Personal Details',
                   loading: _savingDetails,
                   onPressed: _saveDetails,
                 ),
               ],
             ),
+
             const SizedBox(height: 16),
+
+            // ── LOGIN EMAIL & VERIFICATION ──
             SectionCard(
-              title: 'Email Address',
+              title: 'Login & Authentication',
               children: [
-                AccountField(label: 'Email (Login)', controller: _emailDisplayCtrl, readOnly: true),
-                const SizedBox(height: 12),
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 4,
+                AccountField(
+                  label: 'Login Email Address',
+                  controller: _emailDisplayCtrl,
+                  readOnly: true,
+                  prefixIcon: const Icon(Icons.email_outlined, size: 20, color: AppColors.brand),
+                ),
+                const SizedBox(height: 10),
+                Row(
                   children: [
-                    const Text(
-                      'Changing your email requires verifying the new address first.',
-                      style: TextStyle(fontSize: 14, color: AppColors.muted, height: 1.4),
+                    const Expanded(
+                      child: Text(
+                        'Changing login email requires email inbox verification link.',
+                        style: TextStyle(fontSize: 12.5, color: AppColors.muted, height: 1.3),
+                      ),
                     ),
-                    TextButton(
+                    const SizedBox(width: 8),
+                    FilledButton.tonal(
                       onPressed: _showChangeEmailDialog,
-                      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8)),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.brandSoft,
+                        foregroundColor: AppColors.brand,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                      ),
                       child: const Text('Change'),
                     ),
                   ],
                 ),
                 if (_emailStatus != null) FeedbackText(_emailStatus!, isError: _emailStatusIsError),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: TextButton(
+                  child: TextButton.icon(
                     onPressed: _syncingEmail ? null : _syncEmailIfVerified,
-                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 30)),
-                    child: _syncingEmail
-                        ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Already verified a new email? Sync now', style: TextStyle(fontSize: 11.5)),
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                    icon: _syncingEmail
+                        ? const SizedBox(height: 13, width: 13, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.sync_rounded, size: 15, color: AppColors.brand),
+                    label: const Text(
+                      'Already clicked the verification link? Sync now',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.brand),
+                    ),
                   ),
                 ),
               ],
             ),
+
             const SizedBox(height: 16),
+
+            // ── HARDWARE BIOMETRIC SECURITY ──
             if (_biometricAvailable) ...[
-              const Padding(
-                padding: EdgeInsets.only(left: 4, bottom: 8),
-                child: SectionHeader('Security'),
-              ),
               SectionCard(
-                title: 'Biometric App Lock',
+                title: 'Biometric Hardware Vault',
                 children: [
-                  LayoutBuilder(builder: (context, constraints) {
-                    final compact = constraints.maxWidth < 420 || MediaQuery.textScalerOf(context).scale(1) > 1.25;
-                    final content = Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _biometricEnabled ? 'Active Protection' : 'Disabled',
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w600,
-                            color: _biometricEnabled ? AppColors.success : AppColors.muted,
-                          ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: _biometricEnabled
+                              ? const Color(0xFF16A34A).withValues(alpha: 0.12)
+                              : AppColors.muted.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          _biometricEnabled
-                              ? 'Fingerprint/Face ID required whenever app resumes or inactivity timeout occurs'
-                              : 'Enable fingerprint or Face ID to quickly unlock CMS without typing your password each time',
-                          style: const TextStyle(fontSize: 13, color: AppColors.muted, height: 1.4),
+                        child: Icon(
+                          Icons.fingerprint_rounded,
+                          size: 24,
+                          color: _biometricEnabled ? const Color(0xFF16A34A) : AppColors.muted,
                         ),
-                      ],
-                    );
-                    final toggle = Switch(
-                      value: _biometricEnabled,
-                      activeThumbColor: AppColors.brand,
-                      onChanged: _toggleBiometrics,
-                    );
-                    return compact
-                        ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [content, Align(alignment: Alignment.centerRight, child: toggle)])
-                        : Row(children: [Expanded(child: content), toggle]);
-                  }),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _biometricEnabled ? 'Biometric App-Lock Active' : 'App-Lock Disabled',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: _biometricEnabled ? const Color(0xFF16A34A) : AppColors.ink,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _biometricEnabled
+                                  ? 'Fingerprint/Face ID required on launch and after 5m inactivity.'
+                                  : 'Enable fingerprint or Face ID to quickly unlock CMS portal.',
+                              style: const TextStyle(fontSize: 11.5, color: AppColors.muted, height: 1.3),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: _biometricEnabled,
+                        activeThumbColor: AppColors.brand,
+                        onChanged: _toggleBiometrics,
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
             ],
+
+            // ── CHANGE PASSWORD SECTION ──
             SectionCard(
               title: 'Change Password',
               children: [
@@ -395,21 +611,70 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   label: 'New Password',
                   controller: _newPasswordCtrl,
                   obscureText: _obscurePassword,
-                  helperText: 'Minimum 6 characters.',
+                  helperText: 'Must be at least 6 characters.',
+                  prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20, color: AppColors.brand),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 19, color: AppColors.muted),
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      size: 19,
+                      color: AppColors.muted,
+                    ),
                     onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
                 if (_passwordError != null) FeedbackText(_passwordError!, isError: true),
                 if (_passwordSuccess != null) FeedbackText(_passwordSuccess!),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 PrimaryButton(
-                  label: 'Change Password',
+                  label: 'Update Password',
                   loading: _savingPassword,
                   onPressed: _changePassword,
                 ),
               ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // ── SECURE SIGN OUT ──
+            InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: _confirmSignOut,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                decoration: BoxDecoration(
+                  color: AppColors.danger.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.logout_rounded, color: AppColors.danger, size: 19),
+                    SizedBox(width: 8),
+                    Text(
+                      'Sign out of CMS',
+                      style: TextStyle(
+                        color: AppColors.danger,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            Center(
+              child: Text(
+                'CMS v1.0.0 • Secured Banking Portal',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  color: AppColors.muted.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ],
         ),
