@@ -66,9 +66,8 @@
 - [x] Standardized font scaling: `TextScaler.noScaling` (1.0) applied globally to auto-normalize UI typography across all mobile devices regardless of OS font size settings.
 - [x] High-readability customer view mode:
       - Crystal-clear typography and high-contrast ink (`AppColors.ink`) replacing faint muted text in read-only states.
-      - Profile Header with dynamic account-type gradient avatar, large Account Title, and real-time status pill.
-      - Quick-action buttons (Copy Account No, Copy IBAN, Copy Phone, Copy CNIC) with haptic feedback and instant confirmation.
-      - Distinct `_DetailFieldTile` design with 1-tap clipboard copy across all 9 fields.
+      - Compact Hero Profile Header Card with dynamic account-type gradient avatar, large Account Title, real-time status pill, and account type badge (removed redundant quick copy buttons row to maximize vertical screen efficiency).
+      - Distinct `_DetailFieldTile` design with 1-tap clipboard copy across all 9 individual fields.
 - [x] Customer Management & Search Results card clarity:
       - Prominent Account Title heading with high-contrast text.
       - Account-type gradient avatar with bold initials.

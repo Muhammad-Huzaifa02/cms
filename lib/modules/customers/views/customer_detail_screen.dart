@@ -343,145 +343,112 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       children: [
         // ── HERO PROFILE HEADER CARD ──
         Card(
-          elevation: 2,
+          elevation: 1.5,
           margin: const EdgeInsets.only(bottom: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: _getAvatarGradient(c.accountType),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.12),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: _getAvatarGradient(c.accountType),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.10),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
                       ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        initials,
+                    ],
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initials,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        titleText,
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
+                          color: AppColors.ink,
+                          height: 1.25,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          Text(
-                            titleText,
-                            style: const TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.ink,
-                              height: 1.25,
+                          // Status pill with colored dot
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 1),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 6,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              // Status pill with colored dot
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 1),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 7,
-                                      height: 7,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: statusColor,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      statusText.toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        color: statusColor,
-                                        letterSpacing: 0.4,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Account Type badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-                                decoration: BoxDecoration(
-                                  color: AppColors.brandSoft,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  c.accountType,
-                                  style: const TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.brandDeep,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: statusColor,
                                   ),
                                 ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  statusText.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: statusColor,
+                                    letterSpacing: 0.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Account Type badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: AppColors.brandSoft,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              c.accountType,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.brandDeep,
                               ),
-                            ],
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Divider(height: 1, color: AppColors.border),
-                const SizedBox(height: 14),
-                // Quick Action Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _quickActionButton(
-                      icon: Icons.credit_card_rounded,
-                      label: 'Copy A/C',
-                      onTap: () => _copyToClipboard('Account Number', c.accountNumber),
-                    ),
-                    if (c.ibnNo.isNotEmpty)
-                      _quickActionButton(
-                        icon: Icons.account_balance_rounded,
-                        label: 'Copy IBAN',
-                        onTap: () => _copyToClipboard('IBAN', c.ibnNo),
-                      ),
-                    _quickActionButton(
-                      icon: Icons.phone_rounded,
-                      label: 'Copy Phone',
-                      onTap: () => _copyToClipboard('Phone Number', c.phone),
-                    ),
-                    _quickActionButton(
-                      icon: Icons.badge_outlined,
-                      label: 'Copy CNIC',
-                      onTap: () => _copyToClipboard('CNIC', c.cnic),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -617,42 +584,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             },
           ),
       ],
-    );
-  }
-
-  Widget _quickActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: AppColors.brandSoft,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 18, color: AppColors.brand),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.ink,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
