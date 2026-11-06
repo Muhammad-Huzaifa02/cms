@@ -51,6 +51,15 @@
       - Interactive expandable 7-day customer onboarding growth trend card (`GrowthChart`) with tap-to-inspect bar highlights and weekly totals.
 - [x] Customer Details and Add Customer use the standardized 9-field sequence:
       1. Account Title, 2. Account Number, 3. IBAN No, 4. Account Type, 5. Account Status, 6. CNIC, 7. Phone Number, 8. Email, 9. Address.
+- [x] High-readability customer view mode:
+      - Crystal-clear typography and high-contrast ink (`AppColors.ink`) replacing faint muted text in read-only states.
+      - Profile Header with dynamic account-type gradient avatar, large Account Title, and real-time status pill.
+      - Quick-action buttons (Copy Account No, Copy IBAN, Copy Phone, Copy CNIC) with haptic feedback and instant confirmation.
+      - Distinct `_DetailFieldTile` design with 1-tap clipboard copy across all 9 fields.
+- [x] Customer Management & Search Results card clarity:
+      - Prominent Account Title heading with high-contrast text.
+      - Account-type gradient avatar with bold initials.
+      - Inline status indicator dot (`Active`, `Dormant`, `Blocked`, `Inactive`) and secondary identifier preview.
 - [x] Streamlined customer records: Removed Customer Full Name and Notes from both Add Customer and Customer Details screens (Full Name mapped cleanly to Account Title).
 - [x] CNIC/Account Number/Phone masked by default, tap-to-reveal.
 - [x] Activity log — append-only, Admin-only visibility.

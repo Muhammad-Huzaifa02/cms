@@ -196,18 +196,122 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
         }
         final customer = customers[index];
         final favorite = favoriteIds.contains(customer.accountNumber);
+        final titleText = customer.accountTitle.trim().isNotEmpty
+            ? customer.accountTitle.trim()
+            : customer.name.trim();
+        final initials = titleText.isEmpty
+            ? '?'
+            : titleText.split(RegExp(r'\s+')).map((w) => w.isNotEmpty ? w[0] : '').take(2).join().toUpperCase();
+        final statusColor = _getStatusColor(customer.status);
+        final statusText = customer.status.trim().isNotEmpty ? customer.status.trim() : 'Active';
+
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFFE4ECE8), width: 1.1),
+          ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            leading: CircleAvatar(
-              backgroundColor: AppColors.brandSoft,
-              foregroundColor: AppColors.brand,
-              child: Text(customer.name.isEmpty ? '?' : customer.name[0].toUpperCase()),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: _getAvatarGradient(customer.accountType),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                initials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  letterSpacing: 0.5,
+                ),
+              ),
             ),
-            title: Text(customer.name, maxLines: 2, overflow: TextOverflow.ellipsis),
-            subtitle: Text('${customer.accountTitle}\n${customer.maskedAccountNumber}',
-                maxLines: 2, overflow: TextOverflow.ellipsis),
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    titleText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: statusColor,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        statusText.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          color: statusColor,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${customer.maskedAccountNumber} • ${customer.accountType}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Ph: ${customer.maskedPhone}',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: AppColors.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             onTap: () => push3D(
               context,
               CustomerDetailScreen(
@@ -219,13 +323,58 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
             trailing: IconButton(
               tooltip: favorite ? 'Remove from favorites' : 'Add to favorites',
               onPressed: () => _toggleFavorite(customer.accountNumber, favorite),
-              icon: Icon(favorite ? Icons.star : Icons.star_border,
-                  color: favorite ? AppColors.gold : AppColors.muted),
+              icon: Icon(
+                favorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                color: favorite ? AppColors.gold : AppColors.muted,
+                size: 24,
+              ),
             ),
           ),
         );
       },
     );
+  }
+
+  LinearGradient _getAvatarGradient(String accountType) {
+    final lower = accountType.toLowerCase();
+    if (lower.contains('saving')) {
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [AppColors.brandDeep, AppColors.brand],
+      );
+    } else if (lower.contains('current')) {
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
+      );
+    } else if (lower.contains('business') || lower.contains('corporate')) {
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF78350F), Color(0xFFD97706)],
+      );
+    }
+    return const LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [AppColors.brandDeep, AppColors.brandLight],
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return const Color(0xFF16A34A);
+      case 'dormant':
+        return const Color(0xFFD97706);
+      case 'blocked':
+        return AppColors.danger;
+      case 'inactive':
+      default:
+        return const Color(0xFF64748B);
+    }
   }
 
   @override

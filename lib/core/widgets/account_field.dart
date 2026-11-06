@@ -6,14 +6,11 @@ import '../theme/app_theme.dart';
 /// Account, Add/Edit Customer, Add Staff). Height, radius, and spacing
 /// all come from the app's global InputDecorationTheme (see
 /// app_theme.dart) so this stays visually identical to every other text
-/// field in the app — this widget's job is label placement, the
-/// read-only visual treatment, and optional validation/helper content.
+/// field in the app.
 ///
-/// [validator]/[inputFormatters] are optional — when [validator] is
-/// omitted this behaves exactly as it always has (a plain TextField);
-/// passing one switches it to a TextFormField so it participates in a
-/// parent Form's validation. This is deliberately one component for
-/// both cases rather than a second near-duplicate widget.
+/// Customer data readability is prioritized: read-only text is rendered
+/// in deep high-contrast ink ([AppColors.ink]) rather than faint gray,
+/// ensuring banking data remains crystal clear across all devices.
 class AccountField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
@@ -47,10 +44,17 @@ class AccountField extends StatelessWidget {
     final decoration = InputDecoration(
       isDense: false,
       hintText: hintText,
-      suffixIcon: suffixIcon,
-      fillColor: readOnly ? AppColors.bg : Colors.white,
+      suffixIcon: suffixIcon ??
+          (readOnly ? const Icon(Icons.lock_outline, size: 16, color: AppColors.muted) : null),
+      fillColor: readOnly ? const Color(0xFFF7FAF9) : Colors.white,
     );
-    final style = TextStyle(fontSize: 14, color: readOnly ? AppColors.muted : AppColors.ink);
+    // Deep high-contrast font so read-only customer data is always easily readable.
+    final style = TextStyle(
+      fontSize: 15,
+      fontWeight: readOnly ? FontWeight.w600 : FontWeight.w500,
+      color: AppColors.ink,
+      letterSpacing: 0.2,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,15 +64,30 @@ class AccountField extends StatelessWidget {
           spacing: 6,
           runSpacing: 4,
           children: [
-            Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
             if (readOnly) ...[
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.muted.withValues(alpha: 0.12),
+                  color: AppColors.brand.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(5),
                 ),
-                child: const Text('READ ONLY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted, letterSpacing: 0.2)),
+                child: const Text(
+                  'LOCKED',
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.brand,
+                    letterSpacing: 0.3,
+                  ),
+                ),
               ),
             ],
           ],

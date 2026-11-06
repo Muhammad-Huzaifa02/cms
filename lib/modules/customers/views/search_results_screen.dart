@@ -113,28 +113,22 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                          Text(c.name, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                  if (c.accountTitle.isNotEmpty && c.accountTitle != c.name) ...[
-                                    const SizedBox(height: 2),
-                                    Text(c.accountTitle, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, color: AppColors.muted, fontStyle: FontStyle.italic)),
-                                  ],
-                                  const SizedBox(height: 5),
-                                  // Masked phone/CNIC/account number together —
-                                  // when a search matches on last-4 digits,
-                                  // several customers can share those same
-                                  // last 4 across different fields, so
-                                  // showing all three masked values here is
-                                  // what actually lets someone tell two
-                                  // results apart instead of guessing.
-                                  Wrap(
-                                    spacing: 10,
-                                    runSpacing: 2,
-                                    children: [
-                                      Text('Ph: ${c.maskedPhone}', style: const TextStyle(fontSize: 13, color: AppColors.muted)),
-                                      Text('CNIC: ${c.maskedCnic}', style: const TextStyle(fontSize: 13, color: AppColors.muted)),
-                                      Text('A/C: ${c.maskedAccountNumber}', style: const TextStyle(fontSize: 13, color: AppColors.muted)),
-                                    ],
-                                  ),
+                          Text(
+                            c.accountTitle.isNotEmpty ? c.accountTitle : c.name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.ink),
+                          ),
+                          const SizedBox(height: 5),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 4,
+                            children: [
+                              Text('A/C: ${c.maskedAccountNumber}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                              Text('Ph: ${c.maskedPhone}', style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+                              Text('CNIC: ${c.maskedCnic}', style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+                            ],
+                          ),
                                 ],
                               ),
                             ),
