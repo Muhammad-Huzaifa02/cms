@@ -10,11 +10,17 @@ import '../../../core/widgets/account_field.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/feedback_text.dart';
 
-/// Organized into three sections — Customer Information, Contact
-/// Information, Account Information — matching the fields that actually
-/// exist on Customer. No "Activity/Transactions" section: this app has
-/// no real transaction data to show, and the activity log is a separate,
-/// Admin-only screen rather than something that belongs inline here.
+/// Customer Details and Edit Screen.
+/// Formatted in the exact standardized sequence:
+/// 1. Account Title
+/// 2. Account Number
+/// 3. IBAN No
+/// 4. Account Type
+/// 5. Account Status
+/// 6. CNIC
+/// 7. Phone Number
+/// 8. Email
+/// 9. Address
 class CustomerDetailScreen extends StatefulWidget {
   final Customer customer;
   final AppUser currentUser;
@@ -35,13 +41,16 @@ class CustomerDetailScreen extends StatefulWidget {
 class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _service = CustomerService();
-  static const _genderOptions = ['Male', 'Female', 'Other'];
   static const _statusOptions = ['Active', 'Inactive', 'Dormant', 'Blocked'];
 
-  late TextEditingController _nameCtrl, _accountTitleCtrl, _phoneCtrl, _cnicCtrl, _addressCtrl, _notesCtrl, _ibnCtrl, _emailCtrl;
-  late final TextEditingController _accountTypeDisplayCtrl;
+  late TextEditingController _accountTitleCtrl;
   late final TextEditingController _accountNumberDisplayCtrl;
-  late String _gender;
+  late TextEditingController _ibnCtrl;
+  late final TextEditingController _accountTypeDisplayCtrl;
+  late TextEditingController _cnicCtrl;
+  late TextEditingController _phoneCtrl;
+  late TextEditingController _emailCtrl;
+  late TextEditingController _addressCtrl;
   late String _status;
   bool _saving = false;
   String? _error;
@@ -50,32 +59,27 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   void initState() {
     super.initState();
     final c = widget.customer;
-    _nameCtrl = TextEditingController(text: c.name);
     _accountTitleCtrl = TextEditingController(text: c.accountTitle);
-    _phoneCtrl = TextEditingController(text: c.phone);
-    _emailCtrl = TextEditingController(text: c.email ?? '');
-    _cnicCtrl = TextEditingController(text: c.cnic);
-    _addressCtrl = TextEditingController(text: c.address ?? '');
-    _notesCtrl = TextEditingController(text: c.notes ?? '');
+    _accountNumberDisplayCtrl = TextEditingController(text: c.accountNumber);
     _ibnCtrl = TextEditingController(text: c.ibnNo);
     _accountTypeDisplayCtrl = TextEditingController(text: c.accountType);
-    _accountNumberDisplayCtrl = TextEditingController(text: c.accountNumber);
-    _gender = _genderOptions.contains(c.gender) ? c.gender! : _genderOptions.first;
+    _cnicCtrl = TextEditingController(text: c.cnic);
+    _phoneCtrl = TextEditingController(text: c.phone);
+    _emailCtrl = TextEditingController(text: c.email ?? '');
+    _addressCtrl = TextEditingController(text: c.address ?? '');
     _status = _statusOptions.contains(c.status) ? c.status : _statusOptions.first;
   }
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
     _accountTitleCtrl.dispose();
-    _phoneCtrl.dispose();
-    _emailCtrl.dispose();
-    _cnicCtrl.dispose();
-    _addressCtrl.dispose();
-    _notesCtrl.dispose();
+    _accountNumberDisplayCtrl.dispose();
     _ibnCtrl.dispose();
     _accountTypeDisplayCtrl.dispose();
-    _accountNumberDisplayCtrl.dispose();
+    _cnicCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emailCtrl.dispose();
+    _addressCtrl.dispose();
     super.dispose();
   }
 
@@ -90,18 +94,18 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     try {
       final updated = Customer(
         accountNumber: widget.customer.accountNumber,
-        name: _nameCtrl.text.trim(),
+        name: _accountTitleCtrl.text.trim(),
         accountTitle: _accountTitleCtrl.text.trim(),
         phone: _phoneCtrl.text.trim(),
         cnic: _cnicCtrl.text.trim(),
         accountType: widget.customer.accountType,
         ibnNo: _ibnCtrl.text.trim().toUpperCase(),
         status: _status,
-        gender: _gender,
+        gender: widget.customer.gender,
         email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
         dateOpened: widget.customer.dateOpened,
-        address: _addressCtrl.text.trim(),
-        notes: _notesCtrl.text.trim(),
+        address: _addressCtrl.text.trim().isEmpty ? null : _addressCtrl.text.trim(),
+        notes: widget.customer.notes ?? '',
         createdBy: widget.customer.createdBy,
         createdAt: widget.customer.createdAt,
         updatedBy: widget.currentUser.uid,
@@ -177,29 +181,24 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             SectionCard(
               title: 'Customer Details',
               children: [
-                AccountField(label: 'Full Name', controller: _nameCtrl, readOnly: !_canEdit, validator: Validators.requiredName),
-                const SizedBox(height: 16),
-                AccountField(label: 'Account Title', controller: _accountTitleCtrl, readOnly: !_canEdit, validator: Validators.accountTitle),
-                const SizedBox(height: 16),
-                const Text('Gender', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
-                const SizedBox(height: 6),
-                _dropdown(
-                  value: _gender,
-                  options: _genderOptions,
-                  enabled: _canEdit,
-                  onChanged: (val) {
-                    if (val != null) setState(() => _gender = val);
-                  },
+                // 1. Account Title
+                AccountField(
+                  label: 'Account Title',
+                  controller: _accountTitleCtrl,
+                  readOnly: !_canEdit,
+                  validator: Validators.accountTitle,
                 ),
                 const SizedBox(height: 16),
+                // 2. Account Number
                 AccountField(
                   label: 'Account Number',
                   controller: _accountNumberDisplayCtrl,
                   readOnly: true,
                 ),
                 const SizedBox(height: 16),
+                // 3. IBAN No
                 AccountField(
-                  label: 'IBN No.',
+                  label: 'IBAN No.',
                   controller: _ibnCtrl,
                   readOnly: !_canEdit,
                   validator: Validators.ibnNo,
@@ -213,6 +212,14 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
+                // 4. Account Type
+                AccountField(
+                  label: 'Account Type',
+                  controller: _accountTypeDisplayCtrl,
+                  readOnly: true,
+                ),
+                const SizedBox(height: 16),
+                // 5. Account Status
                 const Text('Account Status', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
                 const SizedBox(height: 6),
                 _dropdown(
@@ -224,10 +231,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                AccountField(label: 'Account Type', controller: _accountTypeDisplayCtrl, readOnly: true),
-                const SizedBox(height: 16),
+                // 6. CNIC
                 AccountField(
-                  label: 'CNIC No.',
+                  label: 'CNIC',
                   controller: _cnicCtrl,
                   readOnly: !_canEdit,
                   validator: Validators.cnic,
@@ -235,6 +241,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
                 ),
                 const SizedBox(height: 16),
+                // 7. Phone Number
                 AccountField(
                   label: 'Phone Number',
                   controller: _phoneCtrl,
@@ -244,8 +251,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
                 ),
                 const SizedBox(height: 16),
+                // 8. Email
                 AccountField(
-                  label: 'Email Address (optional)',
+                  label: 'Email',
                   controller: _emailCtrl,
                   readOnly: !_canEdit,
                   keyboardType: TextInputType.emailAddress,
@@ -258,9 +266,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                AccountField(label: 'Address', controller: _addressCtrl, readOnly: !_canEdit),
-                const SizedBox(height: 16),
-                AccountField(label: 'Notes', controller: _notesCtrl, readOnly: !_canEdit),
+                // 9. Address
+                AccountField(
+                  label: 'Address',
+                  controller: _addressCtrl,
+                  readOnly: !_canEdit,
+                ),
               ],
             ),
             if (_error != null) FeedbackText(_error!, isError: true),

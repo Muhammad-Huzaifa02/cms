@@ -49,8 +49,9 @@
       - Dual identifier preview on cards (masked account number `•` masked phone).
       - Account-type dynamic gradient avatars (`Savings`, `Current`, `Business`).
       - Interactive expandable 7-day customer onboarding growth trend card (`GrowthChart`) with tap-to-inspect bar highlights and weekly totals.
-- [x] Customer Details and Add Customer use the same sectioned layout
-      and shared components as My Account.
+- [x] Customer Details and Add Customer use the standardized 9-field sequence:
+      1. Account Title, 2. Account Number, 3. IBAN No, 4. Account Type, 5. Account Status, 6. CNIC, 7. Phone Number, 8. Email, 9. Address.
+- [x] Streamlined customer records: Removed Customer Full Name and Notes from both Add Customer and Customer Details screens (Full Name mapped cleanly to Account Title).
 - [x] CNIC/Account Number/Phone masked by default, tap-to-reveal.
 - [x] Activity log — append-only, Admin-only visibility.
 - [x] Export to Excel/PDF (Admin-only), updated with IBAN, Account Title, Gender,

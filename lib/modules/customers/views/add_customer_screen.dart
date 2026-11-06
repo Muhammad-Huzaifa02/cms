@@ -10,11 +10,17 @@ import '../../../core/widgets/account_field.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/feedback_text.dart';
 
-/// Same three-section structure as Customer Details (Customer / Contact /
-/// Account Information) so creating and viewing a customer feel like the
-/// same screen, built from the same shared components. All validation and
-/// duplicate-checking is unchanged — this is a layout/consistency pass,
-/// not a business-logic change.
+/// Add Customer Screen.
+/// Formatted in the exact standardized sequence:
+/// 1. Account Title
+/// 2. Account Number
+/// 3. IBAN No
+/// 4. Account Type (Account Category + Account Type)
+/// 5. Account Status
+/// 6. CNIC
+/// 7. Phone Number
+/// 8. Email
+/// 9. Address
 class AddCustomerScreen extends StatefulWidget {
   final AppUser currentUser;
   const AddCustomerScreen({super.key, required this.currentUser});
@@ -90,21 +96,17 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     ],
   };
 
-  static const _genderOptions = ['Male', 'Female', 'Other'];
   static const _statusOptions = ['Active', 'Inactive', 'Dormant', 'Blocked'];
 
   final _formKey = GlobalKey<FormState>();
   final _service = CustomerService();
-  final _nameCtrl = TextEditingController();
   final _accountTitleCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  final _cnicCtrl = TextEditingController();
   final _accountCtrl = TextEditingController();
   final _ibnCtrl = TextEditingController();
+  final _cnicCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
-  final _notesCtrl = TextEditingController();
-  String _gender = 'Male';
   String _status = 'Active';
   String _accountCategory = _accountCategories.first;
   String _accountType = _accountTypesByCategory[_accountCategories.first]!.first;
@@ -113,15 +115,13 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
     _accountTitleCtrl.dispose();
-    _phoneCtrl.dispose();
-    _emailCtrl.dispose();
-    _cnicCtrl.dispose();
     _accountCtrl.dispose();
     _ibnCtrl.dispose();
+    _cnicCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emailCtrl.dispose();
     _addressCtrl.dispose();
-    _notesCtrl.dispose();
     super.dispose();
   }
 
@@ -133,17 +133,17 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     try {
       final customer = Customer(
         accountNumber: _accountCtrl.text.trim(),
-        name: _nameCtrl.text.trim(),
+        name: _accountTitleCtrl.text.trim(),
         accountTitle: _accountTitleCtrl.text.trim(),
         phone: _phoneCtrl.text.trim(),
         cnic: _cnicCtrl.text.trim(),
         accountType: _accountType,
         ibnNo: _ibnCtrl.text.trim().toUpperCase(),
         status: _status,
-        gender: _gender,
+        gender: null,
         email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
-        address: _addressCtrl.text.trim(),
-        notes: _notesCtrl.text.trim(),
+        address: _addressCtrl.text.trim().isEmpty ? null : _addressCtrl.text.trim(),
+        notes: null,
         createdBy: widget.currentUser.uid,
         updatedBy: widget.currentUser.uid,
       );
@@ -169,10 +169,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
             SectionCard(
-              title: 'Customer Information',
+              title: 'Customer Details',
               children: [
-                AccountField(label: 'Full Name', controller: _nameCtrl, validator: Validators.requiredName),
-                const SizedBox(height: 16),
+                // 1. Account Title
                 AccountField(
                   label: 'Account Title',
                   controller: _accountTitleCtrl,
@@ -180,60 +179,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   validator: Validators.accountTitle,
                 ),
                 const SizedBox(height: 16),
-                const Text('Gender', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
-                const SizedBox(height: 6),
-                _accountDropdown(
-                  value: _gender,
-                  options: _genderOptions,
-                  onChanged: (val) {
-                    if (val != null) setState(() => _gender = val);
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SectionCard(
-              title: 'Contact Information',
-              children: [
-                AccountField(
-                  label: 'Phone Number',
-                  controller: _phoneCtrl,
-                  hintText: '03001234567',
-                  keyboardType: TextInputType.phone,
-                  validator: Validators.phone,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
-                ),
-                const SizedBox(height: 16),
-                AccountField(
-                  label: 'Email Address (optional)',
-                  controller: _emailCtrl,
-                  hintText: 'customer@example.com',
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (val) {
-                    final trimmed = (val ?? '').trim();
-                    if (trimmed.isNotEmpty && (!trimmed.contains('@') || !trimmed.contains('.'))) {
-                      return 'Enter a valid email address.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                AccountField(label: 'Address (optional)', controller: _addressCtrl),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SectionCard(
-              title: 'Account Information',
-              children: [
-                AccountField(
-                  label: 'CNIC',
-                  controller: _cnicCtrl,
-                  hintText: '3520212345671',
-                  keyboardType: TextInputType.number,
-                  validator: Validators.cnic,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
-                ),
-                const SizedBox(height: 16),
+                // 2. Account Number
                 AccountField(
                   label: 'Account Number',
                   controller: _accountCtrl,
@@ -243,8 +189,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(14)],
                 ),
                 const SizedBox(height: 16),
+                // 3. IBAN No
                 AccountField(
-                  label: 'IBN No.',
+                  label: 'IBAN No.',
                   controller: _ibnCtrl,
                   hintText: 'e.g. PK36MEZN0001234567890123',
                   validator: Validators.ibnNo,
@@ -258,16 +205,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Account Status', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
-                const SizedBox(height: 6),
-                _accountDropdown(
-                  value: _status,
-                  options: _statusOptions,
-                  onChanged: (val) {
-                    if (val != null) setState(() => _status = val);
-                  },
-                ),
-                const SizedBox(height: 16),
+                // 4. Account Type (Category + Type)
                 const Text('Account Category', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
                 const SizedBox(height: 6),
                 _accountDropdown(
@@ -291,13 +229,58 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                     if (type != null) setState(() => _accountType = type);
                   },
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SectionCard(
-              title: 'Notes',
-              children: [
-                AccountField(label: 'Notes (optional)', controller: _notesCtrl),
+                const SizedBox(height: 16),
+                // 5. Account Status
+                const Text('Account Status', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                const SizedBox(height: 6),
+                _accountDropdown(
+                  value: _status,
+                  options: _statusOptions,
+                  onChanged: (val) {
+                    if (val != null) setState(() => _status = val);
+                  },
+                ),
+                const SizedBox(height: 16),
+                // 6. CNIC
+                AccountField(
+                  label: 'CNIC',
+                  controller: _cnicCtrl,
+                  hintText: '3520212345671',
+                  keyboardType: TextInputType.number,
+                  validator: Validators.cnic,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
+                ),
+                const SizedBox(height: 16),
+                // 7. Phone Number
+                AccountField(
+                  label: 'Phone Number',
+                  controller: _phoneCtrl,
+                  hintText: '03001234567',
+                  keyboardType: TextInputType.phone,
+                  validator: Validators.phone,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+                ),
+                const SizedBox(height: 16),
+                // 8. Email
+                AccountField(
+                  label: 'Email (optional)',
+                  controller: _emailCtrl,
+                  hintText: 'customer@example.com',
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (val) {
+                    final trimmed = (val ?? '').trim();
+                    if (trimmed.isNotEmpty && (!trimmed.contains('@') || !trimmed.contains('.'))) {
+                      return 'Enter a valid email address.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                // 9. Address
+                AccountField(
+                  label: 'Address (optional)',
+                  controller: _addressCtrl,
+                ),
               ],
             ),
             if (_error != null) FeedbackText(_error!, isError: true),
