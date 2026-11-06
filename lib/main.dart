@@ -188,12 +188,8 @@ class _AuthGateState extends State<_AuthGate> {
   }
 }
 
-/// Wraps Dashboard behind BiometricLockScreen only if the user has App
-/// Lock enabled in My Account — everyone else goes straight to Dashboard
-/// as before. Caches the lock-enabled check in initState rather than
-/// re-querying on every rebuild (appUserStream can re-emit on any profile
-/// change), so a rebuild while locked can't cause a flicker back to an
-/// unlocked state.
+/// Wraps Dashboard behind BiometricLockScreen when the user has App
+/// Lock enabled in My Account or when a session times out due to inactivity.
 class _LockGate extends StatefulWidget {
   final AppUser currentUser;
   final AuthService authService;
@@ -203,9 +199,41 @@ class _LockGate extends StatefulWidget {
   State<_LockGate> createState() => _LockGateState();
 }
 
-class _LockGateState extends State<_LockGate> {
-  late final Future<bool> _lockEnabledFuture = BiometricService().isLockEnabled(widget.currentUser.uid);
+class _LockGateState extends State<_LockGate> with WidgetsBindingObserver {
+  final _biometricService = BiometricService();
+  bool _lockEnabled = false;
+  bool _loadingLock = true;
   bool _timedOut = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkLockStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkLockStatus();
+    }
+  }
+
+  Future<void> _checkLockStatus() async {
+    final enabled = await _biometricService.isLockEnabled(widget.currentUser.uid);
+    if (mounted) {
+      setState(() {
+        _lockEnabled = enabled;
+        _loadingLock = false;
+      });
+    }
+  }
 
   void _handleInactivityTimeout() {
     if (!mounted || _timedOut) return;
@@ -218,41 +246,42 @@ class _LockGateState extends State<_LockGate> {
     );
   }
 
+  void _handleUnlocked() {
+    if (mounted && _timedOut) {
+      setState(() => _timedOut = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: _lockEnabledFuture,
-      builder: (context, snap) {
-        if (snap.connectionState != ConnectionState.done) {
-          // Don't reveal Dashboard until we actually know whether it
-          // should be locked — a brief unlocked flash would defeat the
-          // point of the lock.
-          return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.brand)));
-        }
+    if (_loadingLock) {
+      return const Scaffold(
+        backgroundColor: AppColors.bg,
+        body: Center(child: CircularProgressIndicator(color: AppColors.brand)),
+      );
+    }
 
-        final lockEnabled = snap.data == true;
-        final dashboard = DashboardScreen(currentUser: widget.currentUser);
+    final dashboard = DashboardScreen(currentUser: widget.currentUser);
 
-        // If inactive or biometric lock is enabled:
-        if (lockEnabled || _timedOut) {
-          return BiometricLockScreen(
-            uid: widget.currentUser.uid,
-            onSignOut: widget.authService.signOut,
-            child: InactivityWatcher(
-              timeoutDuration: const Duration(minutes: 5),
-              onTimeout: _handleInactivityTimeout,
-              child: dashboard,
-            ),
-          );
-        }
-
-        // Auto-lock when inactive even if biometric lock is not manually configured:
-        return InactivityWatcher(
+    // If biometric lock is enabled OR the session timed out from 5 min of inactivity:
+    if (_lockEnabled || _timedOut) {
+      return BiometricLockScreen(
+        uid: widget.currentUser.uid,
+        isTimedOut: _timedOut,
+        onSignOut: widget.authService.signOut,
+        onUnlocked: _handleUnlocked,
+        child: InactivityWatcher(
           timeoutDuration: const Duration(minutes: 5),
           onTimeout: _handleInactivityTimeout,
           child: dashboard,
-        );
-      },
+        ),
+      );
+    }
+
+    return InactivityWatcher(
+      timeoutDuration: const Duration(minutes: 5),
+      onTimeout: _handleInactivityTimeout,
+      child: dashboard,
     );
   }
 }

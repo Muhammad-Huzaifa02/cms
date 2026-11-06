@@ -78,9 +78,13 @@
       Status, and Email, logged to activity log.
 - [x] My Account: edit own name/phone, change password, change login
       email (verify-then-sync flow), biometric app-lock toggle.
-- [x] Redesigned biometric app-lock: Modern circular vault UI with status ring,
-      manual-tap only, per-uid isolation, no stored password, enrollment-change
-      detection, and clear fallback actions.
+- [x] Redesigned biometric app-lock & session lock architecture:
+      - Automatic prompt: Automatically initiates biometric authentication prompt on app launch and upon returning from background.
+      - Responsive inactivity re-lock: `BiometricLockScreen` handles live inactivity timeout events via `didUpdateWidget`, re-locking and prompting immediately.
+      - `onUnlocked` callback: Resets `_timedOut` state back to `false` in `_LockGate` upon successful authentication so sessions resume seamlessly.
+      - Lifecycle awareness: Seamlessly re-locks on `paused` (backgrounded) and re-prompts on `resumed` without false triggers during native biometric sheets.
+      - Executive Vault UI: Midnight banking gradient (`#011814`), bank branding badge, glowing concentric biometric sensor hub, dynamic status banners, primary unlock button, and password fallback signout.
+      - Expanded unit/widget tests in `test/biometric_lock_screen_test.dart` (32/32 tests passing).
 - [x] Responsive font scale clamping (`textScaler.clamp(0.85, 1.15)`) in
       `MaterialApp.builder` to preserve layouts on high accessibility font settings.
 - [x] Modern build toolchain upgrade: Gradle 9.1.0, AGP 9.0.1, Kotlin 2.3.20.
