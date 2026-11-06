@@ -42,7 +42,7 @@
 - [x] Dashboard recent customer cards display Account Title as the primary heading.
 - [x] Dashboard UI design enhancements:
       - Native pull-to-refresh (`RefreshIndicator`) for stats and recent customer streams.
-      - Redesigned executive banking header: User avatar circle with dynamic gradient, time-aware greeting ("Good Morning/Afternoon/Evening"), prominent user name, and polished role badge (`ADMIN` gold vs `STAFF` badge pill).
+      - Redesigned executive banking header: Clean gradient backdrop (watermark removed), User avatar circle with dynamic gradient, time-aware greeting ("Good Morning/Afternoon/Evening"), prominent user name, and polished role badge (`ADMIN` gold vs `STAFF` badge pill).
       - Removed Today's Date Banner from header for a clean, focused executive layout.
       - "RECENT CUSTOMERS" section header with intake count badge and direct "View All →" link to Customer Management.
       - Customer card status indicator with colored dot (`Active`, `Dormant`, `Blocked`, `Inactive`).
@@ -54,7 +54,8 @@
 - [x] Upgraded Staff Management:
       - Real-time search across staff name, email, and phone number.
       - Status filter chips (All, Active, Deactivated) with live counter badges.
-      - Elevated staff cards with avatar gradient, contact details, status pill, and live permission chips.
+      - Fixed right RenderFlex overflow in staff cards by constraining flex rows and using vertical permission wrapping.
+      - Redesigned Staff Profile screen with role presets, granular permission cards, active switch, and 1-tap contact copy.
 - [x] Standardized font scaling: `TextScaler.noScaling` (1.0) applied globally to auto-normalize UI typography across all mobile devices regardless of OS font size settings.
 - [x] High-readability customer view mode:
       - Crystal-clear typography and high-contrast ink (`AppColors.ink`) replacing faint muted text in read-only states.

@@ -326,20 +326,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   child: Stack(
                     children: [
-                      // Subtle decorative banking watermark
-                      Positioned(
-                        right: -15,
-                        top: -10,
-                        child: Opacity(
-                          opacity: 0.08,
-                          child: Image.asset(
-                            'assets/icon/app_logo.png',
-                            width: 130,
-                            height: 130,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
                       // Soft ambient light
                       Positioned(
                         left: -35,

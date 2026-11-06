@@ -288,12 +288,16 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                                     ),
                                                   ),
                                                   const SizedBox(width: 6),
-                                                  Text(
-                                                    s.permissions.roleCategory.label,
-                                                    style: const TextStyle(
-                                                      fontSize: 11.5,
-                                                      fontWeight: FontWeight.w600,
-                                                      color: AppColors.muted,
+                                                  Flexible(
+                                                    child: Text(
+                                                      s.permissions.roleCategory.label,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        fontSize: 11.5,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: AppColors.muted,
+                                                      ),
                                                     ),
                                                   ),
                                                 ],
@@ -321,7 +325,9 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                               children: [
                                                 const Icon(Icons.phone_outlined, size: 13, color: AppColors.muted),
                                                 const SizedBox(width: 4),
-                                                Text(s.phone!, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                                                Flexible(
+                                                  child: Text(s.phone!, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                                                ),
                                               ],
                                             ),
                                           if (s.email != null && s.email!.isNotEmpty)
@@ -330,7 +336,9 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                               children: [
                                                 const Icon(Icons.email_outlined, size: 13, color: AppColors.muted),
                                                 const SizedBox(width: 4),
-                                                Text(s.email!, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                                                Flexible(
+                                                  child: Text(s.email!, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                                                ),
                                               ],
                                             ),
                                         ],
@@ -341,21 +349,23 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                     const Divider(height: 1, color: AppColors.border),
                                     const SizedBox(height: 8),
 
-                                    // Permission Chips Row
-                                    Row(
+                                    // Permission Chips Column (Prevents right overflow)
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         const Text(
-                                          'PERMISSIONS:',
+                                          'PERMISSIONS',
                                           style: TextStyle(
                                             fontSize: 10.5,
                                             fontWeight: FontWeight.w800,
                                             color: AppColors.muted,
-                                            letterSpacing: 0.5,
+                                            letterSpacing: 0.8,
                                           ),
                                         ),
-                                        const Spacer(),
+                                        const SizedBox(height: 6),
                                         Wrap(
                                           spacing: 6,
+                                          runSpacing: 6,
                                           children: [
                                             _permChip('View', s.permissions.view, (v) => _togglePermission(s, 'view', v)),
                                             _permChip('Add', s.permissions.add, (v) => _togglePermission(s, 'add', v)),
