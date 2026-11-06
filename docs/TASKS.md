@@ -56,6 +56,13 @@
       - Status filter chips (All, Active, Deactivated) with live counter badges.
       - Fixed right RenderFlex overflow in staff cards by constraining flex rows and using vertical permission wrapping.
       - Redesigned Staff Profile screen with role presets, granular permission cards, active switch, and 1-tap contact copy.
+- [x] Executive Banking Navigation Drawer overhaul:
+      - Gradient executive header with bank badge ("CUSTOMER MANAGEMENT SYSTEM"), dynamic gradient avatar, user name, email/phone, and role pill.
+      - 1-tap interactive header navigating directly to Edit Profile.
+      - Categorized drawer sections with high-contrast section headers (`OVERVIEW & ACCOUNT`, `ADMINISTRATION`, `DATA & EXPORT`, `SYSTEM MAINTENANCE`).
+      - Rounded navigation tiles with soft brand accent backgrounds, custom icon badges, descriptive subtitles, and selection indicators.
+      - Fast action navigation including Dashboard, Customer Management, Add New Customer (for authorized staff), My Profile, Staff Management, Activity Audit Log, Excel/PDF exports, and Index Synchronization.
+      - Edge-to-edge safe bottom footer with prominent styled Sign Out button and secured portal build stamp.
 - [x] Standardized font scaling: `TextScaler.noScaling` (1.0) applied globally to auto-normalize UI typography across all mobile devices regardless of OS font size settings.
 - [x] High-readability customer view mode:
       - Crystal-clear typography and high-contrast ink (`AppColors.ink`) replacing faint muted text in read-only states.

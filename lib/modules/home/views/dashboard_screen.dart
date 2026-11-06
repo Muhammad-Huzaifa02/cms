@@ -138,116 +138,337 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       key: _scaffoldKey,
       drawer: Drawer(
+        backgroundColor: Colors.white,
         child: Column(
           children: [
-            UserAccountsDrawerHeader(
-              accountName: Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-              accountEmail: Text(user.email ?? user.phone ?? ''),
-              currentAccountPicture: Container(
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Image.asset('assets/icon/app_logo.png', fit: BoxFit.contain),
-                ),
+            // ── EXECUTIVE DRAWER HEADER ──
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(
+                20,
+                MediaQuery.of(context).padding.top + 16,
+                20,
+                20,
               ),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [AppColors.brandDeep, AppColors.brand],
+                  colors: [
+                    Color(0xFF022B24),
+                    AppColors.brandDeep,
+                    AppColors.brand,
+                  ],
                 ),
               ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // App branding chip
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.account_balance, size: 12, color: AppColors.gold),
+                        SizedBox(width: 5),
+                        Text(
+                          'CUSTOMER MANAGEMENT SYSTEM',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      Navigator.pop(context);
+                      push3D(context, EditProfileScreen(currentUser: user));
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          // User Initials Avatar
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: user.isAdmin
+                                    ? [const Color(0xFFD4AF37), AppColors.gold]
+                                    : [AppColors.brandLight, AppColors.brand],
+                              ),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.18),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              user.name.trim().isNotEmpty
+                                  ? user.name.trim().split(RegExp(r'\s+')).map((w) => w[0]).take(2).join().toUpperCase()
+                                  : '?',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  user.email ?? user.phone ?? '',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: user.isAdmin
+                                        ? AppColors.gold.withValues(alpha: 0.28)
+                                        : Colors.white.withValues(alpha: 0.18),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: user.isAdmin ? AppColors.gold : Colors.white.withValues(alpha: 0.4),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        user.isAdmin ? Icons.shield_rounded : Icons.badge_outlined,
+                                        size: 11,
+                                        color: user.isAdmin ? AppColors.gold : Colors.white,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        user.isAdmin ? 'ADMINISTRATOR' : 'BANKING STAFF',
+                                        style: TextStyle(
+                                          color: user.isAdmin ? AppColors.gold : Colors.white,
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 20,
+                            color: Colors.white.withValues(alpha: 0.6),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.person_outline),
-              title: const Text('My account'),
-              onTap: () {
-                Navigator.pop(context);
-                push3D(context, EditProfileScreen(currentUser: user));
-              },
+
+            // ── SCROLLABLE NAVIGATION LIST ──
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                children: [
+                  _drawerSectionHeader('OVERVIEW & ACCOUNT'),
+                  _drawerTile(
+                    icon: Icons.dashboard_rounded,
+                    title: 'Dashboard',
+                    isSelected: true,
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  if (user.can('view'))
+                    _drawerTile(
+                      icon: Icons.people_alt_outlined,
+                      title: 'Customer Management',
+                      subtitle: 'Search & view records',
+                      onTap: () {
+                        Navigator.pop(context);
+                        push3D(context, CustomerManagementScreen(currentUser: user));
+                      },
+                    ),
+                  if (user.can('add'))
+                    _drawerTile(
+                      icon: Icons.person_add_alt_1_outlined,
+                      title: 'Add New Customer',
+                      subtitle: 'Onboard new account',
+                      onTap: () {
+                        Navigator.pop(context);
+                        push3D(context, AddCustomerScreen(currentUser: user));
+                      },
+                    ),
+                  _drawerTile(
+                    icon: Icons.person_outline_rounded,
+                    title: 'My Profile',
+                    subtitle: 'Account & security credentials',
+                    onTap: () {
+                      Navigator.pop(context);
+                      push3D(context, EditProfileScreen(currentUser: user));
+                    },
+                  ),
+
+                  if (user.isAdmin) ...[
+                    const SizedBox(height: 10),
+                    _drawerSectionHeader('ADMINISTRATION'),
+                    _drawerTile(
+                      icon: Icons.badge_outlined,
+                      title: 'Staff Management',
+                      subtitle: 'Roles, accounts & permissions',
+                      onTap: () {
+                        Navigator.pop(context);
+                        push3D(context, StaffManagementScreen(currentUser: user));
+                      },
+                    ),
+                    _drawerTile(
+                      icon: Icons.receipt_long_outlined,
+                      title: 'Activity Audit Log',
+                      subtitle: 'Security & compliance trail',
+                      onTap: () {
+                        Navigator.pop(context);
+                        push3D(context, ActivityLogScreen(currentUser: user));
+                      },
+                    ),
+
+                    const SizedBox(height: 10),
+                    _drawerSectionHeader('DATA & EXPORT'),
+                    _drawerTile(
+                      icon: Icons.table_chart_outlined,
+                      iconColor: const Color(0xFF16A34A),
+                      title: 'Export to Excel (.xlsx)',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _export('excel');
+                      },
+                    ),
+                    _drawerTile(
+                      icon: Icons.picture_as_pdf_outlined,
+                      iconColor: const Color(0xFFDC2626),
+                      title: 'Export to PDF Document',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _export('pdf');
+                      },
+                    ),
+
+                    const SizedBox(height: 10),
+                    _drawerSectionHeader('SYSTEM MAINTENANCE'),
+                    _drawerTile(
+                      icon: Icons.sync_rounded,
+                      title: 'Sync Search Index',
+                      subtitle: 'Re-index legacy records for search',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _runBackfill();
+                      },
+                    ),
+                  ],
+                ],
+              ),
             ),
-            if (user.isAdmin) ...[
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.people_outline),
-                title: const Text('Manage staff'),
-                onTap: () {
-                  Navigator.pop(context);
-                  push3D(context, StaffManagementScreen(currentUser: user));
-                },
+
+            // ── SAFE BOTTOM FOOTER ──
+            const Divider(height: 1, color: AppColors.border),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                MediaQuery.of(context).padding.bottom > 0
+                    ? MediaQuery.of(context).padding.bottom + 8
+                    : 16,
               ),
-              if (user.can('view'))
-                ListTile(
-                  leading: const Icon(Icons.manage_search_outlined),
-                  title: const Text('Customer Manage'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    push3D(context, CustomerManagementScreen(currentUser: user));
-                  },
-                ),
-              ListTile(
-                leading: const Icon(Icons.history),
-                title: const Text('Activity log'),
-                onTap: () {
-                  Navigator.pop(context);
-                  push3D(context, ActivityLogScreen(currentUser: user));
-                },
+              child: Column(
+                children: [
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _confirmSignOut();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.logout_rounded, color: AppColors.danger, size: 19),
+                          SizedBox(width: 8),
+                          Text(
+                            'Sign out',
+                            style: TextStyle(
+                              color: AppColors.danger,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'CMS v1.0.0 • Secured Banking Portal',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: AppColors.muted.withValues(alpha: 0.8),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.file_download_outlined),
-                title: const Text('Export to Excel'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _export('excel');
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.picture_as_pdf_outlined),
-                title: const Text('Export to PDF'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _export('pdf');
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.sync, size: 20),
-                title: const Text('Sync search index', style: TextStyle(fontSize: 13.5)),
-                subtitle: const Text(
-                  'Run once after updating the app — makes customers added before this update show up in the new field search.',
-                  style: TextStyle(fontSize: 10.5, color: AppColors.muted),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _runBackfill();
-                },
-              ),
-            ],
-            if (!user.isAdmin && user.can('view'))
-              ListTile(
-                leading: const Icon(Icons.manage_search_outlined),
-                title: const Text('Customer Manage'),
-                onTap: () {
-                  Navigator.pop(context);
-                  push3D(context, CustomerManagementScreen(currentUser: user));
-                },
-              ),
-            const Spacer(),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: AppColors.danger),
-              title: const Text('Sign out', style: TextStyle(color: AppColors.danger)),
-              onTap: () {
-                Navigator.pop(context);
-                _confirmSignOut();
-              },
             ),
-            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -725,6 +946,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             )
           : null,
+    );
+  }
+
+  Widget _drawerSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
+          color: AppColors.muted,
+          letterSpacing: 0.8,
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerTile({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    Color? iconColor,
+    bool isSelected = false,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 3),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        tileColor: isSelected ? AppColors.brandSoft : Colors.transparent,
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.brand : (iconColor ?? AppColors.brand).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            size: 19,
+            color: isSelected ? Colors.white : (iconColor ?? AppColors.brand),
+          ),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 13.5,
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            color: isSelected ? AppColors.brandDeep : AppColors.ink,
+          ),
+        ),
+        subtitle: subtitle != null
+            ? Text(
+                subtitle,
+                style: const TextStyle(fontSize: 11, color: AppColors.muted),
+              )
+            : null,
+        trailing: const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.muted),
+        onTap: onTap,
+      ),
     );
   }
 }
