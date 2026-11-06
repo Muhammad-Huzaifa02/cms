@@ -247,7 +247,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _passwordSuccess = null;
     });
     try {
-      await _auth.changeOwnPassword(_newPasswordCtrl.text);
+      final newPass = _newPasswordCtrl.text;
+      await _auth.changeOwnPassword(newPass);
+      // Synchronize hardware biometric vault if user has biometric login enabled
+      if (_biometricEnabled) {
+        await _biometricService.saveBiometricCredentials(
+          uid: widget.currentUser.uid,
+          email: widget.currentUser.email ?? '',
+          password: newPass,
+          name: widget.currentUser.name,
+        );
+      }
       if (!mounted) return;
       _newPasswordCtrl.clear();
       setState(() => _passwordSuccess = 'Password updated successfully.');
