@@ -350,9 +350,11 @@ class CustomerService {
       if (deleteEventId == null || deleteEventId.isEmpty) {
         throw Exception('Run the Admin search-index sync once before editing existing customers.');
       }
+      final newDeleteEventId = isAccountNumberChanged ? _db.collection('activityLog').doc().id : deleteEventId;
+      final effectiveLogId = isAccountNumberChanged ? deleteEventId : eventId;
       final data = customer.toMap(actingUid: actor.uid, isNew: false)
-        ..['lastActivityId'] = eventId
-        ..['deleteActivityId'] = deleteEventId;
+        ..['lastActivityId'] = effectiveLogId
+        ..['deleteActivityId'] = newDeleteEventId;
 
       if (isAccountNumberChanged) {
         final newCustomerRef = _col.doc(customer.accountNumber);
@@ -364,7 +366,7 @@ class CustomerService {
 
       _activity.stageInTransaction(
         transaction,
-        logId: eventId,
+        logId: effectiveLogId,
         action: ActivityAction.customerUpdated,
         targetId: customer.accountNumber,
         actor: actor,

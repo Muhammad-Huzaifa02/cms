@@ -89,7 +89,9 @@ service cloud.firestore {
       allow delete: if (can('delete')
         && activityMatches(resource.data.deleteActivityId, 'customer_deleted', accountNumber))
       || (can('edit')
-        && activityMatches(resource.data.deleteActivityId, 'customer_updated', accountNumber));
+        && existsAfter(/databases/$(database)/documents/activityLog/$(resource.data.deleteActivityId))
+        && getAfter(/databases/$(database)/documents/activityLog/$(resource.data.deleteActivityId)).data.action == 'customer_updated'
+        && getAfter(/databases/$(database)/documents/activityLog/$(resource.data.deleteActivityId)).data.performedBy == request.auth.uid);
     }
 
     match /users/{uid} {
@@ -172,7 +174,6 @@ service cloud.firestore {
             && getAfter(/databases/$(database)/documents/customers/$(request.resource.data.targetId)).data.createdBy == request.auth.uid)
           || (request.resource.data.action == 'customer_updated'
             && can('edit')
-            && exists(/databases/$(database)/documents/customers/$(request.resource.data.targetId))
             && existsAfter(/databases/$(database)/documents/customers/$(request.resource.data.targetId))
             && getAfter(/databases/$(database)/documents/customers/$(request.resource.data.targetId)).data.lastActivityId == logId
             && getAfter(/databases/$(database)/documents/customers/$(request.resource.data.targetId)).data.updatedBy == request.auth.uid
