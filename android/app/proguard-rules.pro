@@ -7,14 +7,18 @@
 -keep class io.flutter.provider.** { *; }
 -keep class io.flutter.plugin.editing.** { *; }
 
-# Firebase Rules
+# Firebase Rules & Reflection Attributes
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
 -dontwarn com.google.firebase.**
--keep class com.google.firebase.** { *; }
 
 # Biometrics & Secure Storage
 -keep class androidx.biometric.** { *; }
+-dontwarn androidx.biometric.**
 
-# Play Core / Deferred Components
+# Play Core / Deferred Components (optional, suppress warnings so unused code is pruned)
 -dontwarn com.google.android.play.core.**
--keep class com.google.android.play.core.** { *; }
+
+# Native library keep
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
