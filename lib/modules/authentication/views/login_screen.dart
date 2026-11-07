@@ -373,33 +373,40 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 46,
-                                child: OutlinedButton.icon(
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.brandDeep,
-                                    side: const BorderSide(color: AppColors.brand, width: 1.5),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              Center(
+                                child: Tooltip(
+                                  message: 'Log in with Biometrics',
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: (_loading || _loggingInWithBiometric || _lockoutSecondsLeft > 0)
+                                          ? null
+                                          : _loginWithBiometrics,
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Container(
+                                        width: 58,
+                                        height: 58,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.brand.withValues(alpha: 0.08),
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(color: AppColors.brand, width: 1.5),
+                                        ),
+                                        child: Center(
+                                          child: _loggingInWithBiometric
+                                              ? const SizedBox(
+                                                  height: 26,
+                                                  width: 26,
+                                                  child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.brand),
+                                                )
+                                              : const Icon(
+                                                  Icons.fingerprint_rounded,
+                                                  size: 38,
+                                                  color: AppColors.brand,
+                                                ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                  icon: _loggingInWithBiometric
-                                      ? const SizedBox(
-                                          height: 18,
-                                          width: 18,
-                                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.brand),
-                                        )
-                                      : const Icon(Icons.fingerprint_rounded, size: 24, color: AppColors.brand),
-                                  label: Text(
-                                    _loggingInWithBiometric
-                                        ? 'Verifying…'
-                                        : 'Log in with Biometrics',
-                                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  onPressed: (_loading || _loggingInWithBiometric || _lockoutSecondsLeft > 0)
-                                      ? null
-                                      : _loginWithBiometrics,
                                 ),
                               ),
                             ],
