@@ -109,10 +109,30 @@
 - [x] App logo + launcher icon source.
 - [x] Real Firebase project wired for Android
       (`customer-management-syst-36662`).
-- [x] Unit & widget test suite added (`validators_test.dart`, `customer_model_test.dart`,
-      `user_model_test.dart`, `widget_test.dart`) — 29/29 tests (100%) passing.
+- [x] Bank-Grade Password Complexity Policy:
+      - Enforces minimum 8 characters, at least 1 uppercase letter (`A-Z`), 1 lowercase letter (`a-z`), 1 number (`0-9`), and 1 special symbol (`[!@#\$%^&*(),.?":{}|<>_\-+=\[\]\\/`~]`).
+      - Validated across Admin Bootstrap (`create_admin_screen.dart`), Staff Creation (`add_staff_screen.dart`), Profile Password Updates (`edit_profile_screen.dart`), and backend `AuthService`.
+      - Comprehensive unit test coverage added in `test/validators_test.dart` (8 dedicated password policy tests).
+- [x] Streamlined 1-Tap Biometric Sensor on Login Screen:
+      - Replaced text button with a 58x58 squircle container hosting a prominent 38px sensor glyph (`Icons.fingerprint_rounded`) with tooltip and real-time auth progress indicator.
+      - Hardware biometric vault automatically synchronized on password changes.
+- [x] Anti-Extraction & Data Protection:
+      - Added `android:allowBackup="false"` in `AndroidManifest.xml` to prevent physical ADB sandbox backup extraction.
+      - Clipboard auto-sanitization clears sensitive copied values after 60 seconds.
+- [x] Dead Code & Package Pruning (Over 500 lines removed, slim binary):
+      - Removed obsolete `growth_chart.dart` (314 lines).
+      - Pruned unreferenced `staff_detail_screen.dart` (76 lines).
+      - Removed unused `animated_counter.dart` (39 lines).
+      - Pruned unused `design_tokens.dart` (64 lines) and `CustomerService.getGrowthLast7Days()` (21 lines).
+      - Removed unused packages `fl_chart` and `cupertino_icons` from `pubspec.yaml`, reducing APK compilation size.
+- [x] Unit & widget test suite:
+      - `test/validators_test.dart` (Pakistani phone, CNIC, account numbers, IBAN, account title, password policy).
+      - `test/customer_model_test.dart` (Masking, last-4 extraction, keyword generation, serialization).
+      - `test/user_model_test.dart` (Role-based permissions).
+      - `test/widget_test.dart` (Login screen UI and auth state gating).
+      - All 39/39 tests (100%) passing.
 - [x] Cleaned up unused files (`floating_navigation_bar.dart`,
-      `premium_3d_card.dart`, `dashboard_stats_model.dart`).
+      `premium_3d_card.dart`, `dashboard_stats_model.dart`, `growth_chart.dart`, `animated_counter.dart`).
 
 ## Known limitations / deliberately not done
 

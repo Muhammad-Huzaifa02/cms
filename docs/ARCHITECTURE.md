@@ -17,8 +17,7 @@ lib/
       section_card.dart, account_field.dart, primary_button.dart,
       feedback_text.dart, tilt_tap_card.dart, fade_in_slide.dart,
       shimmer_loading.dart, biometric_lock_screen.dart,
-      dashboard_stat_card.dart, quick_action_card.dart,
-      growth_chart.dart, error_state.dart, inactivity_watcher.dart
+      dashboard_stat_card.dart, error_state.dart, inactivity_watcher.dart
   data/
     models/                     # AppUser, Customer, ActivityLogEntry
     services/                   # AuthService, CustomerService,
@@ -33,12 +32,12 @@ lib/
                                 # Search results
     profile/views/              # Edit own account (My Account)
   routes/app_routes.dart
-android/                        # Gradle 9.1.0, AGP 9.0.1, Kotlin 2.3.20, FLAG_SECURE
+android/                        # Gradle 9.1.0, AGP 9.0.1, Kotlin 2.3.20, FLAG_SECURE, allowBackup=false
 firestore.rules
-assets/icon/                    # app_logo.png/.svg
+assets/icon/                    # app_logo.png
 tools/create_first_admin.js     # backup path for seeding an Admin
 docs/                           # documentation suite
-test/                           # 29 unit and widget tests
+test/                           # 39 unit and widget tests (100% passing)
 ```
 
 ## Firestore data model

@@ -45,8 +45,6 @@ header and Login screen.
   stat with icon, accent colour and optional caption.
 - **`QuickActionCard`** — compact tappable shortcut tile; only wire it to
   screens that actually exist.
-- **`GrowthChart`** / `GrowthChartSkeleton` — dependency-free 7-bar chart
-  fed a `List<int>` of daily counts.
 - **`ErrorStateWidget`** / **`SliverErrorState`** — error message with a
   Try Again button. Use whenever a stream/future can fail, so a failure
   is never shown as an empty list.
