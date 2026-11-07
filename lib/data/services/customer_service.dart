@@ -130,29 +130,6 @@ class CustomerService {
     return snap.count ?? 0;
   }
 
-  /// One lightweight `.count()` query per day for the last 7 days —
-  /// 7 small server-side counts, never a download of customer documents.
-  /// Returns oldest→newest. Deliberately fixed at 7 days rather than a
-  /// selectable period (week/month/quarter/year): each additional period
-  /// multiplies the query count, and a single always-useful view is a
-  /// better performance/complexity trade-off than a rarely-used dropdown.
-  Future<List<int>> getGrowthLast7Days() async {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final counts = <int>[];
-    for (int i = 6; i >= 0; i--) {
-      final dayStart = today.subtract(Duration(days: i));
-      final dayEnd = dayStart.add(const Duration(days: 1));
-      final snap = await _col
-          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(dayStart))
-          .where('createdAt', isLessThan: Timestamp.fromDate(dayEnd))
-          .count()
-          .get();
-      counts.add(snap.count ?? 0);
-    }
-    return counts;
-  }
-
   /// Exact-match lookup by phone or CNIC, used for duplicate detection
   /// before creating/editing a customer. Relies on the fact that
   /// buildSearchKeywords() always includes the FULL cleaned value as one
