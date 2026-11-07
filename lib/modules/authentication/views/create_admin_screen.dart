@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/validators.dart';
 import '../../../core/widgets/fade_in_slide.dart';
 import '../../home/views/dashboard_screen.dart';
 
@@ -47,7 +48,13 @@ class _CreateAdminScreenState extends State<CreateAdminScreen> {
       setState(() => _error = 'Enter a valid phone number.');
       return;
     }
-    if (_passwordCtrl.text.length < 6) missing.add('password (6+ characters)');
+    final passError = Validators.password(_passwordCtrl.text);
+    if (_passwordCtrl.text.isEmpty) {
+      missing.add('password');
+    } else if (passError != null) {
+      setState(() => _error = passError);
+      return;
+    }
 
     if (missing.isNotEmpty) {
       setState(() => _error = 'Required: ${missing.join(', ')}.');
@@ -188,7 +195,7 @@ class _CreateAdminScreenState extends State<CreateAdminScreen> {
                               controller: _passwordCtrl,
                               obscureText: true,
                               decoration: const InputDecoration(
-                                hintText: 'Password (6+ characters) *',
+                                hintText: 'Password (8+ chars, upper, lower, digit, symbol) *',
                                 prefixIcon: Icon(Icons.lock_outline, size: 19),
                               ),
                             ),

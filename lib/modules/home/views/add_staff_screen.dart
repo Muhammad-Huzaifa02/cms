@@ -75,7 +75,13 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
       setState(() => _error = phoneError);
       return;
     }
-    if (_passwordCtrl.text.length < 6) missing.add('password (6+ characters)');
+    final passError = Validators.password(_passwordCtrl.text);
+    if (_passwordCtrl.text.isEmpty) {
+      missing.add('temporary password');
+    } else if (passError != null) {
+      setState(() => _error = passError);
+      return;
+    }
 
     if (missing.isNotEmpty) {
       setState(() => _error = 'Required: ${missing.join(', ')}.');
@@ -127,7 +133,14 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
             decoration: const InputDecoration(labelText: 'Phone number *', hintText: '03001234567', prefixIcon: Icon(Icons.phone_outlined, size: 19)),
           ),
           const SizedBox(height: 12),
-          TextField(controller: _passwordCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Temporary password *')),
+          TextField(
+            controller: _passwordCtrl,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: 'Temporary password *',
+              hintText: '8+ chars (upper, lower, number, symbol)',
+            ),
+          ),
           const SizedBox(height: 6),
           const Text('* All fields required — staff can login with either their email or phone number.',
               style: TextStyle(fontSize: 14, color: AppColors.muted)),

@@ -109,4 +109,51 @@ void main() {
       expect(Validators.requiredName(''), equals('Name is required.'));
     });
   });
+
+  group('Validators - Password Policy', () {
+    test('accepts strong bank-grade password', () {
+      expect(Validators.password('BankPass@123'), isNull);
+      expect(Validators.password('Secur3#Password!'), isNull);
+    });
+
+    test('rejects empty or null password', () {
+      expect(Validators.password(''), equals('Password is required.'));
+      expect(Validators.password(null), equals('Password is required.'));
+    });
+
+    test('rejects passwords shorter than 8 characters', () {
+      expect(
+        Validators.password('Bank@1'),
+        equals('Password must be at least 8 characters long.'),
+      );
+    });
+
+    test('rejects passwords without uppercase letter', () {
+      expect(
+        Validators.password('bankpass@123'),
+        equals('Password must contain at least one uppercase letter (A-Z).'),
+      );
+    });
+
+    test('rejects passwords without lowercase letter', () {
+      expect(
+        Validators.password('BANKPASS@123'),
+        equals('Password must contain at least one lowercase letter (a-z).'),
+      );
+    });
+
+    test('rejects passwords without number', () {
+      expect(
+        Validators.password('BankPassword@'),
+        equals('Password must contain at least one number (0-9).'),
+      );
+    });
+
+    test('rejects passwords without special character', () {
+      expect(
+        Validators.password('BankPassword123'),
+        equals('Password must contain at least one special character (e.g. @, #, \$, !).'),
+      );
+    });
+  });
 }

@@ -76,4 +76,34 @@ class Validators {
     if (v.isEmpty) return 'Name is required.';
     return null;
   }
+
+  static final _hasUpper = RegExp(r'[A-Z]');
+  static final _hasLower = RegExp(r'[a-z]');
+  static final _hasDigit = RegExp(r'[0-9]');
+  static final _hasSpecial = RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-+=\[\]\\/`~]');
+
+  /// Banking-grade password policy:
+  /// - Minimum 8 characters
+  /// - At least one uppercase letter (A-Z)
+  /// - At least one lowercase letter (a-z)
+  /// - At least one number (0-9)
+  /// - At least one special symbol (!@#$%^&*...)
+  static String? password(String? value) {
+    final v = value ?? '';
+    if (v.isEmpty) return 'Password is required.';
+    if (v.length < 8) return 'Password must be at least 8 characters long.';
+    if (!_hasUpper.hasMatch(v)) {
+      return 'Password must contain at least one uppercase letter (A-Z).';
+    }
+    if (!_hasLower.hasMatch(v)) {
+      return 'Password must contain at least one lowercase letter (a-z).';
+    }
+    if (!_hasDigit.hasMatch(v)) {
+      return 'Password must contain at least one number (0-9).';
+    }
+    if (!_hasSpecial.hasMatch(v)) {
+      return 'Password must contain at least one special character (e.g. @, #, \$, !).';
+    }
+    return null;
+  }
 }

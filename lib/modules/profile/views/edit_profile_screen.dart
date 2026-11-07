@@ -3,6 +3,7 @@ import '../../../data/models/user_model.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/biometric_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/validators.dart';
 import '../../../core/widgets/section_card.dart';
 import '../../../core/widgets/account_field.dart';
 import '../../../core/widgets/primary_button.dart';
@@ -234,9 +235,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _changePassword() async {
-    if (_newPasswordCtrl.text.length < 6) {
+    final passError = Validators.password(_newPasswordCtrl.text);
+    if (passError != null) {
       setState(() {
-        _passwordError = 'Password must be at least 6 characters.';
+        _passwordError = passError;
         _passwordSuccess = null;
       });
       return;
@@ -621,7 +623,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   label: 'New Password',
                   controller: _newPasswordCtrl,
                   obscureText: _obscurePassword,
-                  helperText: 'Must be at least 6 characters.',
+                  helperText: 'Min 8 chars, uppercase, lowercase, number & symbol.',
                   prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20, color: AppColors.brand),
                   suffixIcon: IconButton(
                     icon: Icon(

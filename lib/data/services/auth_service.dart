@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../firebase_options.dart';
+import '../../core/utils/validators.dart';
 import '../models/user_model.dart';
 
 /// Handles login by EITHER email or phone number, both with password
@@ -124,6 +125,8 @@ class AuthService {
     if (email.trim().isEmpty || phone.trim().isEmpty) {
       throw ArgumentError('Email and phone number are both required.');
     }
+    final passError = Validators.password(password);
+    if (passError != null) throw ArgumentError(passError);
 
     final secondaryAppName = 'staffCreation_${DateTime.now().microsecondsSinceEpoch}';
     FirebaseApp? secondaryApp;
@@ -234,9 +237,11 @@ class AuthService {
     required String phone,
     required String password,
   }) async {
-    if (name.trim().isEmpty || email.trim().isEmpty || phone.trim().isEmpty || password.length < 6) {
-      throw ArgumentError('Name, email, phone, and a password of at least 6 characters are all required.');
+    if (name.trim().isEmpty || email.trim().isEmpty || phone.trim().isEmpty) {
+      throw ArgumentError('Name, email, and phone number are all required.');
     }
+    final passError = Validators.password(password);
+    if (passError != null) throw ArgumentError(passError);
     final bootstrapRef = _db.collection('system').doc('bootstrap');
 
     // Make sure the flag doc exists so the very first run doesn't hit a
@@ -374,7 +379,8 @@ class AuthService {
   Future<void> changeOwnPassword(String newPassword) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('You are not signed in.');
-    if (newPassword.length < 6) throw ArgumentError('Password must be at least 6 characters.');
+    final passError = Validators.password(newPassword);
+    if (passError != null) throw ArgumentError(passError);
     try {
       await user.updatePassword(newPassword);
     } on FirebaseAuthException catch (e) {
