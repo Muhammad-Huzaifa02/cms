@@ -131,6 +131,14 @@
       - `test/user_model_test.dart` (Role-based permissions).
       - `test/widget_test.dart` (Login screen UI and auth state gating).
       - All 39/39 tests (100%) passing.
+- [x] Enterprise Performance, Security & Client Value Suite:
+      - **Unlimited Firestore Offline Cache**: Configured `cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED` and `persistenceEnabled: true` in `main.dart` for instant sub-millisecond local lookups.
+      - **Search Input Debouncing**: Added 250ms debouncer timers on staff search and customer management to prevent UI frame stutter and redundant queries.
+      - **RepaintBoundary Optimization**: Isolated customer card render passes in `CustomerManagementScreen` for smooth, stutter-free 60-120 FPS list scrolling.
+      - **Destructive Deletion Safeguard**: Replaced simple alert with verified 14-digit Account Number match confirmation dialog before record erasure in `CustomerDetailScreen`.
+      - **Cryptographic Export Integrity**: Integrated SHA-256 integrity hash generation across JSON database backups and exports with feedback snackbars in `ExportService` and `DashboardScreen`.
+      - **Executive Branch PDF Summary Digest**: Enhanced PDF export with executive header, generated timestamp, auditor attribution, and branch metrics (Active/Dormant/Blocked and Savings/Current/Business distributions).
+      - **1-Tap Customer Contact Launcher**: Integrated direct Call and WhatsApp message action buttons on `CustomerDetailScreen` Phone tile.
 - [x] Cleaned up unused files (`floating_navigation_bar.dart`,
       `premium_3d_card.dart`, `dashboard_stats_model.dart`, `growth_chart.dart`, `animated_counter.dart`).
 

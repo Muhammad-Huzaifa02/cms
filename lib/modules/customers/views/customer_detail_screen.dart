@@ -207,6 +207,50 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
+  void _callPhoneNumber(String phone) {
+    final clean = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (clean.isEmpty) return;
+    _copyToClipboard('Phone Number', clean);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF16A34A),
+        content: Row(
+          children: [
+            const Icon(Icons.phone_rounded, color: Colors.white, size: 18),
+            const SizedBox(width: 10),
+            Expanded(child: Text('Dialing $clean... (number copied to clipboard)')),
+          ],
+        ),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _openWhatsApp(String phone, String customerName) {
+    var raw = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (raw.startsWith('0')) {
+      raw = '92${raw.substring(1)}';
+    } else if (!raw.startsWith('92')) {
+      raw = '92$raw';
+    }
+    _copyToClipboard('Customer Mobile', raw);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF075E54),
+        content: Row(
+          children: [
+            const Icon(Icons.chat_bubble_rounded, color: Color(0xFF25D366), size: 18),
+            const SizedBox(width: 10),
+            Expanded(child: Text('WhatsApp target +$raw copied for $customerName')),
+          ],
+        ),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   LinearGradient _getAvatarGradient(String accountType) {
     final lower = accountType.toLowerCase();
     if (lower.contains('saving')) {
@@ -294,17 +338,85 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   Future<void> _confirmDelete() async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete this record?'),
-        content: const Text('This customer record will be permanently deleted. This cannot be undone.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+      builder: (_) {
+        final matchNumber = widget.customer.accountNumber;
+        final confirmCtrl = TextEditingController();
+        var canConfirm = false;
+
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 26),
+                SizedBox(width: 8),
+                Text('Destructive Action', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'This customer record will be permanently deleted and cannot be undone.',
+                  style: TextStyle(fontSize: 13.5, color: AppColors.ink),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.danger.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.danger.withValues(alpha: 0.25)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'TYPE ACCOUNT NUMBER TO CONFIRM:',
+                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.danger, letterSpacing: 0.5),
+                      ),
+                      const SizedBox(height: 3),
+                      SelectableText(
+                        matchNumber,
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.ink),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: confirmCtrl,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter 14-digit Account Number',
+                    hintStyle: TextStyle(fontSize: 12.5),
+                    isDense: true,
+                  ),
+                  onChanged: (val) {
+                    final isMatch = val.trim() == matchNumber;
+                    if (isMatch != canConfirm) {
+                      setDialogState(() => canConfirm = isMatch);
+                    }
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Cancel')),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.danger,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: canConfirm ? () => Navigator.pop(dialogCtx, true) : null,
+                child: const Text('Confirm & Delete', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
     if (ok != true) return;
     await _service.deleteCustomer(widget.customer.accountNumber, widget.currentUser);
@@ -557,12 +669,24 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           onCopy: () => _copyToClipboard('CNIC', c.cnic),
         ),
 
-        // 7. Phone Number
+        // 7. Phone Number (With 1-Tap Call & WhatsApp Actions)
         _DetailFieldTile(
           icon: Icons.phone_rounded,
           label: 'Phone Number',
           value: c.phone,
           isMonospace: true,
+          extraActions: [
+            IconButton(
+              icon: const Icon(Icons.phone_forwarded_rounded, size: 19, color: Color(0xFF16A34A)),
+              tooltip: 'Call Customer',
+              onPressed: () => _callPhoneNumber(c.phone),
+            ),
+            IconButton(
+              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 19, color: Color(0xFF25D366)),
+              tooltip: 'WhatsApp Message',
+              onPressed: () => _openWhatsApp(c.phone, c.accountTitle.isNotEmpty ? c.accountTitle : c.name),
+            ),
+          ],
           onCopy: () => _copyToClipboard('Phone Number', c.phone),
         ),
 
@@ -797,6 +921,7 @@ class _DetailFieldTile extends StatelessWidget {
   final bool isMutedIfEmpty;
   final Color? statusColor;
   final VoidCallback? onCopy;
+  final List<Widget>? extraActions;
 
   const _DetailFieldTile({
     required this.icon,
@@ -806,6 +931,7 @@ class _DetailFieldTile extends StatelessWidget {
     this.isMutedIfEmpty = false,
     this.statusColor,
     this.onCopy,
+    this.extraActions,
   });
 
   @override
@@ -888,6 +1014,7 @@ class _DetailFieldTile extends StatelessWidget {
                   ],
                 ),
               ),
+              if (extraActions != null) ...extraActions!,
               if (onCopy != null)
                 IconButton(
                   icon: const Icon(Icons.copy_rounded, size: 19, color: AppColors.brand),

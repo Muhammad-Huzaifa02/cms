@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:excel/excel.dart' as xls;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -76,34 +77,132 @@ class ExportService {
     final doc = pw.Document();
     const headers = ['Name', 'Account Title', 'Phone', 'CNIC', 'Account No.', 'IBN No.', 'Status'];
 
+    // Branch Analytics summary calculations
+    final activeCount = customers.where((c) => c.status.toLowerCase() == 'active').length;
+    final dormantCount = customers.where((c) => c.status.toLowerCase() == 'dormant').length;
+    final blockedCount = customers.where((c) => c.status.toLowerCase() == 'blocked').length;
+
+    final savingsCount = customers.where((c) => c.accountType.toLowerCase().contains('saving')).length;
+    final currentCount = customers.where((c) => c.accountType.toLowerCase().contains('current')).length;
+    final businessCount = customers.where((c) => c.accountType.toLowerCase().contains('business')).length;
+
     doc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(24),
         build: (context) => [
-          pw.Text('CMS — Customer List', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-          pw.Text('Exported ${DateFormat('MMM d, yyyy h:mm a').format(DateTime.now())}',
-              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+          // ── EXECUTIVE REPORT HEADER ──
+          pw.Container(
+            padding: const pw.EdgeInsets.all(12),
+            decoration: pw.BoxDecoration(
+              color: const PdfColor.fromInt(0xFF022B24),
+              borderRadius: pw.BorderRadius.circular(6),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text('CMS — BRANCH AUDIT & CUSTOMER REPORT',
+                        style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.white)),
+                    pw.SizedBox(height: 2),
+                    pw.Text('CONFIDENTIAL BANKING INTELLIGENCE DIGEST',
+                        style: const pw.TextStyle(fontSize: 8, color: PdfColor.fromInt(0xFFD4AF37))),
+                  ],
+                ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text('Generated: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}',
+                        style: const pw.TextStyle(fontSize: 8, color: PdfColors.white)),
+                    pw.Text('Auditor: ${actor.name}',
+                        style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey300)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          pw.SizedBox(height: 12),
+
+          // ── EXECUTIVE METRICS SUMMARY TILES ──
+          pw.Row(
+            children: [
+              pw.Expanded(
+                child: pw.Container(
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                    color: const PdfColor.fromInt(0xFFF1F5F9),
+                    borderRadius: pw.BorderRadius.circular(4),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('TOTAL RECORDS', style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey700)),
+                      pw.Text('${customers.length}', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ),
+              pw.SizedBox(width: 8),
+              pw.Expanded(
+                child: pw.Container(
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                    color: const PdfColor.fromInt(0xFFF0FDF4),
+                    borderRadius: pw.BorderRadius.circular(4),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('ACTIVE / DORMANT / BLOCKED', style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey700)),
+                      pw.Text('$activeCount / $dormantCount / $blockedCount', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF16A34A))),
+                    ],
+                  ),
+                ),
+              ),
+              pw.SizedBox(width: 8),
+              pw.Expanded(
+                child: pw.Container(
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                    color: const PdfColor.fromInt(0xFFEFF6FF),
+                    borderRadius: pw.BorderRadius.circular(4),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('SAVINGS / CURRENT / BUSINESS', style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey700)),
+                      pw.Text('$savingsCount / $currentCount / $businessCount', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF2563EB))),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
           pw.SizedBox(height: 14),
+
+          // ── DATA TABLE ──
           pw.TableHelper.fromTextArray(
             headers: headers,
             data: customers
                 .map((c) => [c.name, c.accountTitle, c.phone, c.cnic, c.accountNumber, c.ibnNo, c.status])
                 .toList(),
-            headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+            headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white, fontSize: 8),
             headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFF0A6B57)),
-            cellStyle: const pw.TextStyle(fontSize: 9),
-            cellHeight: 24,
+            cellStyle: const pw.TextStyle(fontSize: 7.5),
+            cellHeight: 20,
           ),
         ],
       ),
     );
 
     final dir = await getApplicationDocumentsDirectory();
-    final path = '${dir.path}/cms_customers_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    final path = '${dir.path}/cms_executive_report_${DateTime.now().millisecondsSinceEpoch}.pdf';
     final file = File(path);
     await file.writeAsBytes(await doc.save());
 
-    await _activity.log(action: ActivityAction.export, targetId: 'pdf:${customers.length}_records', actor: actor);
+    await _activity.log(action: ActivityAction.export, targetId: 'pdf_digest:${customers.length}_records', actor: actor);
     return file;
   }
 
@@ -142,6 +241,11 @@ class ExportService {
           .toList(),
     };
 
+    // Calculate cryptographic SHA-256 integrity hash over records payload
+    final rawBytes = utf8.encode(jsonEncode(backupPayload['customers']));
+    final sha256Digest = sha256.convert(rawBytes).toString();
+    backupPayload['integritySha256'] = sha256Digest;
+
     final jsonContent = const JsonEncoder.withIndent('  ').convert(backupPayload);
     final dir = await getApplicationDocumentsDirectory();
     final path = '${dir.path}/cms_backup_vault_${DateTime.now().millisecondsSinceEpoch}.json';
@@ -150,10 +254,16 @@ class ExportService {
 
     await _activity.log(
       action: ActivityAction.export,
-      targetId: 'backup_json:${customers.length}_records',
+      targetId: 'backup_json:${customers.length}_records:sha256_${sha256Digest.substring(0, 8)}',
       actor: actor,
     );
     return file;
+  }
+
+  /// Calculates SHA-256 fingerprint of any exported file for audit verification
+  Future<String> calculateFileSha256(File file) async {
+    final bytes = await file.readAsBytes();
+    return sha256.convert(bytes).toString();
   }
 
   Future<void> shareFile(File file, {String? subject}) async {

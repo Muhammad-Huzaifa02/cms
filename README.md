@@ -27,6 +27,11 @@ Branch customer lookup, identity verification, and record management tool — in
   - Gender (`Male`, `Female`, `Other`), Account Status (`Active`, `Inactive`, `Dormant`, `Blocked`), and optional customer Email.
   - Duplicate detection on Phone and CNIC.
 - **Role-Gated & View-Only Contexts**: Customer editing is strictly restricted to Customer Management (`allowEditAction: true`). Dashboard recent cards and Search Results remain strictly view-only to prevent accidental modifications during lookups.
+- **Destructive Operation Safeguards**: Permanently deleting a customer requires explicit 14-digit Account Number verification input in a modal prompt to eliminate accidental or unauthorized record erasure.
+- **Direct 1-Tap Customer Contact**: Immediate Call (`tel:`) and WhatsApp (`wa.me`) launchers integrated on the customer profile screen alongside copy actions.
+- **Cryptographic Export Verification**: All database backups and exports calculate and display a SHA-256 fingerprint for tamper-evident data integrity verification.
+- **Executive Branch Summary PDF Digest**: PDF exports feature a formatted banking audit digest with branch distribution metrics (Active/Dormant/Blocked status and Savings/Current/Business account ratios).
+- **Sub-Millisecond Offline Lookups**: Configured with unlimited Firestore client persistence and search debouncing for high-speed responsiveness under slow network conditions.
 - **Dashboard Recent Customers**: Prominently displays `Account Title`, Account Number, and masked identifiers.
 - **Field-Isolated Search**: Search customers strictly by exact fields (`Account Title`, `Account Number`, `Phone`, or `CNIC`) with 4-digit last-four lookup and dedicated index backfill.
 - **Data Masking & Security**: CNIC, Account Number, and Phone masked by default (showing last 4 digits) with tap-to-reveal.

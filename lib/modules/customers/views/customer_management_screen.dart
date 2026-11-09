@@ -205,14 +205,15 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
         final statusColor = _getStatusColor(customer.status);
         final statusText = customer.status.trim().isNotEmpty ? customer.status.trim() : 'Active';
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 10),
-          elevation: 1,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Color(0xFFE4ECE8), width: 1.1),
-          ),
-          child: ListTile(
+        return RepaintBoundary(
+          child: Card(
+            margin: const EdgeInsets.only(bottom: 10),
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFE4ECE8), width: 1.1),
+            ),
+            child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: Container(
               width: 44,
@@ -330,7 +331,8 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
               ),
             ),
           ),
-        );
+        ),
+      );
       },
     );
   }

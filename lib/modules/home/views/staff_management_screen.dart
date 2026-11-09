@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/services/staff_service.dart';
@@ -20,11 +21,13 @@ class StaffManagementScreen extends StatefulWidget {
 class _StaffManagementScreenState extends State<StaffManagementScreen> {
   final _service = StaffService();
   final _searchCtrl = TextEditingController();
+  Timer? _searchDebounce;
   String _query = '';
   String _statusFilter = 'All'; // 'All', 'Active', 'Deactivated'
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -128,7 +131,16 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: TextField(
                   controller: _searchCtrl,
-                  onChanged: (val) => setState(() => _query = val.trim()),
+                  onChanged: (val) {
+                    _searchDebounce?.cancel();
+                    _searchDebounce = Timer(const Duration(milliseconds: 250), () {
+                      if (!mounted) return;
+                      final query = val.trim();
+                      if (_query != query) {
+                        setState(() => _query = query);
+                      }
+                    });
+                  },
                   style: const TextStyle(fontSize: 14.5),
                   decoration: InputDecoration(
                     hintText: 'Search staff by name, email, or phone…',
@@ -138,6 +150,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                         ? IconButton(
                             icon: const Icon(Icons.clear, size: 20),
                             onPressed: () {
+                              _searchDebounce?.cancel();
                               _searchCtrl.clear();
                               setState(() => _query = '');
                             },

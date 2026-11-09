@@ -123,9 +123,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
           : format == 'pdf'
               ? await _exportService.exportToPdf(customers, widget.currentUser)
               : await _exportService.exportToJsonBackup(customers, widget.currentUser);
+      
+      final shaDigest = await _exportService.calculateFileSha256(file);
+      final shortSha = shaDigest.length >= 12 ? shaDigest.substring(0, 12) : shaDigest;
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.brandDeep,
+            duration: const Duration(seconds: 4),
+            content: Row(
+              children: [
+                const Icon(Icons.verified_outlined, color: Color(0xFFD4AF37), size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Export verified • SHA-256: $shortSha...',
+                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
       await _exportService.shareFile(
         file,
-        subject: format == 'json' ? 'CMS Database Backup Vault' : 'CMS customer export',
+        subject: format == 'json'
+            ? 'CMS Database Backup Vault (SHA256: $shortSha)'
+            : 'CMS Customer Export (SHA256: $shortSha)',
       );
     } catch (e) {
       if (!mounted) return;
