@@ -139,9 +139,8 @@
       - **Cryptographic Export Integrity**: Integrated SHA-256 integrity hash generation across JSON database backups and exports with feedback snackbars in `ExportService` and `DashboardScreen`.
       - **Executive Branch PDF Summary Digest**: Enhanced PDF export with executive header, generated timestamp, auditor attribution, and branch metrics (Active/Dormant/Blocked and Savings/Current/Business distributions).
       - **1-Tap Customer Contact Launcher**: Integrated direct Call and WhatsApp message action buttons on `CustomerDetailScreen` Phone tile.
-- [x] In-App Update, Dark Theme & Automated Notifications:
+- [x] In-App Update & Automated Notifications:
       - **In-App Update Detection**: Built `AppUpdateService` checking `system/appConfig` on app start in `DashboardScreen`, providing version comparison, release notes, and download link modal.
-      - **Executive Dark Theme Mode**: Added `ThemeController` with persistent `FlutterSecureStorage` backing, full dark palette in `AppTheme.dark()`, and toggle in `EditProfileScreen`.
       - **Customer Notifications (SMS & WhatsApp)**: Built `CustomerNotificationService` with standardized welcome and update templates, 1-tap dispatch dialog in `AddCustomerScreen`, and update action in `CustomerDetailScreen`.
 - [x] Cleaned up unused files (`floating_navigation_bar.dart`,
       `premium_3d_card.dart`, `dashboard_stats_model.dart`, `growth_chart.dart`, `animated_counter.dart`).

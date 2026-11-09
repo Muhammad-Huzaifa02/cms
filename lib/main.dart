@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cms/firebase_options.dart';
 import 'package:cms/core/theme/app_theme.dart';
-import 'package:cms/core/theme/theme_controller.dart';
 import 'package:cms/data/services/auth_service.dart';
 import 'package:cms/data/models/user_model.dart';
 import 'package:cms/modules/authentication/views/login_screen.dart';
@@ -45,8 +44,6 @@ Future<void> main() async {
     }
   }
 
-  await ThemeController.instance.loadTheme();
-
   runApp(const CmsApp());
 }
 
@@ -60,27 +57,20 @@ class CmsApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: ThemeController.instance,
-      builder: (context, _) {
-        return MaterialApp(
-          title: 'CMS — Customer Management System',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light(),
-          darkTheme: AppTheme.dark(),
-          themeMode: ThemeController.instance.themeMode,
-          onGenerateRoute: AppRoutes.onGenerateRoute,
-          builder: (context, child) {
-            // Normalizes font scaling to standard normal size (1.0) across all devices.
-            final mediaQuery = MediaQuery.of(context);
-            return MediaQuery(
-              data: mediaQuery.copyWith(textScaler: TextScaler.noScaling),
-              child: child ?? const SizedBox.shrink(),
-            );
-          },
-          home: _AuthGate(authService: authService ?? AuthService()),
+    return MaterialApp(
+      title: 'CMS — Customer Management System',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light(),
+      onGenerateRoute: AppRoutes.onGenerateRoute,
+      builder: (context, child) {
+        // Normalizes font scaling to standard normal size (1.0) across all devices.
+        final mediaQuery = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQuery.copyWith(textScaler: TextScaler.noScaling),
+          child: child ?? const SizedBox.shrink(),
         );
       },
+      home: _AuthGate(authService: authService ?? AuthService()),
     );
   }
 }

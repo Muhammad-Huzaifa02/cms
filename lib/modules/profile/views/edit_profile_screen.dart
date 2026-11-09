@@ -3,7 +3,6 @@ import '../../../data/models/user_model.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/biometric_service.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/theme_controller.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/section_card.dart';
 import '../../../core/widgets/account_field.dart';
@@ -615,64 +614,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 16),
             ],
-
-            // ── EXECUTIVE THEME MODE (LIGHT / DARK) ──
-            AnimatedBuilder(
-              animation: ThemeController.instance,
-              builder: (context, _) {
-                final isDark = ThemeController.instance.isDarkMode;
-                return SectionCard(
-                  title: 'Appearance & Display',
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFFD4AF37).withValues(alpha: 0.15)
-                                : AppColors.brand.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                            size: 24,
-                            color: isDark ? const Color(0xFFD4AF37) : AppColors.brand,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                isDark ? 'Executive Dark Mode' : 'Standard Light Mode',
-                                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                isDark
-                                    ? 'High-contrast midnight banking palette enabled.'
-                                    : 'Crisp, daylight executive banking theme enabled.',
-                                style: const TextStyle(fontSize: 11.5, color: AppColors.muted, height: 1.3),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Switch(
-                          value: isDark,
-                          activeThumbColor: const Color(0xFFD4AF37),
-                          onChanged: (val) => ThemeController.instance.toggleTheme(val),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 16),
 
             // ── CHANGE PASSWORD SECTION ──
             SectionCard(
