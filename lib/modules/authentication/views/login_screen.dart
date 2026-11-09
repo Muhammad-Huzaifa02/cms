@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/biometric_service.dart';
 import '../../../core/theme/app_theme.dart';
@@ -23,11 +24,15 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordCtrl = TextEditingController();
   final _rateLimiter = LoginRateLimiter.instance;
   final _biometricService = BiometricService();
+  final _secureStorage = const FlutterSecureStorage();
+  static const _rememberMeKey = 'cms_remember_me';
+  static const _savedIdentifierKey = 'cms_saved_identifier';
   Timer? _countdownTimer;
   int _lockoutSecondsLeft = 0;
   bool _loading = false;
   bool _loggingInWithBiometric = false;
   bool _obscurePassword = true;
+  bool _rememberMe = true;
   String? _error;
   Map<String, String>? _savedBiometricAccount;
   bool _biometricAvailable = false;
@@ -36,7 +41,23 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _checkInitialLockout();
+    _loadSavedIdentifier();
     _loadBiometricLogin();
+  }
+
+  Future<void> _loadSavedIdentifier() async {
+    try {
+      final remember = await _secureStorage.read(key: _rememberMeKey);
+      final savedId = await _secureStorage.read(key: _savedIdentifierKey);
+      if (mounted) {
+        setState(() {
+          _rememberMe = remember != 'false';
+          if (_rememberMe && savedId != null && savedId.isNotEmpty && _identifierCtrl.text.isEmpty) {
+            _identifierCtrl.text = savedId;
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadBiometricLogin() async {
@@ -105,18 +126,30 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       AuthSessionState.markFreshLogin();
+      final identifier = _identifierCtrl.text.trim();
       final user = await _auth.signIn(
-        identifier: _identifierCtrl.text.trim(),
+        identifier: identifier,
         password: _passwordCtrl.text,
       );
       _rateLimiter.recordSuccessfulLogin();
+
+      // Persist or clear Remember Me identifier in secure storage
+      try {
+        if (_rememberMe) {
+          await _secureStorage.write(key: _rememberMeKey, value: 'true');
+          await _secureStorage.write(key: _savedIdentifierKey, value: identifier);
+        } else {
+          await _secureStorage.write(key: _rememberMeKey, value: 'false');
+          await _secureStorage.delete(key: _savedIdentifierKey);
+        }
+      } catch (_) {}
 
       // Remember credentials in secure hardware vault if biometric lock is enabled
       final lockEnabled = await _biometricService.isLockEnabled(user.uid);
       if (lockEnabled) {
         await _biometricService.saveBiometricCredentials(
           uid: user.uid,
-          email: _identifierCtrl.text.trim(),
+          email: identifier,
           password: _passwordCtrl.text,
           name: user.name,
         );
@@ -330,13 +363,46 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: _loading ? null : _showForgotPasswordDialog,
-                                style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 30)),
-                                child: const Text('Forgot password?', style: TextStyle(fontSize: 11.5, color: AppColors.muted)),
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                InkWell(
+                                  onTap: () => setState(() => _rememberMe = !_rememberMe),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: Checkbox(
+                                            value: _rememberMe,
+                                            activeColor: AppColors.brand,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                            onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'Remember me',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.ink,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: _loading ? null : _showForgotPasswordDialog,
+                                  style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 30)),
+                                  child: const Text('Forgot password?', style: TextStyle(fontSize: 11.5, color: AppColors.muted)),
+                                ),
+                              ],
                             ),
                             if (_error != null) ...[
                               const SizedBox(height: 4),

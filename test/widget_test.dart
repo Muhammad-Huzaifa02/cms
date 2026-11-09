@@ -23,5 +23,6 @@ void main() {
     expect(find.text('Customer Management System'), findsOneWidget);
     expect(find.widgetWithText(ElevatedButton, 'Login'), findsOneWidget);
     expect(find.textContaining('Email address'), findsWidgets);
+    expect(find.text('Remember me'), findsOneWidget);
   });
 }

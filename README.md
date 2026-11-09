@@ -15,7 +15,9 @@ Branch customer lookup, identity verification, and record management tool — in
   - **Bank-Grade Password Complexity**: Enforces at least 8 characters with at least 1 uppercase letter (`A-Z`), 1 lowercase letter (`a-z`), 1 number (`0-9`), and 1 special symbol (`!@#$%^&*...`) across Admin bootstrap, staff creation, and password changes.
   - **Inactivity Session Auto-Lock**: Automatically terminates active sessions after 5 minutes of continuous user inactivity.
   - **Brute-Force Rate Limiter**: Locks out authentication for 30 seconds after 5 consecutive failed login attempts.
-- **Dual Authentication**: Sign in with verified email or Pakistani mobile number (`03xx-xxxxxxx`) and password, secured against unauthenticated phone enumeration.
+- **Dual Authentication & Remember Me**:
+  - Sign in with verified email or Pakistani mobile number (`03xx-xxxxxxx`) and password, secured against unauthenticated phone enumeration.
+  - "Remember Me" toggle with encrypted on-device keychain storage (`FlutterSecureStorage`) for prefilling credentials on subsequent launches.
 - **1-Tap Biometric Authentication**:
   - Dedicated hardware sensor icon button (58x58 squircle with large 38px sensor glyph) right on the login card.
   - Encrypted hardware keychain vault (`FlutterSecureStorage`) with automatic synchronization on password changes.
