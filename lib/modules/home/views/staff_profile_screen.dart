@@ -270,25 +270,6 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  const Divider(height: 1, color: AppColors.border),
-                  const SizedBox(height: 12),
-                  // Quick Contact Actions
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _quickContactBtn(
-                        icon: Icons.email_rounded,
-                        label: 'Copy Email',
-                        value: _staff.email,
-                      ),
-                      _quickContactBtn(
-                        icon: Icons.phone_rounded,
-                        label: 'Copy Phone',
-                        value: _staff.phone,
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -472,36 +453,6 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _quickContactBtn({
-    required IconData icon,
-    required String label,
-    required String? value,
-  }) {
-    final available = value != null && value.trim().isNotEmpty;
-    return InkWell(
-      onTap: available ? () => _copyToClipboard(label, value) : null,
-      borderRadius: BorderRadius.circular(10),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: available ? AppColors.brand : AppColors.muted),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: available ? AppColors.brand : AppColors.muted,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
