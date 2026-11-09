@@ -161,6 +161,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // App Update Configuration (Readable by authenticated staff, writable only by Admin)
+    match /system/appConfig {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
     match /activityLog/{logId} {
       allow read: if isAdmin();
       allow create: if isActive()
