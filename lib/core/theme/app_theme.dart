@@ -112,4 +112,92 @@ class AppTheme {
       fontFamily: 'Roboto',
     );
   }
+
+  /// Executive Dark Banking Theme
+  static ThemeData dark() {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF0F1715),
+      colorScheme: ColorScheme.fromSeed(
+        brightness: Brightness.dark,
+        seedColor: AppColors.brand,
+        primary: AppColors.brandLight,
+        secondary: AppColors.gold,
+        surface: const Color(0xFF162320),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF121D1A),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.brand,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+          elevation: 0,
+          minimumSize: const Size(48, 52),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF1B2C28),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        labelStyle: const TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+        hintStyle: const TextStyle(color: Color(0xFF64748B)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.brandLight, width: 1.5),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF2D453F)),
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 2,
+        color: const Color(0xFF162320),
+        shadowColor: Colors.black.withValues(alpha: 0.3),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: Color(0xFF233833), width: 1.2),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: const Color(0xFF162320),
+        elevation: 12,
+        shadowColor: Colors.black.withValues(alpha: 0.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: const Color(0xFF162320),
+        elevation: 16,
+        showDragHandle: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF1F3530),
+        contentTextStyle: const TextStyle(color: Colors.white, fontSize: 13),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: const Color(0xFF1B2C28),
+        selectedColor: AppColors.brandDeep,
+        side: const BorderSide(color: Color(0xFF2D453F)),
+        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+        pressElevation: 2,
+      ),
+      fontFamily: 'Roboto',
+    );
+  }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/services/customer_service.dart';
+import '../../../data/services/notification_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/section_card.dart';
@@ -326,7 +327,25 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         originalCnic: widget.customer.cnic,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer updated successfully.')));
+
+      final updateMsg = CustomerNotificationService.buildUpdateMessage(
+        accountTitle: updated.accountTitle,
+        accountNumber: updated.accountNumber,
+      );
+      final waPhone = CustomerNotificationService.normalizeWhatsAppPhone(updated.phone);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Customer updated. Automated alert ready for ${updated.phone}.'),
+          action: SnackBarAction(
+            label: 'Send Alert',
+            textColor: const Color(0xFFD4AF37),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: '$updateMsg (Target: +$waPhone)'));
+            },
+          ),
+        ),
+      );
       Navigator.of(context).pop();
     } catch (e) {
       if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));

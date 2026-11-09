@@ -28,7 +28,11 @@ Branch customer lookup, identity verification, and record management tool — in
   - Duplicate detection on Phone and CNIC.
 - **Role-Gated & View-Only Contexts**: Customer editing is strictly restricted to Customer Management (`allowEditAction: true`). Dashboard recent cards and Search Results remain strictly view-only to prevent accidental modifications during lookups.
 - **Destructive Operation Safeguards**: Permanently deleting a customer requires explicit 14-digit Account Number verification input in a modal prompt to eliminate accidental or unauthorized record erasure.
-- **Direct 1-Tap Customer Contact**: Immediate Call (`tel:`) and WhatsApp (`wa.me`) launchers integrated on the customer profile screen alongside copy actions.
+- **Direct 1-Tap Customer Contact & Automated Receipts**:
+  - Immediate Call (`tel:`) and WhatsApp (`wa.me`) launchers integrated on the customer profile screen.
+  - Automated welcome and update notifications via SMS or WhatsApp for every new customer or record modification.
+- **Executive Dark Banking Mode**: User-selectable midnight banking theme toggle in `My Account` with full persistence across app launches.
+- **In-App Update Detection**: Automatic background check against Firestore system configuration prompting the user with release notes and 1-tap download links when new app builds are published.
 - **Cryptographic Export Verification**: All database backups and exports calculate and display a SHA-256 fingerprint for tamper-evident data integrity verification.
 - **Executive Branch Summary PDF Digest**: PDF exports feature a formatted banking audit digest with branch distribution metrics (Active/Dormant/Blocked status and Savings/Current/Business account ratios).
 - **Sub-Millisecond Offline Lookups**: Configured with unlimited Firestore client persistence and search debouncing for high-speed responsiveness under slow network conditions.

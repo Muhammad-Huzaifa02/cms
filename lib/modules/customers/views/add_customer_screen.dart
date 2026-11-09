@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/services/customer_service.dart';
+import '../../../data/services/notification_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/section_card.dart';
@@ -148,6 +149,98 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
         updatedBy: widget.currentUser.uid,
       );
       await _service.addCustomer(customer, widget.currentUser);
+      if (!mounted) return;
+
+      // Offer immediate automated notification dispatch (SMS / WhatsApp)
+      final phone = customer.phone;
+      final welcomeMsg = CustomerNotificationService.buildWelcomeMessage(
+        accountTitle: customer.accountTitle,
+        accountNumber: customer.accountNumber,
+        accountType: customer.accountType,
+        ibnNo: customer.ibnNo,
+      );
+
+      await showDialog<void>(
+        context: context,
+        builder: (dialogCtx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 24),
+              SizedBox(width: 10),
+              Text('Customer Added', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Customer record created. Would you like to send an automated confirmation message to $phone?',
+                style: const TextStyle(fontSize: 13.5, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  welcomeMsg,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11.5, color: AppColors.ink, fontStyle: FontStyle.italic),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('Skip'),
+            ),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF075E54),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              icon: const Icon(Icons.chat_bubble_rounded, size: 16, color: Color(0xFF25D366)),
+              label: const Text('Send WhatsApp', style: TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: () {
+                final waPhone = CustomerNotificationService.normalizeWhatsAppPhone(phone);
+                Clipboard.setData(ClipboardData(text: '$welcomeMsg (Target: +$waPhone)'));
+                Navigator.pop(dialogCtx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: const Color(0xFF075E54),
+                    content: Text('WhatsApp receipt copied for +$waPhone.'),
+                  ),
+                );
+              },
+            ),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.brand,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              icon: const Icon(Icons.sms_rounded, size: 16),
+              label: const Text('Send SMS', style: TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: welcomeMsg));
+                Navigator.pop(dialogCtx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: AppColors.brand,
+                    content: Text('SMS receipt copied for $phone.'),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (e) {

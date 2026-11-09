@@ -6,6 +6,7 @@ import '../../../data/models/customer_model.dart';
 import '../../../data/services/customer_service.dart';
 import '../../../data/services/export_service.dart';
 import '../../../data/services/auth_service.dart';
+import '../../../data/services/app_update_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/perspective_page_route.dart';
 import '../../../core/widgets/tilt_tap_card.dart';
@@ -33,8 +34,97 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _customerService = CustomerService();
   final _exportService = ExportService();
   final _authService = AuthService();
+  final _updateService = AppUpdateService();
   bool _exporting = false;
   late Stream<List<Customer>> _recentCustomersStream = _customerService.recentCustomers();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkInAppUpdate());
+  }
+
+  Future<void> _checkInAppUpdate() async {
+    final info = await _updateService.checkForUpdate();
+    if (!mounted || !info.hasUpdate) return;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: !info.isForced,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.brand.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.system_update_rounded, color: AppColors.brand, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Update Available',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'v${info.latestVersion} (Current: v${info.currentVersion})',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFB45309)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              info.releaseNotes.isNotEmpty ? info.releaseNotes : 'A new enhanced version of CMS is available with performance improvements and security updates.',
+              style: const TextStyle(fontSize: 13, height: 1.4),
+            ),
+          ],
+        ),
+        actions: [
+          if (!info.isForced)
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Later'),
+            ),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.brand,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: const Icon(Icons.download_rounded, size: 18),
+            label: const Text('Download Update', style: TextStyle(fontWeight: FontWeight.w700)),
+            onPressed: () {
+              Navigator.pop(ctx);
+              if (info.downloadUrl.isNotEmpty) {
+                Clipboard.setData(ClipboardData(text: info.downloadUrl));
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(info.downloadUrl.isNotEmpty
+                      ? 'Download link copied to clipboard. Open in browser to install.'
+                      : 'Contact your branch administrator for the v${info.latestVersion} APK package.'),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   // Fetched once per Dashboard visit (not per rebuild) — both use
   // Firestore COUNT aggregation, so this is two small server-side counts,
