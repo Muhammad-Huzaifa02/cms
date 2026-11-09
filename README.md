@@ -2,6 +2,8 @@
 
 Branch customer lookup, identity verification, and record management tool — independent of core banking systems.
 
+👉 **[Read the Official Customer Operations & User Guide](docs/CUSTOMER_GUIDE.md)** for detailed operational workflows, field specifications, staff management, and troubleshooting.
+
 ---
 
 ## Features
