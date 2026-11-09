@@ -1,5 +1,3 @@
-import 'package:flutter/services.dart';
-
 enum NotificationChannel { sms, whatsApp }
 
 /// Customer Notification Service for automated SMS & WhatsApp receipts and alerts.

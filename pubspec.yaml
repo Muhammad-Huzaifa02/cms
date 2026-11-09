@@ -21,6 +21,7 @@ dependencies:
   local_auth: ^2.3.0
   flutter_secure_storage: ^9.2.2
   shimmer: ^3.0.0
+  crypto: ^3.0.3
 
   # Export (FR-2.6: Admin-only export to Excel/PDF)
   excel: ^4.0.6
