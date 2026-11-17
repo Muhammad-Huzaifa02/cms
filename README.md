@@ -10,9 +10,16 @@ Branch customer lookup, identity verification, and record management tool — in
 
 - **Modern Glassmorphism (Frosted Glass) UI/UX**:
   - Across all screens, cards, dialogs, drawers, and headers, the interface features a luxurious frosted acrylic texture.
-  - Multi-layer `BackdropFilter` Gaussian blur with translucent gradient fills and crisp specular light borders.
-  - Vibrant ambient mesh gradient illumination providing refraction and depth under dynamic lighting.
+  - Multi-layer `BackdropFilter` Gaussian blur (20px) with translucent gradient fills (88% to 70% opacity) and crisp specular light borders (1.5–2.0px).
+  - Vibrant ambient mesh gradient illumination providing refraction, depth, and specular sheen under dynamic lighting.
   - Interactive frosted tactile cards with 3D tilt effects, glowing role badges, and frosted action icons.
+  - Seamless executive dashboard header: unified dark emerald gradient flowing continuously into the search bar with zero border seams or raster artifacts.
+- **Unified Avatar Architecture**:
+  - High-contrast circular initials avatars for Staff, Administrators, and Customers sharing identical luxury styling.
+  - Crisp specular white borders (`1.5–2.0px`), soft elevation depth shadows, and 2-letter bold uppercase typography.
+  - Role-matched dynamic gradients: Luxury Gold for Administrators; Emerald, Sapphire Blue, Teal Cyan, Warm Amber, and Indigo for Banking Staff; and account-type gradients for Customers.
+- **Universal Standard Text Size & Display Normalization**:
+  - Global `TextScaler.noScaling` (1.0) and clamped typography to guarantee pixel-perfect layout fidelity across all OEM Android devices (Samsung OneUI, Xiaomi MIUI, Oppo ColorOS, Stock Android), completely eliminating text clipping or cutoffs.
 - **Cybersecurity & Threat Hardening**:
   - **Device Integrity Guard**: Blocks execution on rooted, jailbroken, hooked (Frida/Xposed), or tampered devices.
   - **Firebase App Check**: Play Integrity attestation in production and debug token verification in development to block automated API abuse and scraping.

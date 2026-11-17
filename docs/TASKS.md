@@ -143,6 +143,14 @@
       - **Remember Me Authentication**: Integrated secure "Remember me" toggle on `LoginScreen` backed by `FlutterSecureStorage` hardware keychain to remember the login identifier across app restarts.
       - **In-App Update Detection**: Built `AppUpdateService` checking `system/appConfig` on app start in `DashboardScreen`, providing version comparison, release notes, and download link modal.
       - **Customer Notifications (SMS & WhatsApp)**: Built `CustomerNotificationService` with standardized welcome and update templates, 1-tap dispatch dialog in `AddCustomerScreen`, and update action in `CustomerDetailScreen`.
+- [x] Modern Glassmorphism (Frosted Glass) UI/UX Transformation:
+      - **Glass Component Suite**: Created `GlassContainer`, `GlassContainer.card()`, `GlassContainer.dark()`, and `GlassScaffoldBackground` with multi-layer `BackdropFilter` Gaussian diffusion (20px) and radiant ambient mesh gradients.
+      - **Universal Frosted Acrylic Surfaces**: Transformed all cards, tiles, dialogs, drawers, and headers across every screen to acrylic gradient surfaces (88% to 70% opacity) with crisp 1.5–2px specular light borders.
+      - **Universal Display & Text Scaling Normalization**: Enforced `TextScaler.noScaling` (1.0) in root `main.dart` builder to eliminate OEM font scaling clipping and guarantee uniform layout fidelity across all devices.
+      - **Dashboard Header Seam & White Line Elimination**: Neutralized inherited `AppBarTheme` bottom border on `SliverAppBar` and extended the search bar underlay to eliminate subpixel raster seams.
+      - **Staff Permissions Overflow Fix**: Eliminated 5.1px RenderFlex overflow on "Delete Customers" toggle when in `RESTRICTED` state with flexible layout and compact switch scaling in `StaffProfileScreen`.
+      - **Unified Avatar Styling**: Standardized circular avatar component design across Staff, Admin, and Customer components with specular white borders, elevation shadows, 2-letter bold initials, and role-matched gradients.
+      - **PDF Vector Export Cleanliness**: Replaced unsupported unicode punctuation in `ExportService` header to eliminate font box placeholder glyphs (`☒`) on exported PDF reports.
 - [x] Cleaned up unused files (`floating_navigation_bar.dart`,
       `premium_3d_card.dart`, `dashboard_stats_model.dart`, `growth_chart.dart`, `animated_counter.dart`).
 

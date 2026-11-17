@@ -50,6 +50,13 @@ Welcome to the **Customer Management System (CMS)**. This manual provides branch
 
 The Customer Management System (CMS) operates independently of core banking networks, enabling branch officers to rapidly verify customer identities, manage contact information, dispatch automated customer notifications, and maintain tamper-evident audit logs.
 
+### Modern Frosted Glass (Glassmorphism) Interface
+The application features a modern, executive **Glassmorphism (Frosted Glass)** design language engineered for readability, focus, and visual elegance:
+- **Frosted Acrylic Surfaces**: Cards, modal dialogs, drawers, and headers use multi-layer Gaussian diffusion blur (20px) and translucent acrylic fills (88% to 70% opacity) with crisp specular light highlights.
+- **Ambient Illumination**: Subtle background radial mesh glows provide optical depth without distracting from critical financial figures.
+- **Universal Display Normalization**: Enforces strict standard text scaling (`1.0x`) across all OEM Android devices (Samsung OneUI, Xiaomi MIUI, Oppo ColorOS, Stock Android) to prevent layout clipping and ensure account details, status tags, and action buttons remain fully visible on any screen.
+- **Unified Avatar Styling**: Circular high-contrast avatars for Administrators, Staff Officers, and Customers featuring crisp white specular borders, elevation drop shadows, 2-letter uppercase initials, and role-matched dynamic gradients (Luxury Gold for Admins, Executive Palettes for Staff, and Account-Type Gradients for Customers).
+
 ### Access Levels:
 | Role | Capabilities | Primary Users |
 | :--- | :--- | :--- |
@@ -189,11 +196,17 @@ Branch Managers can manage all branch officers under **Staff Management**:
    - `Can Delete Customers`
 4. Tap **Create Staff Account**.
 
-### Granular Permissions
+### Granular Permissions & Control
 Managers can adjust staff privileges at any time:
-- Tap on any staff member's profile card.
-- Toggle individual switches (e.g., granting a junior clerk `View` and `Add` permissions while disabling `Edit` and `Delete`).
-- Changes take effect immediately across all active sessions.
+- Tap on any staff member's profile card in **Staff Management**.
+- Inspect their role, status, contact information, and account details.
+- Toggle individual permissions under **Permissions & Access Control**:
+  - `View Customers`: Search and inspect customer records.
+  - `Add Customers`: Register and onboard new customer accounts.
+  - `Edit Customers`: Modify customer records and account details.
+  - `Delete Customers`: Permanently remove customer records.
+- Each permission displays an instant live status badge: **`GRANTED`** (green) or **`RESTRICTED`** (neutral grey / red for destructive privileges).
+- Changes take effect immediately across all active sessions with real-time audit logging.
 
 ### Activating & Deactivating Staff Accounts
 If a staff member is transferred or leaves the branch:
@@ -211,6 +224,12 @@ Under the **Exports & Reports** section, Branch Managers have access to data gov
 - Formatted with headers and column auto-sizing for Microsoft Excel and Google Sheets.
 
 ### Executive PDF Digest with Distribution Ratios
+- Produces a formal, executive banking report with official headers (`CMS BRANCH AUDIT & CUSTOMER REPORT`).
+- Clean vector typography without unsupported symbol artifacts.
+- Includes a **Branch Distribution Summary Digest**:
+  - Active vs. Dormant vs. Blocked customer ratios.
+  - Savings vs. Current vs. Business account breakdowns.
+  - Clean printable table ready for branch compliance audits.
 - Produces a formal, executive banking report with official headers.
 - Includes a **Branch Distribution Summary Digest**:
   - Active vs. Dormant vs. Blocked customer ratios.

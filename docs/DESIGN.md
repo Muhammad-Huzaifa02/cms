@@ -18,12 +18,17 @@ header and Login screen.
 
 ## Component library (`core/widgets/`) — reuse these, don't re-derive
 
-- **`SectionCard`** + **`SectionHeader`** — titled card grouping related
-  fields/controls (Details, Change Password, Biometric, etc.). Any new
-  settings-style screen should be built from this, not a hand-spaced
-  `Card`.
-- **`AccountField`** — labeled input with a consistent read-only/"LOCKED"
-  treatment, used across My Account and similar forms.
+- **`GlassContainer`** / **`GlassScaffoldBackground`** (`core/widgets/glass_container.dart`) — the
+  foundation of the app's modern Frosted Glass design language. Delivers
+  hardware-accelerated `BackdropFilter` Gaussian blur (20px), translucent
+  acrylic gradient fill (88% to 70% opacity), crisp specular light borders
+  (1.5–2px, 95% opacity), and vibrant ambient mesh radial orbs.
+- **`SectionCard`** + **`SectionHeader`** — frosted glass card grouping related
+  fields/controls (Details, Change Password, Biometric, etc.) with acrylic
+  translucency and specular highlighting. Any new settings-style screen
+  should be built from this, not a hand-spaced `Card`.
+- **`AccountField`** — frosted labeled input with a consistent read-only/"LOCKED"
+  treatment and glass borders, used across My Account and similar forms.
 - **`PrimaryButton`** — full-width, 52dp, built-in loading spinner. Every
   submit/save button in the app should be this, not a one-off
   `ElevatedButton`.
@@ -40,6 +45,11 @@ header and Login screen.
 - **`ShimmerLoading`** — skeleton loading state (via the `shimmer`
   package) instead of a bare spinner, used on the Dashboard's initial
   customer list load.
+- **`Unified Avatar System`** — standardized circular avatar design across
+  Staff, Admin, and Customer components featuring a crisp specular white
+  border (`1.5–2px`, 85% opacity), drop shadow (`blurRadius: 6–8px`, `offset: 0, 2–3`),
+  2-letter bold uppercase initials, and role-matched dynamic gradients
+  (Luxury Gold for Admin, Emerald/Sapphire/Teal/Amber/Indigo for Staff & Customer).
 
 - **`DashboardStatCard`** / `DashboardStatSkeleton` — animated count-up
   stat with icon, accent colour and optional caption.
@@ -52,6 +62,15 @@ header and Login screen.
   `hintText`. Passing a validator makes it a `TextFormField`; omitting it
   keeps the plain `TextField`. Use it for every labelled form field
   rather than a screen-local text-field helper.
+
+## Universal Standard Text Scaling & Display Normalization
+
+In financial banking apps with dense, multi-field customer forms, phone/CNIC/account
+numbers, and status badges, arbitrary OS-level accessibility font enlargement
+causes severe visual clipping, layout overflow exceptions, and truncated data.
+The app enforces **`TextScaler.noScaling` (1.0)** via `MediaQuery` in `main.dart`,
+ensuring 100% predictable, pixel-perfect rendering across all Android OEM distributions
+(Samsung OneUI, Xiaomi MIUI, Oppo ColorOS, Stock Android) without any unintended clipping.
 
 ## A recurring bug class — read before adding a new animation
 
