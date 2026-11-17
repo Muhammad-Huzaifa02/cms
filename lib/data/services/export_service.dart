@@ -104,7 +104,7 @@ class ExportService {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('CMS — BRANCH AUDIT & CUSTOMER REPORT',
+                    pw.Text('CMS BRANCH AUDIT & CUSTOMER REPORT',
                         style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.white)),
                     pw.SizedBox(height: 2),
                     pw.Text('CONFIDENTIAL BANKING INTELLIGENCE DIGEST',
