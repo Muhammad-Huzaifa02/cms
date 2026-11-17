@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../data/services/biometric_service.dart';
 import '../theme/app_theme.dart';
@@ -141,137 +142,195 @@ class _BiometricLockScreenState extends State<BiometricLockScreen> with WidgetsB
 
     return Scaffold(
       backgroundColor: const Color(0xFF011814),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF011410),
-              Color(0xFF022B24),
-              Color(0xFF011814),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+      body: Stack(
+        children: [
+          // Background ambient gradient with refractive glow circles
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF011410),
+                    Color(0xFF022B24),
+                    Color(0xFF011814),
+                  ],
+                ),
+              ),
+              child: Stack(
                 children: [
-                  // ── BANK BRANDING CHIP ──
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.shield_rounded, size: 14, color: AppColors.gold),
-                        SizedBox(width: 6),
-                        Text(
-                          'CUSTOMER MANAGEMENT SYSTEM',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 36),
-
-                  // ── BIOMETRIC GLOWING HUB ──
-                  GestureDetector(
-                    onTap: _checking ? null : () => _tryBiometricLogin(autoTriggered: false),
+                  Positioned(
+                    top: -60,
+                    right: -40,
                     child: Container(
-                      width: 120,
-                      height: 120,
+                      width: 260,
+                      height: 260,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.06),
-                        border: Border.all(
-                          color: _checking
-                              ? AppColors.gold.withValues(alpha: 0.6)
-                              : Colors.white.withValues(alpha: 0.22),
-                          width: 2,
-                        ),
+                        color: AppColors.gold.withValues(alpha: 0.14),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 120,
+                    left: -60,
+                    child: Container(
+                      width: 300,
+                      height: 300,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.brandLight.withValues(alpha: 0.18),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // ── FROSTED BRANDING CHIP ──
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.28), width: 1.1),
                         boxShadow: [
                           BoxShadow(
-                            color: (_checking ? AppColors.gold : AppColors.brand).withValues(alpha: 0.25),
-                            blurRadius: 30,
-                            spreadRadius: 4,
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      child: Center(
-                        child: Container(
-                          width: 90,
-                          height: 90,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.09),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.shield_rounded, size: 14, color: AppColors.gold),
+                          SizedBox(width: 6),
+                          Text(
+                            'CUSTOMER MANAGEMENT SYSTEM',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.8,
+                            ),
                           ),
-                          child: Center(
-                            child: _checking
-                                ? const SizedBox(
-                                    width: 38,
-                                    height: 38,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                      color: AppColors.gold,
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 36),
+
+                    // ── FROSTED GLASS BIOMETRIC CARD ──
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.16),
+                                Colors.white.withValues(alpha: 0.05),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              width: 1.4,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                blurRadius: 24,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              GestureDetector(
+                                onTap: _checking ? null : () => _tryBiometricLogin(autoTriggered: false),
+                                child: Container(
+                                  width: 110,
+                                  height: 110,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white.withValues(alpha: 0.09),
+                                    border: Border.all(
+                                      color: _checking
+                                          ? AppColors.gold.withValues(alpha: 0.8)
+                                          : Colors.white.withValues(alpha: 0.35),
+                                      width: 2,
                                     ),
-                                  )
-                                : Icon(
-                                    Icons.fingerprint_rounded,
-                                    color: Colors.white.withValues(alpha: 0.95),
-                                    size: 54,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: (_checking ? AppColors.gold : AppColors.brand).withValues(alpha: 0.35),
+                                        blurRadius: 30,
+                                        spreadRadius: 4,
+                                      ),
+                                    ],
                                   ),
+                                  child: Center(
+                                    child: _checking
+                                        ? const SizedBox(
+                                            width: 38,
+                                            height: 38,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 3,
+                                              color: AppColors.gold,
+                                            ),
+                                          )
+                                        : Icon(
+                                            Icons.fingerprint_rounded,
+                                            color: Colors.white.withValues(alpha: 0.95),
+                                            size: 56,
+                                          ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Text(
+                                isTimeout ? 'Session Timed Out' : 'Session Locked',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: Text(
+                                  isTimeout
+                                      ? 'Your session was locked due to 5 minutes of inactivity to protect customer data. Touch fingerprint sensor or tap below to resume.'
+                                      : 'Touch fingerprint sensor or tap below to unlock CMS banking portal.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.75),
+                                    fontSize: 13,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  // ── TITLE & SUBTITLE ──
-                  Text(
-                    isTimeout ? 'Session Timed Out' : 'Session Locked',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      isTimeout
-                          ? 'Your session was locked due to 5 minutes of inactivity to protect customer data. Touch fingerprint sensor or tap below to resume.'
-                          : 'Touch fingerprint sensor or tap below to unlock CMS banking portal.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.75),
-                        fontSize: 13,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
 
                   // ── ERROR OR STATUS BANNER ──
                   if (_error != null) ...[
@@ -367,6 +426,7 @@ class _BiometricLockScreenState extends State<BiometricLockScreen> with WidgetsB
             ),
           ),
         ),
+        ],
       ),
     );
   }

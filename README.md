@@ -8,6 +8,11 @@ Branch customer lookup, identity verification, and record management tool — in
 
 ## Features
 
+- **Modern Glassmorphism (Frosted Glass) UI/UX**:
+  - Across all screens, cards, dialogs, drawers, and headers, the interface features a luxurious frosted acrylic texture.
+  - Multi-layer `BackdropFilter` Gaussian blur with translucent gradient fills and crisp specular light borders.
+  - Vibrant ambient mesh gradient illumination providing refraction and depth under dynamic lighting.
+  - Interactive frosted tactile cards with 3D tilt effects, glowing role badges, and frosted action icons.
 - **Cybersecurity & Threat Hardening**:
   - **Device Integrity Guard**: Blocks execution on rooted, jailbroken, hooked (Frida/Xposed), or tampered devices.
   - **Firebase App Check**: Play Integrity attestation in production and debug token verification in development to block automated API abuse and scraping.

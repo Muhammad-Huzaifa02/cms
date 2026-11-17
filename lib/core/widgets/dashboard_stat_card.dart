@@ -1,12 +1,11 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import '../theme/app_theme.dart';
 
 /// One headline number on the Dashboard: icon, label, a count-up value and
-/// an optional caption line. The count-up runs once when the card first
-/// appears (and glides from the old value to a new one if it changes) — a
-/// single short tween, not a continuous animation.
+/// an optional caption line. Wrapped in a frosted glass card container.
 class DashboardStatCard extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -34,43 +33,53 @@ class DashboardStatCard extends StatelessWidget {
     return Semantics(
       label: '$label: $value${caption != null ? ', $caption' : ''}',
       excludeSemantics: true,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: _cardDecoration(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: Icon(icon, size: 17, color: accent),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            padding: const EdgeInsets.all(13),
+            decoration: _glassCardDecoration(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: accent.withValues(alpha: 0.28),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Icon(icon, size: 17, color: accent),
+                ),
+                const SizedBox(height: 8),
+                Text(label, style: const TextStyle(fontSize: 13.5, color: AppColors.muted, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                TweenAnimationBuilder<int>(
+                  tween: IntTween(begin: 0, end: value),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, v, _) => Text(
+                    NumberFormat.decimalPattern().format(v),
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.ink, height: 1.1),
+                  ),
+                ),
+                if (caption != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    caption!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12.5, color: captionColor ?? AppColors.muted, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(label, style: const TextStyle(fontSize: 14, color: AppColors.muted, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 2),
-            TweenAnimationBuilder<int>(
-              tween: IntTween(begin: 0, end: value),
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutCubic,
-              builder: (context, v, _) => Text(
-                NumberFormat.decimalPattern().format(v),
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.ink, height: 1.1),
-              ),
-            ),
-            if (caption != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                caption!,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 13, color: captionColor ?? AppColors.muted, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -89,17 +98,24 @@ class DashboardStatSkeleton extends StatelessWidget {
       highlightColor: Colors.grey[100]!,
       child: Container(
         height: 104,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(18)),
       ),
     );
   }
 }
 
-BoxDecoration _cardDecoration() => BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppColors.ink.withValues(alpha: 0.06)),
+BoxDecoration _glassCardDecoration() => BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.white.withValues(alpha: 0.88),
+          Colors.white.withValues(alpha: 0.65),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.95), width: 1.3),
       boxShadow: [
-        BoxShadow(color: AppColors.ink.withValues(alpha: 0.055), blurRadius: 10, offset: const Offset(0, 4)),
+        BoxShadow(color: AppColors.brandDeep.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4)),
       ],
     );

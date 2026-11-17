@@ -44,36 +44,65 @@ class ActivityLogScreen extends StatelessWidget {
             itemBuilder: (context, i) {
               final e = entries[i];
               final time = e.timestamp != null ? DateFormat('MMM d, h:mm a').format(e.timestamp!) : '';
-              return Card(
+              return Container(
                 margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.90),
+                      Colors.white.withValues(alpha: 0.72),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.95), width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.brandDeep.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         margin: const EdgeInsets.only(top: 5),
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(color: _dotColor(e.action), shape: BoxShape.circle),
+                        width: 9,
+                        height: 9,
+                        decoration: BoxDecoration(
+                          color: _dotColor(e.action),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: _dotColor(e.action).withValues(alpha: 0.4),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             RichText(
                               text: TextSpan(
-                                style: const TextStyle(fontSize: 15, color: AppColors.ink, height: 1.4),
+                                style: const TextStyle(fontSize: 14.5, color: AppColors.ink, height: 1.4),
                                 children: [
-                                  TextSpan(text: e.performedByName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  TextSpan(text: e.performedByName, style: const TextStyle(fontWeight: FontWeight.w800)),
                                   TextSpan(text: ' ${e.action.label} '),
-                                  TextSpan(text: e.targetId, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  TextSpan(text: e.targetId, style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.brandDeep)),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 3),
-                            Text(time, style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+                            const SizedBox(height: 4),
+                            Text(time, style: const TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w500)),
                           ],
                         ),
                       ),

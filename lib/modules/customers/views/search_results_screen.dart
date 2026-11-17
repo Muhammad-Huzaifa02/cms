@@ -93,19 +93,55 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                   },
                   child: TiltTapCard(
                     onTap: () => push3D(context, CustomerDetailScreen(customer: c, currentUser: widget.currentUser)),
-                    child: Card(
+                    child: Container(
                       margin: const EdgeInsets.only(bottom: 10),
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.90),
+                            Colors.white.withValues(alpha: 0.72),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.95), width: 1.3),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.brandDeep.withValues(alpha: 0.05),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Row(
                           children: [
                             Hero(
                               tag: 'avatar-${c.accountNumber}',
-                              child: CircleAvatar(
-                                backgroundColor: AppColors.brand,
-                                child: Text(c.name.isNotEmpty ? c.name[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [AppColors.brandDeep, AppColors.brand],
+                                  ),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.1),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(c.name.isNotEmpty ? c.name[0].toUpperCase() : '?',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                               ),
                             ),
                             const SizedBox(width: 14),

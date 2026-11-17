@@ -3,6 +3,7 @@ import '../../../data/services/auth_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/fade_in_slide.dart';
+import '../../../core/widgets/glass_container.dart';
 import '../../home/views/dashboard_screen.dart';
 
 /// Reachable from the login screen's "First time? Create Admin account"
@@ -86,98 +87,137 @@ class _CreateAdminScreenState extends State<CreateAdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.brandDeep, AppColors.brand, AppColors.brandLight],
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF022B24), AppColors.brandDeep, AppColors.brand],
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -80,
+                    right: -50,
+                    child: Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.gold.withValues(alpha: 0.16),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 80,
+                    left: -70,
+                    child: Container(
+                      width: 320,
+                      height: 320,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.brandLight.withValues(alpha: 0.22),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: FadeInSlide(
-                duration: const Duration(milliseconds: 800),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Only shown when this screen was pushed from the login
-                    // link — when it's the app's very first screen (no Admin
-                    // exists yet), there's nothing to go back to.
-                    if (Navigator.of(context).canPop())
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ),
-                    FadeInSlide(
-                      delay: const Duration(milliseconds: 50),
-                      offset: const Offset(0, -15),
-                      child: Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 8))],
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Image.asset('assets/icon/app_logo.png', fit: BoxFit.contain),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const FadeInSlide(
-                      delay: Duration(milliseconds: 100),
-                      child: Text('Set up your Admin account', textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold)),
-                    ),
-                    const SizedBox(height: 4),
-                    FadeInSlide(
-                      delay: const Duration(milliseconds: 200),
-                      child: Text('One-time setup — this becomes the branch owner login', textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 12)),
-                    ),
-                    const SizedBox(height: 26),
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(milliseconds: 1000),
-                      curve: Curves.easeOutBack,
-                      builder: (context, t, child) {
-                        return Opacity(
-                          opacity: t.clamp(0.0, 1.0),
-                          child: Transform(
-                            alignment: Alignment.center,
-                            transform: Matrix4.identity()
-                              ..setEntry(3, 2, 0.0018)
-                              ..rotateX((1 - t) * 0.45)
-                              ..rotateY((1 - t) * 0.1)
-                              // ignore: deprecated_member_use
-                              ..scale(0.8 + (0.2 * t), 0.8 + (0.2 * t), 1.0),
-                            child: child,
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                child: FadeInSlide(
+                  duration: const Duration(milliseconds: 400),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (Navigator.of(context).canPop())
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.white),
+                            onPressed: () => Navigator.of(context).pop(),
                           ),
-                        );
-                      },
-                      child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: _nameCtrl,
-                              decoration: const InputDecoration(
-                                hintText: 'Full name *',
-                                prefixIcon: Icon(Icons.person_outline, size: 19),
-                              ),
+                        ),
+                      FadeInSlide(
+                        delay: const Duration(milliseconds: 50),
+                        offset: const Offset(0, -15),
+                        child: Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
+                            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 18, offset: Offset(0, 8))],
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Image.asset('assets/icon/app_logo.png', fit: BoxFit.contain),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const FadeInSlide(
+                        delay: Duration(milliseconds: 100),
+                        child: Text('Set up your Admin account', textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(height: 4),
+                      FadeInSlide(
+                        delay: const Duration(milliseconds: 200),
+                        child: Text('One-time setup — this becomes the branch owner login', textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 12)),
+                      ),
+                      const SizedBox(height: 24),
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, t, child) {
+                          return Opacity(
+                            opacity: t.clamp(0.0, 1.0),
+                            child: Transform(
+                              alignment: Alignment.center,
+                              transform: Matrix4.identity()
+                                ..setEntry(3, 2, 0.0018)
+                                ..rotateX((1 - t) * 0.45)
+                                ..rotateY((1 - t) * 0.1)
+                                // ignore: deprecated_member_use
+                                ..scale(0.8 + (0.2 * t), 0.8 + (0.2 * t), 1.0),
+                              child: child,
                             ),
-                            const SizedBox(height: 10),
-                            TextField(
-                              controller: _emailCtrl,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
-                                hintText: 'Email address *',
+                          );
+                        },
+                        child: GlassContainer.card(
+                          blur: 20,
+                          padding: const EdgeInsets.all(22),
+                          surfaceGradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.94),
+                              Colors.white.withValues(alpha: 0.82),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              TextField(
+                                controller: _nameCtrl,
+                                decoration: const InputDecoration(
+                                  hintText: 'Full name *',
+                                  prefixIcon: Icon(Icons.person_outline, size: 19),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextField(
+                                controller: _emailCtrl,
+                                keyboardType: TextInputType.emailAddress,
+                                decoration: const InputDecoration(
+                                  hintText: 'Email address *',
                                 prefixIcon: Icon(Icons.email_outlined, size: 19),
                               ),
                             ),
@@ -223,13 +263,13 @@ class _CreateAdminScreenState extends State<CreateAdminScreen> {
                         ),
                       ),
                     ),
-                    ),
                   ],
                 ),
               ),
             ),
           ),
         ),
+        ],
       ),
     );
   }

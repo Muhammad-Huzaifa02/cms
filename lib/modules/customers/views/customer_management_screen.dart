@@ -206,14 +206,34 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
         final statusText = customer.status.trim().isNotEmpty ? customer.status.trim() : 'Active';
 
         return RepaintBoundary(
-          child: Card(
+          child: Container(
             margin: const EdgeInsets.only(bottom: 10),
-            elevation: 1,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: Color(0xFFE4ECE8), width: 1.1),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.brandDeep.withValues(alpha: 0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: ListTile(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.90),
+                      Colors.white.withValues(alpha: 0.72),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.95), width: 1.3),
+                ),
+                child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: Container(
               width: 44,
@@ -331,8 +351,10 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
               ),
             ),
           ),
-        ),
-      );
+              ),
+            ),
+          ),
+        );
       },
     );
   }

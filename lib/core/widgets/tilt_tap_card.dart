@@ -62,13 +62,16 @@ class _TiltTapCardState extends State<TiltTapCard>
                 borderRadius: widget.borderRadius,
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x1A000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 3),
+                    color: Color(0x14000000),
+                    blurRadius: 12,
+                    offset: Offset(0, 5),
                   ),
                 ],
               ),
-              child: widget.child,
+              child: ClipRRect(
+                borderRadius: widget.borderRadius,
+                child: widget.child,
+              ),
             ),
           );
         },

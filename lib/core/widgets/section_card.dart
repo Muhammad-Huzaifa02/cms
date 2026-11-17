@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'glass_container.dart';
 
-/// A titled card with consistent padding/spacing — used to group related
+/// A titled frosted glass card with consistent padding/spacing — used to group related
 /// fields or controls (Details, Change Password, App Lock, etc.) so every
-/// section on a screen looks like it belongs to the same design system
-/// instead of being hand-spaced per screen.
+/// section on a screen looks like it belongs to the same modern Glassmorphism system.
 class SectionCard extends StatelessWidget {
   final String title;
   final List<Widget> children;
@@ -19,18 +19,15 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: padding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SectionHeader(title),
-            const SizedBox(height: 16),
-            ...children,
-          ],
-        ),
+    return GlassContainer.card(
+      padding: padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(title),
+          const SizedBox(height: 16),
+          ...children,
+        ],
       ),
     );
   }

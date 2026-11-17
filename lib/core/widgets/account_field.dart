@@ -49,7 +49,7 @@ class AccountField extends StatelessWidget {
       prefixIcon: prefixIcon,
       suffixIcon: suffixIcon ??
           (readOnly ? const Icon(Icons.lock_outline, size: 16, color: AppColors.muted) : null),
-      fillColor: readOnly ? const Color(0xFFF7FAF9) : Colors.white,
+      fillColor: readOnly ? const Color(0xEBF4F7F6) : Colors.white.withValues(alpha: 0.85),
     );
     // Deep high-contrast font so read-only customer data is always easily readable.
     final style = TextStyle(
