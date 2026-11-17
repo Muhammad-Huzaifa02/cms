@@ -241,10 +241,14 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: _getAvatarGradient(customer.accountType),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  width: 1.5,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 4,
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
                 ],

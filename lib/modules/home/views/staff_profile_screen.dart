@@ -48,13 +48,21 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     );
   }
 
-  LinearGradient _getStaffGradient(String name) {
-    final hash = name.codeUnits.fold(0, (acc, c) => acc + c);
+  LinearGradient _getStaffGradient(AppUser user) {
+    if (user.isAdmin) {
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFD4AF37), AppColors.gold],
+      );
+    }
+    final hash = user.name.codeUnits.fold(0, (acc, c) => acc + c);
     final palettes = [
       [AppColors.brandDeep, AppColors.brand],
       [const Color(0xFF1E3A8A), const Color(0xFF2563EB)],
       [const Color(0xFF0F766E), const Color(0xFF14B8A6)],
-      [const Color(0xFF78350F), const Color(0xFFD97706)],
+      [const Color(0xFF854D0E), const Color(0xFFD97706)],
+      [const Color(0xFF3730A3), const Color(0xFF6366F1)],
     ];
     final selected = palettes[hash % palettes.length];
     return LinearGradient(
@@ -195,16 +203,16 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                       Row(
                         children: [
                           Container(
-                            width: 56,
-                            height: 56,
+                            width: 58,
+                            height: 58,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: _getStaffGradient(_staff.name),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
+                              gradient: _getStaffGradient(_staff),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 2),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.12),
-                                  blurRadius: 6,
+                                  color: Colors.black.withValues(alpha: 0.16),
+                                  blurRadius: 8,
                                   offset: const Offset(0, 3),
                                 ),
                               ],
@@ -214,7 +222,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                               initials,
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 19,
+                                fontSize: 20,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.5,
                               ),
@@ -563,12 +571,16 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: value ? AppColors.ink : AppColors.muted,
+                    Flexible(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: value ? AppColors.ink : AppColors.muted,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -583,8 +595,9 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                       child: Text(
                         value ? 'GRANTED' : 'RESTRICTED',
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 8.5,
                           fontWeight: FontWeight.w800,
+                          letterSpacing: 0.2,
                           color: value ? (isDanger ? AppColors.danger : AppColors.success) : AppColors.muted,
                         ),
                       ),
@@ -599,10 +612,13 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
               ],
             ),
           ),
-          Switch(
-            value: value,
-            activeThumbColor: isDanger ? AppColors.danger : AppColors.brand,
-            onChanged: _updating ? null : onChanged,
+          Transform.scale(
+            scale: 0.88,
+            child: Switch(
+              value: value,
+              activeThumbColor: isDanger ? AppColors.danger : AppColors.brand,
+              onChanged: _updating ? null : onChanged,
+            ),
           ),
         ],
       ),

@@ -71,13 +71,21 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     }
   }
 
-  LinearGradient _getStaffGradient(String name) {
-    final hash = name.codeUnits.fold(0, (acc, c) => acc + c);
+  LinearGradient _getStaffGradient(AppUser user) {
+    if (user.isAdmin) {
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFD4AF37), AppColors.gold],
+      );
+    }
+    final hash = user.name.codeUnits.fold(0, (acc, c) => acc + c);
     final palettes = [
       [AppColors.brandDeep, AppColors.brand],
       [const Color(0xFF1E3A8A), const Color(0xFF2563EB)],
       [const Color(0xFF0F766E), const Color(0xFF14B8A6)],
-      [const Color(0xFF78350F), const Color(0xFFD97706)],
+      [const Color(0xFF854D0E), const Color(0xFFD97706)],
+      [const Color(0xFF3730A3), const Color(0xFF6366F1)],
     ];
     final selected = palettes[hash % palettes.length];
     return LinearGradient(
@@ -256,11 +264,15 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                           height: 44,
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            gradient: _getStaffGradient(s.name),
+                                            gradient: _getStaffGradient(s),
+                                            border: Border.all(
+                                              color: Colors.white.withValues(alpha: 0.85),
+                                              width: 1.5,
+                                            ),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.black.withValues(alpha: 0.1),
-                                                blurRadius: 4,
+                                                color: Colors.black.withValues(alpha: 0.12),
+                                                blurRadius: 6,
                                                 offset: const Offset(0, 2),
                                               ),
                                             ],

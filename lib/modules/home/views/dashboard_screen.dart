@@ -605,6 +605,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               pinned: true,
               stretch: true,
               backgroundColor: AppColors.brandDeep,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              shadowColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              shape: const Border(),
               leading: Container(
                 margin: const EdgeInsets.only(left: 12),
                 child: Center(
@@ -813,18 +818,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
               clipBehavior: Clip.none,
               children: [
                 // Seamless header background continuation matching the top bar gradient
-                Container(
-                  height: 36,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF022B24),
-                        AppColors.brandDeep,
-                        AppColors.brand,
-                      ],
-                      stops: [0.0, 0.45, 1.0],
+                // Reaches 4px upward to prevent any subpixel raster gap with SliverAppBar
+                Positioned(
+                  top: -4,
+                  left: 0,
+                  right: 0,
+                  height: 40,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFF022B24),
+                          AppColors.brandDeep,
+                          AppColors.brand,
+                        ],
+                        stops: [0.0, 0.45, 1.0],
+                      ),
                     ),
                   ),
                 ),
