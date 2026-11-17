@@ -812,13 +812,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
+                // Seamless header background continuation matching the top bar gradient
                 Container(
-                  height: 30,
+                  height: 36,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [AppColors.brand, AppColors.brand],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF022B24),
+                        AppColors.brandDeep,
+                        AppColors.brand,
+                      ],
+                      stops: [0.0, 0.45, 1.0],
                     ),
                   ),
                 ),
@@ -844,16 +850,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.brandDeep.withValues(alpha: 0.12),
+                            color: AppColors.brandDeep.withValues(alpha: 0.16),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                          BoxShadow(
+                            color: AppColors.gold.withValues(alpha: 0.10),
                             blurRadius: 16,
-                            offset: const Offset(0, 6),
+                            spreadRadius: 1,
                           ),
                         ],
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(18),
                         child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                           child: TextField(
                             readOnly: true,
                             showCursor: false,
@@ -873,7 +884,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.95), width: 1.5),
                               ),
                               filled: true,
-                              fillColor: Colors.white.withValues(alpha: 0.88),
+                              fillColor: Colors.white.withValues(alpha: 0.92),
                               contentPadding: const EdgeInsets.symmetric(vertical: 18),
                             ),
                           ),

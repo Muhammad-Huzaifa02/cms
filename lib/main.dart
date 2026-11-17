@@ -63,10 +63,15 @@ class CmsApp extends StatelessWidget {
       theme: AppTheme.light(),
       onGenerateRoute: AppRoutes.onGenerateRoute,
       builder: (context, child) {
-        // Normalizes font scaling to standard normal size (1.0) across all devices.
+        // Universal Standard Text Size & Display Normalization across all screens:
+        // Enforces fixed 1.0 font scaling (preventing system accessibility overflows),
+        // standardizes bold text weight, and clamps platform density.
         final mediaQuery = MediaQuery.of(context);
         return MediaQuery(
-          data: mediaQuery.copyWith(textScaler: TextScaler.noScaling),
+          data: mediaQuery.copyWith(
+            textScaler: TextScaler.noScaling,
+            boldText: false,
+          ),
           child: child ?? const SizedBox.shrink(),
         );
       },

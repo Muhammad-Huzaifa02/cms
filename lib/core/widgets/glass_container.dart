@@ -48,7 +48,7 @@ class GlassContainer extends StatelessWidget {
     EdgeInsetsGeometry padding = const EdgeInsets.all(16),
     EdgeInsetsGeometry? margin,
     BorderRadius? borderRadius,
-    double blur = 16.0,
+    double blur = 18.0,
     Color? surfaceColor,
     Gradient? surfaceGradient,
     Border? border,
@@ -69,26 +69,26 @@ class GlassContainer extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white.withValues(alpha: 0.88),
-              Colors.white.withValues(alpha: 0.65),
+              Colors.white.withValues(alpha: 0.92),
+              Colors.white.withValues(alpha: 0.78),
             ],
           ),
       border: border ??
           Border.all(
-            color: Colors.white.withValues(alpha: 0.90),
+            color: Colors.white.withValues(alpha: 0.95),
             width: 1.4,
           ),
       boxShadow: boxShadow ??
           [
             BoxShadow(
-              color: AppColors.brandDeep.withValues(alpha: 0.06),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
+              color: AppColors.brandDeep.withValues(alpha: 0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              color: AppColors.brand.withValues(alpha: 0.03),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
             ),
           ],
       onTap: onTap,
@@ -105,7 +105,7 @@ class GlassContainer extends StatelessWidget {
     EdgeInsetsGeometry padding = const EdgeInsets.all(12),
     EdgeInsetsGeometry? margin,
     BorderRadius? borderRadius,
-    double blur = 16.0,
+    double blur = 18.0,
     VoidCallback? onTap,
   }) {
     return GlassContainer(
@@ -125,14 +125,19 @@ class GlassContainer extends StatelessWidget {
         ],
       ),
       border: Border.all(
-        color: Colors.white.withValues(alpha: 0.40),
+        color: Colors.white.withValues(alpha: 0.45),
         width: 1.2,
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.20),
-          blurRadius: 16,
+          color: AppColors.brandDeep.withValues(alpha: 0.30),
+          blurRadius: 18,
           offset: const Offset(0, 6),
+        ),
+        BoxShadow(
+          color: AppColors.gold.withValues(alpha: 0.12),
+          blurRadius: 22,
+          spreadRadius: 1,
         ),
       ],
       onTap: onTap,
