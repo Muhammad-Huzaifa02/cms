@@ -48,7 +48,7 @@ class GlassContainer extends StatelessWidget {
     EdgeInsetsGeometry padding = const EdgeInsets.all(16),
     EdgeInsetsGeometry? margin,
     BorderRadius? borderRadius,
-    double blur = 18.0,
+    double blur = 20.0,
     Color? surfaceColor,
     Gradient? surfaceGradient,
     Border? border,
@@ -69,25 +69,26 @@ class GlassContainer extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white.withValues(alpha: 0.92),
-              Colors.white.withValues(alpha: 0.78),
+              Colors.white.withValues(alpha: 0.88),
+              Colors.white.withValues(alpha: 0.70),
             ],
           ),
       border: border ??
           Border.all(
             color: Colors.white.withValues(alpha: 0.95),
-            width: 1.4,
+            width: 1.5,
           ),
       boxShadow: boxShadow ??
           [
             BoxShadow(
-              color: AppColors.brandDeep.withValues(alpha: 0.05),
-              blurRadius: 16,
+              color: AppColors.brandDeep.withValues(alpha: 0.06),
+              blurRadius: 18,
               offset: const Offset(0, 6),
             ),
             BoxShadow(
-              color: AppColors.brand.withValues(alpha: 0.03),
-              blurRadius: 24,
+              color: AppColors.brand.withValues(alpha: 0.05),
+              blurRadius: 28,
+              spreadRadius: 2,
               offset: const Offset(0, 10),
             ),
           ],
@@ -105,7 +106,7 @@ class GlassContainer extends StatelessWidget {
     EdgeInsetsGeometry padding = const EdgeInsets.all(12),
     EdgeInsetsGeometry? margin,
     BorderRadius? borderRadius,
-    double blur = 18.0,
+    double blur = 20.0,
     VoidCallback? onTap,
   }) {
     return GlassContainer(
@@ -126,18 +127,18 @@ class GlassContainer extends StatelessWidget {
       ),
       border: Border.all(
         color: Colors.white.withValues(alpha: 0.45),
-        width: 1.2,
+        width: 1.3,
       ),
       boxShadow: [
         BoxShadow(
-          color: AppColors.brandDeep.withValues(alpha: 0.30),
-          blurRadius: 18,
+          color: AppColors.brandDeep.withValues(alpha: 0.35),
+          blurRadius: 20,
           offset: const Offset(0, 6),
         ),
         BoxShadow(
-          color: AppColors.gold.withValues(alpha: 0.12),
-          blurRadius: 22,
-          spreadRadius: 1,
+          color: AppColors.gold.withValues(alpha: 0.20),
+          blurRadius: 28,
+          spreadRadius: 2,
         ),
       ],
       onTap: onTap,
@@ -227,13 +228,13 @@ class GlassScaffoldBackground extends StatelessWidget {
                   top: -60,
                   right: -60,
                   child: Container(
-                    width: 280,
-                    height: 280,
+                    width: 300,
+                    height: 300,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          AppColors.brandLight.withValues(alpha: 0.18),
+                          AppColors.brandLight.withValues(alpha: 0.24),
                           AppColors.brandLight.withValues(alpha: 0.0),
                         ],
                       ),
@@ -245,13 +246,13 @@ class GlassScaffoldBackground extends StatelessWidget {
                   top: 260,
                   left: -80,
                   child: Container(
-                    width: 320,
-                    height: 320,
+                    width: 340,
+                    height: 340,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          AppColors.gold.withValues(alpha: 0.14),
+                          AppColors.gold.withValues(alpha: 0.20),
                           AppColors.gold.withValues(alpha: 0.0),
                         ],
                       ),
@@ -263,13 +264,13 @@ class GlassScaffoldBackground extends StatelessWidget {
                   bottom: 60,
                   right: -70,
                   child: Container(
-                    width: 300,
-                    height: 300,
+                    width: 320,
+                    height: 320,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          const Color(0xFF0F766E).withValues(alpha: 0.12),
+                          const Color(0xFF0F766E).withValues(alpha: 0.18),
                           const Color(0xFF0F766E).withValues(alpha: 0.0),
                         ],
                       ),

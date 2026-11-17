@@ -109,13 +109,14 @@ BoxDecoration _glassCardDecoration() => BoxDecoration(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.white.withValues(alpha: 0.88),
-          Colors.white.withValues(alpha: 0.65),
+          Colors.white.withValues(alpha: 0.90),
+          Colors.white.withValues(alpha: 0.72),
         ],
       ),
       borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.95), width: 1.3),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.95), width: 1.4),
       boxShadow: [
-        BoxShadow(color: AppColors.brandDeep.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4)),
+        BoxShadow(color: AppColors.brandDeep.withValues(alpha: 0.05), blurRadius: 14, offset: const Offset(0, 5)),
+        BoxShadow(color: AppColors.brand.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 8)),
       ],
     );
