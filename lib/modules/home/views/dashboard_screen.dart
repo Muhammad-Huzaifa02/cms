@@ -37,8 +37,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _authService = AuthService();
   final _updateService = AppUpdateService();
   bool _exporting = false;
-  bool _drawerNightMode = true;
-  bool _projectsExpanded = true;
   late Stream<List<Customer>> _recentCustomersStream = _customerService.recentCustomers();
 
   @override
@@ -514,14 +512,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ],
                                 ),
                                 alignment: Alignment.center,
-                                child: const Text(
-                                  'C',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 19,
-                                    fontWeight: FontWeight.w900,
-                                    fontFamily: 'serif',
-                                  ),
+                                child: const Icon(
+                                  Icons.account_balance_rounded,
+                                  color: Colors.white,
+                                  size: 19,
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -531,20 +525,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      'CMS',
+                                      'CUSTOMER MANAGEMENT SYSTEM',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 15.5,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.2,
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.5,
                                       ),
                                     ),
-                                    SizedBox(height: 1),
+                                    SizedBox(height: 1.5),
                                     Text(
-                                      'Branch workspace',
+                                      'CMS • Branch Workspace',
                                       style: TextStyle(
                                         color: Color(0x99FFFFFF),
-                                        fontSize: 11.5,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w400,
                                       ),
                                     ),
@@ -610,7 +606,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Search pages...',
+                                      'Search customer...',
                                       style: TextStyle(
                                         color: Colors.white.withValues(alpha: 0.50),
                                         fontSize: 12.5,
@@ -647,175 +643,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             physics: const BouncingScrollPhysics(),
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             children: [
-                              // ── MAIN SECTION ──
-                              const _VertixSectionHeader('MAIN'),
+                              // ── OVERVIEW ──
+                              const _VertixSectionHeader('OVERVIEW'),
                               _VertixActiveStadiumTile(
-                                icon: Icons.grid_view_rounded,
+                                icon: Icons.dashboard_rounded,
                                 title: 'Dashboard',
                                 onTap: () => Navigator.pop(context),
                               ),
-                              _VertixNavItem(
-                                icon: Icons.bolt_rounded,
-                                title: 'Activity',
-                                trailing: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.14),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Text(
-                                    '12',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  if (user.isAdmin) {
-                                    push3D(context, ActivityLogScreen(currentUser: user));
-                                  } else {
-                                    push3D(context, CustomerManagementScreen(currentUser: user));
-                                  }
-                                },
-                              ),
                               if (user.can('view'))
                                 _VertixNavItem(
-                                  icon: Icons.account_balance_wallet_outlined,
-                                  title: 'Wallet',
+                                  icon: Icons.people_alt_outlined,
+                                  title: 'Customer Management',
+                                  subtitle: 'Search & view records',
                                   onTap: () {
                                     Navigator.pop(context);
                                     push3D(context, CustomerManagementScreen(currentUser: user));
                                   },
                                 ),
-                              _VertixNavItem(
-                                icon: Icons.calendar_today_outlined,
-                                title: 'Schedule',
-                                trailing: Container(
-                                  width: 7,
-                                  height: 7,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Color(0xFFFF6B4A),
-                                  ),
-                                ),
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  push3D(context, CustomerManagementScreen(currentUser: user));
-                                },
-                              ),
 
-                              const SizedBox(height: 6),
-
-                              // ── WORKSPACE SECTION ──
-                              const _VertixSectionHeader('WORKSPACE'),
-                              if (user.isAdmin)
+                              if (user.isAdmin) ...[
+                                const SizedBox(height: 6),
+                                const _VertixSectionHeader('ADMINISTRATION'),
                                 _VertixNavItem(
-                                  icon: Icons.chat_bubble_outline_rounded,
-                                  title: 'Messages',
-                                  trailing: Container(
-                                    width: 19,
-                                    height: 19,
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Color(0xFFFF5733),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: const Text(
-                                      '3',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
+                                  icon: Icons.badge_outlined,
+                                  title: 'Staff Management',
+                                  subtitle: 'Roles, accounts & permissions',
                                   onTap: () {
                                     Navigator.pop(context);
                                     push3D(context, StaffManagementScreen(currentUser: user));
                                   },
                                 ),
-
-                              // Projects Collapsible Tree View
-                              _VertixNavItem(
-                                icon: Icons.layers_outlined,
-                                title: 'Projects',
-                                trailing: Icon(
-                                  _projectsExpanded
-                                      ? Icons.keyboard_arrow_up_rounded
-                                      : Icons.keyboard_arrow_down_rounded,
-                                  size: 19,
-                                  color: Colors.white.withValues(alpha: 0.6),
-                                ),
-                                onTap: () => setState(() => _projectsExpanded = !_projectsExpanded),
-                              ),
-
-                              if (_projectsExpanded)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 20, right: 14),
-                                  child: CustomPaint(
-                                    painter: _TreeBranchPainter(
-                                      color: Colors.white.withValues(alpha: 0.22),
-                                      count: 3,
-                                      itemHeight: 34.0,
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        _VertixTreeSubItem(
-                                          dotColor: const Color(0xFF34D399),
-                                          title: 'Website redesign',
-                                          onTap: () {
-                                            Navigator.pop(context);
-                                            _export('excel');
-                                          },
-                                        ),
-                                        _VertixTreeSubItem(
-                                          dotColor: const Color(0xFFFF8A4C),
-                                          title: 'Mobile app',
-                                          onTap: () {
-                                            Navigator.pop(context);
-                                            _export('pdf');
-                                          },
-                                        ),
-                                        _VertixTreeSubItem(
-                                          dotColor: const Color(0xFFA855F7),
-                                          title: 'Brand kit',
-                                          onTap: () {
-                                            Navigator.pop(context);
-                                            _export('json');
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                _VertixNavItem(
+                                  icon: Icons.receipt_long_outlined,
+                                  title: 'Activity Audit Log',
+                                  subtitle: 'Security & compliance trail',
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    push3D(context, ActivityLogScreen(currentUser: user));
+                                  },
                                 ),
 
-                              _VertixNavItem(
-                                icon: Icons.bar_chart_rounded,
-                                title: 'Reports',
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  _export('pdf');
-                                },
-                              ),
-                              _VertixNavItem(
-                                icon: Icons.settings_outlined,
-                                title: 'Settings',
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  push3D(context, EditProfileScreen(currentUser: user));
-                                },
-                              ),
+                                const SizedBox(height: 6),
+                                const _VertixSectionHeader('DATA & EXPORT'),
+                                _VertixNavItem(
+                                  icon: Icons.table_chart_outlined,
+                                  iconColor: const Color(0xFF34D399),
+                                  title: 'Export to Excel (.xlsx)',
+                                  subtitle: 'Branch customer spreadsheet',
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    _export('excel');
+                                  },
+                                ),
+                                _VertixNavItem(
+                                  icon: Icons.picture_as_pdf_outlined,
+                                  iconColor: const Color(0xFFF87171),
+                                  title: 'Export to PDF Document',
+                                  subtitle: 'Executive audit digest',
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    _export('pdf');
+                                  },
+                                ),
+                                _VertixNavItem(
+                                  icon: Icons.backup_outlined,
+                                  iconColor: const Color(0xFF60A5FA),
+                                  title: 'Backup Database (.json)',
+                                  subtitle: 'Full-fidelity recovery snapshot',
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    _export('json');
+                                  },
+                                ),
 
-                              const SizedBox(height: 6),
-
-                              // Night mode toggle
-                              _VertixNightModeToggle(
-                                isNight: _drawerNightMode,
-                                onChanged: (val) => setState(() => _drawerNightMode = val),
-                              ),
+                                const SizedBox(height: 6),
+                                const _VertixSectionHeader('SYSTEM MAINTENANCE'),
+                                _VertixNavItem(
+                                  icon: Icons.sync_rounded,
+                                  iconColor: AppColors.gold,
+                                  title: 'Sync Search Index',
+                                  subtitle: 'Re-index legacy records for search',
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    _runBackfill();
+                                  },
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -824,13 +737,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Container(
                           height: 1,
                           margin: const EdgeInsets.symmetric(horizontal: 14),
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: Colors.white.withValues(alpha: 0.10),
                         ),
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+                          padding: const EdgeInsets.fromLTRB(4, 6, 4, 4),
                           child: _VertixUserProfileTile(
                             user: user,
                             onTap: () => _showProfileSheet(context, user),
+                          ),
+                        ),
+                        // Glowing Sign Out Button & Version
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
+                          child: Column(
+                            children: [
+                              _ModernGlassSignOutButton(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _confirmSignOut();
+                                },
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.shield_outlined,
+                                    size: 11.5,
+                                    color: AppColors.gold.withValues(alpha: 0.85),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    'CMS v1.0.0 • Secured Banking Portal',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.white.withValues(alpha: 0.60),
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -1460,14 +1408,16 @@ class _VertixActiveStadiumTile extends StatelessWidget {
 
 class _VertixNavItem extends StatefulWidget {
   final IconData icon;
+  final Color? iconColor;
   final String title;
-  final Widget? trailing;
+  final String? subtitle;
   final VoidCallback onTap;
 
   const _VertixNavItem({
     required this.icon,
+    this.iconColor,
     required this.title,
-    this.trailing,
+    this.subtitle,
     required this.onTap,
   });
 
@@ -1480,8 +1430,10 @@ class _VertixNavItemState extends State<_VertixNavItem> {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveIconColor = widget.iconColor ?? Colors.white.withValues(alpha: 0.85);
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 1.5),
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       child: MouseRegion(
         onEnter: (_) => setState(() => _isHovered = true),
         onExit: (_) => setState(() => _isHovered = false),
@@ -1505,225 +1457,58 @@ class _VertixNavItemState extends State<_VertixNavItem> {
                   children: [
                     Icon(
                       widget.icon,
-                      size: 19,
-                      color: _isHovered
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.78),
+                      size: 20,
+                      color: _isHovered ? Colors.white : effectiveIconColor,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        widget.title,
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w500,
-                          color: _isHovered
-                              ? Colors.white
-                              : Colors.white.withValues(alpha: 0.88),
-                          letterSpacing: 0.1,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            widget.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: _isHovered
+                                  ? Colors.white
+                                  : Colors.white.withValues(alpha: 0.90),
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                          if (widget.subtitle != null) ...[
+                            const SizedBox(height: 1.5),
+                            Text(
+                              widget.subtitle!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: _isHovered
+                                    ? Colors.white.withValues(alpha: 0.75)
+                                    : Colors.white.withValues(alpha: 0.50),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    if (widget.trailing != null) widget.trailing!,
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TreeBranchPainter extends CustomPainter {
-  final Color color;
-  final int count;
-  final double itemHeight;
-
-  _TreeBranchPainter({
-    required this.color,
-    required this.count,
-    required this.itemHeight,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (count <= 0) return;
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    const double startX = 8.0;
-    const double curveEndX = 22.0;
-    const double radius = 8.0;
-
-    for (int i = 0; i < count; i++) {
-      final double targetY = i * itemHeight + itemHeight / 2;
-      final path = Path();
-      if (i == 0) {
-        path.moveTo(startX, 0);
-        path.lineTo(startX, targetY - radius);
-        path.quadraticBezierTo(startX, targetY, curveEndX, targetY);
-      } else {
-        path.moveTo(startX, (i - 1) * itemHeight + itemHeight / 2);
-        path.lineTo(startX, targetY - radius);
-        path.quadraticBezierTo(startX, targetY, curveEndX, targetY);
-      }
-      canvas.drawPath(path, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _TreeBranchPainter oldDelegate) =>
-      oldDelegate.color != color ||
-      oldDelegate.count != count ||
-      oldDelegate.itemHeight != itemHeight;
-}
-
-class _VertixTreeSubItem extends StatefulWidget {
-  final Color dotColor;
-  final String title;
-  final VoidCallback onTap;
-
-  const _VertixTreeSubItem({
-    required this.dotColor,
-    required this.title,
-    required this.onTap,
-  });
-
-  @override
-  State<_VertixTreeSubItem> createState() => _VertixTreeSubItemState();
-}
-
-class _VertixTreeSubItemState extends State<_VertixTreeSubItem> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 34,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: widget.onTap,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 28, right: 10),
-            child: Row(
-              children: [
-                Container(
-                  width: 7.5,
-                  height: 7.5,
-                  decoration: BoxDecoration(
-                    color: widget.dotColor,
-                    borderRadius: BorderRadius.circular(2.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.dotColor.withValues(alpha: 0.6),
-                        blurRadius: 6,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    widget.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
                       color: _isHovered
                           ? Colors.white
-                          : Colors.white.withValues(alpha: 0.78),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _VertixNightModeToggle extends StatelessWidget {
-  final bool isNight;
-  final ValueChanged<bool> onChanged;
-
-  const _VertixNightModeToggle({
-    required this.isNight,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8.5),
-      child: Row(
-        children: [
-          Icon(
-            Icons.wb_sunny_outlined,
-            size: 19,
-            color: Colors.white.withValues(alpha: 0.78),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Night mode',
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w500,
-                color: Colors.white.withValues(alpha: 0.88),
-                letterSpacing: 0.1,
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: () => onChanged(!isNight),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              width: 44,
-              height: 24,
-              padding: const EdgeInsets.all(2.5),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: isNight
-                    ? Colors.white.withValues(alpha: 0.38)
-                    : Colors.white.withValues(alpha: 0.14),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.22),
-                  width: 1.0,
-                ),
-              ),
-              alignment: isNight ? Alignment.centerRight : Alignment.centerLeft,
-              child: Container(
-                width: 19,
-                height: 19,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
+                          : Colors.white.withValues(alpha: 0.35),
                     ),
                   ],
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1843,6 +1628,87 @@ class _VertixUserProfileTile extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.65),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ModernGlassSignOutButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _ModernGlassSignOutButton({required this.onTap});
+
+  @override
+  State<_ModernGlassSignOutButton> createState() => _ModernGlassSignOutButtonState();
+}
+
+class _ModernGlassSignOutButtonState extends State<_ModernGlassSignOutButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: _isHovered
+                ? [
+                    AppColors.danger.withValues(alpha: 0.28),
+                    AppColors.brandDeep.withValues(alpha: 0.20),
+                  ]
+                : [
+                    AppColors.danger.withValues(alpha: 0.14),
+                    Colors.white.withValues(alpha: 0.03),
+                  ],
+          ),
+          border: Border.all(
+            color: _isHovered
+                ? AppColors.danger.withValues(alpha: 0.65)
+                : AppColors.danger.withValues(alpha: 0.35),
+            width: 1.0,
+          ),
+          boxShadow: _isHovered
+              ? [
+                  BoxShadow(
+                    color: AppColors.danger.withValues(alpha: 0.30),
+                    blurRadius: 12,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: widget.onTap,
+            splashColor: AppColors.danger.withValues(alpha: 0.25),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.power_settings_new_rounded, color: Color(0xFFFDA4AF), size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Sign out',
+                    style: TextStyle(
+                      color: Color(0xFFFDA4AF),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

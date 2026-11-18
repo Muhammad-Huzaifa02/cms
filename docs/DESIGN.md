@@ -53,14 +53,16 @@ header and Login screen.
 - **`Vertix-Inspired Modern Glassmorphism Floating Sidebar`** — high-luxury
   floating frosted glass navigation panel (`borderRadius: 30`, `BackdropFilter` 28px blur,
   obsidian-emerald acrylic tint matching the app's executive palette, radiant atmospheric
-  brand glow orbs, and specular light border). Faithfully recreates the modern workspace layout:
-  - **Top Workspace Header**: Circular brand emblem ("C" in emerald gradient) + Workspace title ("CMS" / "Branch workspace") + white circular floating close button (`<`).
-  - **Quick Search Pill**: Frosted glass capsule text field (`Search pages...`) with search icon and keyboard shortcut badge (`⌘K`) linking directly to `SearchCustomerScreen`.
-  - **Categorized Sections**: `MAIN` and `WORKSPACE` with small uppercase tracking.
-  - **Active Stadium Capsule**: Glowing stadium highlight pill (`borderRadius: 20`, frosted specular acrylic gradient) for `Dashboard`.
-  - **Branching Tree View**: Collapsible `Projects` item with custom bezier curve connector lines (`_TreeBranchPainter`) linking sub-records with color status dots (Mint green for Excel, Coral orange for PDF, Purple for JSON database vault).
-  - **Utility Row**: "Night mode" toggle with Apple-style animated capsule switch.
-  - **Bottom Profile Pill**: Circular avatar with bottom-right green online indicator badge (`●`), user name and email, and `⇅` selector icon opening an executive profile & maintenance sheet.
+  brand glow orbs, and specular light border). Recreates the modern floating workspace aesthetic
+  while retaining 100% of the actual CMS operational options, names, and version numbering:
+  - **Top Workspace Header**: Circular brand emblem with banking shield icon + full title `CUSTOMER MANAGEMENT SYSTEM` and `CMS • Branch Workspace` + circular white floating close button (`<`).
+  - **Quick Search Pill**: Frosted glass capsule text field (`Search customer...`) with search icon and keyboard shortcut badge (`⌘K`) linking directly to `SearchCustomerScreen`.
+  - **Categorized Sections & Real Options**:
+    - `OVERVIEW`: Glowing stadium highlight pill (`borderRadius: 20`) for active `Dashboard`, and `Customer Management` (`Search & view records`).
+    - `ADMINISTRATION`: `Staff Management` (`Roles, accounts & permissions`) and `Activity Audit Log` (`Security & compliance trail`).
+    - `DATA & EXPORT`: `Export to Excel (.xlsx)` (emerald green), `Export to PDF Document` (coral red), and `Backup Database (.json)` (azure blue).
+    - `SYSTEM MAINTENANCE`: `Sync Search Index` (gold shield).
+  - **Bottom Profile & Sign-Out**: Circular avatar with green online badge dot (`●`), user full name, email/phone, role badge, dedicated frosted glowing `Sign out` button, and version branding `CMS v1.0.0 • Secured Banking Portal`.
 
 - **`DashboardStatCard`** / `DashboardStatSkeleton` — animated count-up
   stat with icon, accent colour and optional caption.
