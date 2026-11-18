@@ -151,6 +151,7 @@
       - **Staff Permissions Overflow Fix**: Eliminated 5.1px RenderFlex overflow on "Delete Customers" toggle when in `RESTRICTED` state with flexible layout and compact switch scaling in `StaffProfileScreen`.
       - **Unified Avatar Styling**: Standardized circular avatar component design across Staff, Admin, and Customer components with specular white borders, elevation shadows, 2-letter bold initials, and role-matched gradients.
       - **PDF Vector Export Cleanliness**: Replaced unsupported unicode punctuation in `ExportService` header to eliminate font box placeholder glyphs (`☒`) on exported PDF reports.
+      - **Modern Glassy Purple Glow Sidebar Navigation**: Built an ultra-premium frosted acrylic drawer (`BackdropFilter` 25px blur, obsidian-violet acrylic tint, radiant atmospheric purple mesh glow orbs, and specular right border with neon halo shadow). Features `_ModernGlassDrawerTile` with smooth interactive hover animations, glowing left indicator pills, custom glass squircle icons, clean minimal typography, and glowing sign-out button.
 - [x] Cleaned up unused files (`floating_navigation_bar.dart`,
       `premium_3d_card.dart`, `dashboard_stats_model.dart`, `growth_chart.dart`, `animated_counter.dart`).
 

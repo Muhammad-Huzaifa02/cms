@@ -50,6 +50,12 @@ header and Login screen.
   border (`1.5–2px`, 85% opacity), drop shadow (`blurRadius: 6–8px`, `offset: 0, 2–3`),
   2-letter bold uppercase initials, and role-matched dynamic gradients
   (Luxury Gold for Admin, Emerald/Sapphire/Teal/Amber/Indigo for Staff & Customer).
+- **`Modern Glassy Purple Glow Sidebar`** — high-luxury frosted glass navigation
+  drawer built with multi-layer `BackdropFilter` (25px Gaussian diffusion),
+  deep obsidian-violet acrylic tint, vibrant ambient purple mesh orbs
+  (top header, middle navigation, and bottom sign-out), and a specular right
+  border with outer neon glow shadow. Features `_ModernGlassDrawerTile` with
+  interactive hover animations, micro glowing indicators, and smooth touch transitions.
 
 - **`DashboardStatCard`** / `DashboardStatSkeleton` — animated count-up
   stat with icon, accent colour and optional caption.
