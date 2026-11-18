@@ -14,6 +14,7 @@ Branch customer lookup, identity verification, and record management tool — in
   - Vibrant ambient mesh gradient illumination providing refraction, depth, and specular sheen under dynamic lighting.
   - Interactive frosted tactile cards with 3D tilt effects, glowing role badges, and frosted action icons.
   - Seamless executive dashboard header: unified dark emerald gradient flowing continuously into the search bar with zero border seams or raster artifacts.
+  - **Vertix-Inspired Modern Glass Floating Sidebar**: High-end floating frosted glass navigation drawer (`BackdropFilter` 28px blur, obsidian-emerald acrylic tint matching app brand, and specular light border). Features a circular brand emblem, workspace subtitle, circular white glass close button (`<`), frosted search pill (`Search pages...` with `⌘K`), active stadium capsule highlight (`Dashboard`), collapsible `Projects` tree view with curving branch connector lines (`_TreeBranchPainter`) and colored status dots, Apple-style animated night mode toggle, and pinned bottom user profile pill with green online badge dot (`●`).
 - **Unified Avatar Architecture**:
   - High-contrast circular initials avatars for Staff, Administrators, and Customers sharing identical luxury styling.
   - Crisp specular white borders (`1.5–2.0px`), soft elevation depth shadows, and 2-letter bold uppercase typography.

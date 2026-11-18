@@ -50,13 +50,17 @@ header and Login screen.
   border (`1.5–2px`, 85% opacity), drop shadow (`blurRadius: 6–8px`, `offset: 0, 2–3`),
   2-letter bold uppercase initials, and role-matched dynamic gradients
   (Luxury Gold for Admin, Emerald/Sapphire/Teal/Amber/Indigo for Staff & Customer).
-- **`Modern Glassy Brand Sidebar`** — high-luxury frosted glass navigation
-  drawer built with multi-layer `BackdropFilter` (25px Gaussian diffusion),
-  deep obsidian-emerald acrylic tint matching the app's executive palette,
-  radiant ambient brand mesh orbs (top emerald header orb, middle mint navigation orb,
-  and bottom warm gold footer orb), and a specular gold-trimmed right border
-  with outer emerald glow shadow. Features `_ModernGlassDrawerTile` with
-  interactive hover animations, micro glowing indicators, and smooth touch transitions.
+- **`Vertix-Inspired Modern Glassmorphism Floating Sidebar`** — high-luxury
+  floating frosted glass navigation panel (`borderRadius: 30`, `BackdropFilter` 28px blur,
+  obsidian-emerald acrylic tint matching the app's executive palette, radiant atmospheric
+  brand glow orbs, and specular light border). Faithfully recreates the modern workspace layout:
+  - **Top Workspace Header**: Circular brand emblem ("C" in emerald gradient) + Workspace title ("CMS" / "Branch workspace") + white circular floating close button (`<`).
+  - **Quick Search Pill**: Frosted glass capsule text field (`Search pages...`) with search icon and keyboard shortcut badge (`⌘K`) linking directly to `SearchCustomerScreen`.
+  - **Categorized Sections**: `MAIN` and `WORKSPACE` with small uppercase tracking.
+  - **Active Stadium Capsule**: Glowing stadium highlight pill (`borderRadius: 20`, frosted specular acrylic gradient) for `Dashboard`.
+  - **Branching Tree View**: Collapsible `Projects` item with custom bezier curve connector lines (`_TreeBranchPainter`) linking sub-records with color status dots (Mint green for Excel, Coral orange for PDF, Purple for JSON database vault).
+  - **Utility Row**: "Night mode" toggle with Apple-style animated capsule switch.
+  - **Bottom Profile Pill**: Circular avatar with bottom-right green online indicator badge (`●`), user name and email, and `⇅` selector icon opening an executive profile & maintenance sheet.
 
 - **`DashboardStatCard`** / `DashboardStatSkeleton` — animated count-up
   stat with icon, accent colour and optional caption.

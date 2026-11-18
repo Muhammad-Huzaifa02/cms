@@ -151,7 +151,14 @@
       - **Staff Permissions Overflow Fix**: Eliminated 5.1px RenderFlex overflow on "Delete Customers" toggle when in `RESTRICTED` state with flexible layout and compact switch scaling in `StaffProfileScreen`.
       - **Unified Avatar Styling**: Standardized circular avatar component design across Staff, Admin, and Customer components with specular white borders, elevation shadows, 2-letter bold initials, and role-matched gradients.
       - **PDF Vector Export Cleanliness**: Replaced unsupported unicode punctuation in `ExportService` header to eliminate font box placeholder glyphs (`☒`) on exported PDF reports.
-      - **Modern Glassy Brand Sidebar Navigation**: Built an ultra-premium frosted acrylic drawer (`BackdropFilter` 25px blur, obsidian-emerald acrylic tint matching the app's brand palette, radiant atmospheric brand mesh glow orbs, and specular gold right border with emerald halo shadow). Features `_ModernGlassDrawerTile` with smooth interactive hover animations, glowing left indicator pills, custom glass squircle icons, clean minimal typography, and glowing sign-out button.
+      - **Modern Glassy Brand Sidebar Navigation (Vertix-Inspired)**: Built an ultra-premium floating frosted acrylic drawer (`BackdropFilter` 28px blur, obsidian-emerald acrylic tint matching the app's brand palette, radiant atmospheric brand mesh glow orbs, and specular light border with outer drop shadow). Features the complete Vertix workspace design hierarchy:
+        - Floating rounded card with 30px corner radius and generous outer margins.
+        - Top Workspace Header with brand emblem badge, "CMS - Branch workspace", and circular white glass close button (`<`).
+        - Frosted Search Pill with `Search pages...` and keyboard shortcut badge (`⌘K`).
+        - `MAIN` category with active stadium pill (`borderRadius: 20`) for Dashboard, Activity with badge count `12`, Wallet, and Schedule with status dot `●`.
+        - `WORKSPACE` category with Staff Messages (badge count `3`), and collapsible Projects tree view with curved branch lines (`_TreeBranchPainter`) linking Excel, PDF, and JSON exports with mint, orange, and purple status dots.
+        - Night mode toggle with Apple-style animated switch.
+        - Pinned bottom user profile card with green online indicator dot (`●`), user details, and `⇅` selector opening an executive options modal sheet.
 - [x] Cleaned up unused files (`floating_navigation_bar.dart`,
       `premium_3d_card.dart`, `dashboard_stats_model.dart`, `growth_chart.dart`, `animated_counter.dart`).
 
