@@ -271,16 +271,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
             borderRadius: const BorderRadius.horizontal(right: Radius.circular(28)),
             border: Border(
               right: BorderSide(
-                color: const Color(0xFFC084FC).withValues(alpha: 0.35),
+                color: AppColors.gold.withValues(alpha: 0.40),
                 width: 1.5,
               ),
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF7C3AED).withValues(alpha: 0.30),
+                color: AppColors.brandDeep.withValues(alpha: 0.50),
                 blurRadius: 40,
                 spreadRadius: 2,
                 offset: const Offset(6, 0),
+              ),
+              BoxShadow(
+                color: AppColors.gold.withValues(alpha: 0.15),
+                blurRadius: 24,
+                offset: const Offset(2, 0),
               ),
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.50),
@@ -295,7 +300,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
               child: Stack(
                 children: [
-                  // Layer 1: Deep obsidian / midnight-violet glass gradient background
+                  // Layer 1: Deep obsidian-emerald glass gradient background
                   Positioned.fill(
                     child: Container(
                       decoration: const BoxDecoration(
@@ -303,10 +308,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Color(0xF5100B22),
-                            Color(0xF00D091B),
-                            Color(0xF8150E2D),
-                            Color(0xF2090614),
+                            Color(0xF502221C),
+                            Color(0xF0032B24),
+                            Color(0xF804362E),
+                            Color(0xF2011915),
                           ],
                           stops: [0.0, 0.35, 0.75, 1.0],
                         ),
@@ -314,7 +319,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
 
-                  // Layer 2: Radiant purple atmospheric glow orbs
+                  // Layer 2: Radiant atmospheric brand glow orbs
                   // Top orb (shining behind profile)
                   Positioned(
                     top: -40,
@@ -326,8 +331,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            const Color(0xFF9333EA).withValues(alpha: 0.40),
-                            const Color(0xFF7C3AED).withValues(alpha: 0.18),
+                            AppColors.brandLight.withValues(alpha: 0.45),
+                            AppColors.brand.withValues(alpha: 0.20),
                             Colors.transparent,
                           ],
                           radius: 0.85,
@@ -346,8 +351,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            const Color(0xFFC084FC).withValues(alpha: 0.30),
-                            const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                            AppColors.brand.withValues(alpha: 0.35),
+                            AppColors.brandDeep.withValues(alpha: 0.18),
                             Colors.transparent,
                           ],
                           radius: 0.85,
@@ -366,8 +371,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            const Color(0xFFA855F7).withValues(alpha: 0.35),
-                            const Color(0xFF6D28D9).withValues(alpha: 0.15),
+                            AppColors.gold.withValues(alpha: 0.32),
+                            const Color(0xFFD4AF37).withValues(alpha: 0.12),
                             Colors.transparent,
                           ],
                           radius: 0.85,
@@ -391,7 +396,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         decoration: BoxDecoration(
                           border: Border(
                             bottom: BorderSide(
-                              color: const Color(0xFFC084FC).withValues(alpha: 0.20),
+                              color: AppColors.gold.withValues(alpha: 0.25),
                               width: 1.0,
                             ),
                           ),
@@ -399,8 +404,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              const Color(0xFF9333EA).withValues(alpha: 0.22),
-                              const Color(0xFF7C3AED).withValues(alpha: 0.10),
+                              AppColors.brandLight.withValues(alpha: 0.22),
+                              AppColors.brandDeep.withValues(alpha: 0.12),
                               Colors.white.withValues(alpha: 0.02),
                             ],
                           ),
@@ -408,19 +413,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // App branding chip with glowing purple outline
+                            // App branding chip with glowing gold outline
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFC084FC).withValues(alpha: 0.15),
+                                color: AppColors.brandDeep.withValues(alpha: 0.40),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: const Color(0xFFC084FC).withValues(alpha: 0.45),
+                                  color: AppColors.gold.withValues(alpha: 0.55),
                                   width: 1.0,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFFA855F7).withValues(alpha: 0.25),
+                                    color: AppColors.gold.withValues(alpha: 0.25),
                                     blurRadius: 10,
                                     spreadRadius: 1,
                                   ),
@@ -429,7 +434,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.account_balance_rounded, size: 12.5, color: Color(0xFFE9D5FF)),
+                                  Icon(Icons.account_balance_rounded, size: 12.5, color: AppColors.gold),
                                   SizedBox(width: 6),
                                   Text(
                                     'CUSTOMER MANAGEMENT SYSTEM',
@@ -464,12 +469,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ],
                                   ),
                                   border: Border.all(
-                                    color: const Color(0xFFC084FC).withValues(alpha: 0.30),
+                                    color: AppColors.gold.withValues(alpha: 0.35),
                                     width: 1.2,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.18),
+                                      color: AppColors.brandDeep.withValues(alpha: 0.35),
                                       blurRadius: 14,
                                       offset: const Offset(0, 3),
                                     ),
@@ -487,12 +492,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             ? const LinearGradient(
                                                 begin: Alignment.topLeft,
                                                 end: Alignment.bottomRight,
-                                                colors: [Color(0xFFFBBF24), Color(0xFFD97706), Color(0xFFB45309)],
+                                                colors: [Color(0xFFD4AF37), AppColors.gold],
                                               )
                                             : const LinearGradient(
                                                 begin: Alignment.topLeft,
                                                 end: Alignment.bottomRight,
-                                                colors: [Color(0xFFC084FC), Color(0xFF8B5CF6), Color(0xFF6D28D9)],
+                                                colors: [AppColors.brandLight, AppColors.brand],
                                               ),
                                         border: Border.all(
                                           color: Colors.white.withValues(alpha: 0.95),
@@ -500,8 +505,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         ),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: (user.isAdmin ? const Color(0xFFFBBF24) : const Color(0xFFA855F7))
-                                                .withValues(alpha: 0.50),
+                                            color: (user.isAdmin ? AppColors.gold : AppColors.brandLight)
+                                                .withValues(alpha: 0.55),
                                             blurRadius: 14,
                                             spreadRadius: 1,
                                             offset: const Offset(0, 2),
@@ -552,13 +557,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                             decoration: BoxDecoration(
                                               color: user.isAdmin
-                                                  ? const Color(0xFFFBBF24).withValues(alpha: 0.22)
-                                                  : const Color(0xFF8B5CF6).withValues(alpha: 0.25),
+                                                  ? AppColors.gold.withValues(alpha: 0.25)
+                                                  : AppColors.brandLight.withValues(alpha: 0.25),
                                               borderRadius: BorderRadius.circular(6),
                                               border: Border.all(
                                                 color: user.isAdmin
-                                                    ? const Color(0xFFFBBF24).withValues(alpha: 0.6)
-                                                    : const Color(0xFFC084FC).withValues(alpha: 0.6),
+                                                    ? AppColors.gold.withValues(alpha: 0.65)
+                                                    : AppColors.brandLight.withValues(alpha: 0.65),
                                                 width: 0.8,
                                               ),
                                             ),
@@ -568,13 +573,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 Icon(
                                                   user.isAdmin ? Icons.shield_rounded : Icons.badge_outlined,
                                                   size: 10.5,
-                                                  color: user.isAdmin ? const Color(0xFFFBBF24) : const Color(0xFFE9D5FF),
+                                                  color: user.isAdmin ? AppColors.gold : Colors.white,
                                                 ),
                                                 const SizedBox(width: 4),
                                                 Text(
                                                   user.isAdmin ? 'ADMINISTRATOR' : 'BANKING STAFF',
                                                   style: TextStyle(
-                                                    color: user.isAdmin ? const Color(0xFFFBBF24) : const Color(0xFFE9D5FF),
+                                                    color: user.isAdmin ? AppColors.gold : Colors.white,
                                                     fontSize: 9,
                                                     fontWeight: FontWeight.w800,
                                                     letterSpacing: 0.5,
@@ -589,7 +594,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     Icon(
                                       Icons.arrow_forward_ios_rounded,
                                       size: 13,
-                                      color: const Color(0xFFC084FC).withValues(alpha: 0.7),
+                                      color: AppColors.gold.withValues(alpha: 0.85),
                                     ),
                                   ],
                                 ),
@@ -680,7 +685,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               const _ModernDrawerSectionHeader('SYSTEM MAINTENANCE'),
                               _ModernGlassDrawerTile(
                                 icon: Icons.sync_rounded,
-                                iconColor: const Color(0xFFA78BFA),
+                                iconColor: AppColors.gold,
                                 title: 'Sync Search Index',
                                 subtitle: 'Re-index legacy records for search',
                                 onTap: () {
@@ -700,7 +705,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           gradient: LinearGradient(
                             colors: [
                               Colors.transparent,
-                              const Color(0xFFC084FC).withValues(alpha: 0.35),
+                              AppColors.gold.withValues(alpha: 0.35),
                               Colors.transparent,
                             ],
                           ),
@@ -730,14 +735,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Icon(
                                   Icons.shield_outlined,
                                   size: 12,
-                                  color: const Color(0xFFC084FC).withValues(alpha: 0.75),
+                                  color: AppColors.gold.withValues(alpha: 0.85),
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
                                   'CMS v1.0.0 • Secured Banking Portal',
                                   style: TextStyle(
                                     fontSize: 10.5,
-                                    color: Colors.white.withValues(alpha: 0.55),
+                                    color: Colors.white.withValues(alpha: 0.65),
                                     fontWeight: FontWeight.w500,
                                     letterSpacing: 0.2,
                                   ),
@@ -1288,10 +1293,10 @@ class _ModernDrawerSectionHeader extends StatelessWidget {
             height: 5,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFC084FC),
+              color: AppColors.gold,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFA855F7).withValues(alpha: 0.8),
+                  color: AppColors.gold.withValues(alpha: 0.8),
                   blurRadius: 6,
                   spreadRadius: 1,
                 ),
@@ -1304,7 +1309,7 @@ class _ModernDrawerSectionHeader extends StatelessWidget {
             style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w800,
-              color: Color(0xFFC084FC),
+              color: AppColors.gold,
               letterSpacing: 1.2,
             ),
           ),
@@ -1342,7 +1347,7 @@ class _ModernGlassDrawerTileState extends State<_ModernGlassDrawerTile> {
   Widget build(BuildContext context) {
     final active = widget.isSelected;
     final hovered = _isHovered;
-    final primaryColor = widget.iconColor ?? const Color(0xFFC084FC);
+    final primaryColor = widget.iconColor ?? AppColors.brandLight;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -1360,18 +1365,18 @@ class _ModernGlassDrawerTileState extends State<_ModernGlassDrawerTile> {
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                     colors: [
-                      Color(0x599333EA),
-                      Color(0x336D28D9),
-                      Color(0x1A4C1D95),
+                      Color(0x5E10866E),
+                      Color(0x400A6B57),
+                      Color(0x22033D33),
                     ],
                   )
                 : (hovered
-                    ? const LinearGradient(
+                    ? LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                         colors: [
-                          Color(0x38A855F7),
-                          Color(0x1F7C3AED),
+                          AppColors.brandLight.withValues(alpha: 0.24),
+                          AppColors.brand.withValues(alpha: 0.12),
                         ],
                       )
                     : LinearGradient(
@@ -1382,29 +1387,29 @@ class _ModernGlassDrawerTileState extends State<_ModernGlassDrawerTile> {
                       )),
             border: Border.all(
               color: active
-                  ? const Color(0xFFC084FC).withValues(alpha: 0.70)
+                  ? AppColors.gold.withValues(alpha: 0.75)
                   : (hovered
-                      ? const Color(0xFFA855F7).withValues(alpha: 0.45)
+                      ? AppColors.brandLight.withValues(alpha: 0.45)
                       : Colors.white.withValues(alpha: 0.07)),
               width: active ? 1.4 : 1.0,
             ),
             boxShadow: active
                 ? [
                     BoxShadow(
-                      color: const Color(0xFFA855F7).withValues(alpha: 0.35),
+                      color: AppColors.brand.withValues(alpha: 0.40),
                       blurRadius: 16,
                       spreadRadius: 1,
                       offset: const Offset(0, 3),
                     ),
                     BoxShadow(
-                      color: const Color(0xFF7C3AED).withValues(alpha: 0.20),
+                      color: AppColors.gold.withValues(alpha: 0.18),
                       blurRadius: 24,
                     ),
                   ]
                 : (hovered
                     ? [
                         BoxShadow(
-                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.25),
+                          color: AppColors.brandLight.withValues(alpha: 0.25),
                           blurRadius: 12,
                           offset: const Offset(0, 2),
                         ),
@@ -1416,8 +1421,8 @@ class _ModernGlassDrawerTileState extends State<_ModernGlassDrawerTile> {
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
               onTap: widget.onTap,
-              splashColor: const Color(0xFFA855F7).withValues(alpha: 0.2),
-              highlightColor: const Color(0xFFC084FC).withValues(alpha: 0.1),
+              splashColor: AppColors.brandLight.withValues(alpha: 0.2),
+              highlightColor: AppColors.gold.withValues(alpha: 0.1),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                 child: Row(
@@ -1429,13 +1434,11 @@ class _ModernGlassDrawerTileState extends State<_ModernGlassDrawerTile> {
                       height: 22,
                       margin: EdgeInsets.only(right: (active || hovered) ? 10 : 0),
                       decoration: BoxDecoration(
-                        color: active
-                            ? const Color(0xFFC084FC)
-                            : const Color(0xFFA855F7).withValues(alpha: 0.8),
+                        color: active ? AppColors.gold : AppColors.brandLight,
                         borderRadius: BorderRadius.circular(2),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFA855F7).withValues(alpha: 0.8),
+                            color: (active ? AppColors.gold : AppColors.brandLight).withValues(alpha: 0.8),
                             blurRadius: 8,
                             spreadRadius: 1,
                           ),
@@ -1454,8 +1457,8 @@ class _ModernGlassDrawerTileState extends State<_ModernGlassDrawerTile> {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  Color(0xFFC084FC),
-                                  Color(0xFF7C3AED),
+                                  AppColors.brandLight,
+                                  AppColors.brandDeep,
                                 ],
                               )
                             : (hovered
@@ -1464,7 +1467,7 @@ class _ModernGlassDrawerTileState extends State<_ModernGlassDrawerTile> {
                                     end: Alignment.bottomRight,
                                     colors: [
                                       primaryColor.withValues(alpha: 0.35),
-                                      const Color(0xFF7C3AED).withValues(alpha: 0.25),
+                                      AppColors.brandDeep.withValues(alpha: 0.25),
                                     ],
                                   )
                                 : LinearGradient(
@@ -1477,16 +1480,16 @@ class _ModernGlassDrawerTileState extends State<_ModernGlassDrawerTile> {
                                   )),
                         border: Border.all(
                           color: active
-                              ? Colors.white.withValues(alpha: 0.9)
+                              ? AppColors.gold.withValues(alpha: 0.8)
                               : (hovered
-                                  ? const Color(0xFFC084FC).withValues(alpha: 0.5)
+                                  ? AppColors.brandLight.withValues(alpha: 0.5)
                                   : Colors.white.withValues(alpha: 0.12)),
                           width: 1.0,
                         ),
                         boxShadow: active
                             ? [
                                 BoxShadow(
-                                  color: const Color(0xFFA855F7).withValues(alpha: 0.5),
+                                  color: AppColors.brandLight.withValues(alpha: 0.5),
                                   blurRadius: 10,
                                   offset: const Offset(0, 2),
                                 ),
@@ -1497,7 +1500,7 @@ class _ModernGlassDrawerTileState extends State<_ModernGlassDrawerTile> {
                       child: Icon(
                         widget.icon,
                         size: 20,
-                        color: active ? Colors.white : (hovered ? const Color(0xFFE9D5FF) : primaryColor),
+                        color: active ? Colors.white : (hovered ? AppColors.gold : primaryColor),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1516,7 +1519,7 @@ class _ModernGlassDrawerTileState extends State<_ModernGlassDrawerTile> {
                               fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                               color: active
                                   ? Colors.white
-                                  : (hovered ? Colors.white : const Color(0xFFE2DCF0)),
+                                  : (hovered ? Colors.white : const Color(0xFFE2EFEA)),
                               letterSpacing: 0.2,
                             ),
                           ),
@@ -1529,8 +1532,8 @@ class _ModernGlassDrawerTileState extends State<_ModernGlassDrawerTile> {
                               style: TextStyle(
                                 fontSize: 11,
                                 color: active
-                                    ? const Color(0xFFD8B4FE)
-                                    : (hovered ? const Color(0xFFC4B5FD) : const Color(0xFFAFA3C8)),
+                                    ? const Color(0xFFD4EAE2)
+                                    : (hovered ? const Color(0xFFC7E2D8) : const Color(0xFF9CB8AF)),
                               ),
                             ),
                           ],
@@ -1545,9 +1548,9 @@ class _ModernGlassDrawerTileState extends State<_ModernGlassDrawerTile> {
                         Icons.chevron_right_rounded,
                         size: 17,
                         color: active
-                            ? const Color(0xFFC084FC)
+                            ? AppColors.gold
                             : (hovered
-                                ? const Color(0xFFA855F7)
+                                ? AppColors.brandLight
                                 : Colors.white.withValues(alpha: 0.3)),
                       ),
                     ),
@@ -1587,29 +1590,29 @@ class _ModernGlassSignOutButtonState extends State<_ModernGlassSignOutButton> {
             end: Alignment.bottomRight,
             colors: _isHovered
                 ? [
-                    const Color(0xFFF43F5E).withValues(alpha: 0.25),
-                    const Color(0xFF9333EA).withValues(alpha: 0.18),
+                    AppColors.danger.withValues(alpha: 0.28),
+                    AppColors.brandDeep.withValues(alpha: 0.20),
                   ]
                 : [
-                    const Color(0xFFF43F5E).withValues(alpha: 0.12),
+                    AppColors.danger.withValues(alpha: 0.14),
                     Colors.white.withValues(alpha: 0.03),
                   ],
           ),
           border: Border.all(
             color: _isHovered
-                ? const Color(0xFFF43F5E).withValues(alpha: 0.60)
-                : const Color(0xFFF43F5E).withValues(alpha: 0.30),
+                ? AppColors.danger.withValues(alpha: 0.65)
+                : AppColors.danger.withValues(alpha: 0.35),
             width: 1.2,
           ),
           boxShadow: _isHovered
               ? [
                   BoxShadow(
-                    color: const Color(0xFFF43F5E).withValues(alpha: 0.30),
+                    color: AppColors.danger.withValues(alpha: 0.35),
                     blurRadius: 16,
                     offset: const Offset(0, 3),
                   ),
                   BoxShadow(
-                    color: const Color(0xFFA855F7).withValues(alpha: 0.20),
+                    color: AppColors.brandDeep.withValues(alpha: 0.25),
                     blurRadius: 12,
                   ),
                 ]
@@ -1620,7 +1623,7 @@ class _ModernGlassSignOutButtonState extends State<_ModernGlassSignOutButton> {
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
             onTap: widget.onTap,
-            splashColor: const Color(0xFFF43F5E).withValues(alpha: 0.25),
+            splashColor: AppColors.danger.withValues(alpha: 0.25),
             child: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 14, vertical: 11),
               child: Row(
