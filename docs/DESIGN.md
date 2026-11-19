@@ -64,6 +64,17 @@ header and Login screen.
     - `SYSTEM MAINTENANCE`: `Sync Search Index` (gold shield).
   - **Bottom Profile & Sign-Out**: Circular avatar with green online badge dot (`●`), user full name, email/phone, role badge, dedicated frosted glowing `Sign out` button, and version branding `CMS v1.0.0 • Secured Banking Portal`.
 
+- **`PrimaryButton` Micro-Haptic Spring & State Morph**: Features tactile
+  spring scaling (`0.96` on touch-down) and smooth `AnimatedSwitcher` morphing
+  between the button text and circular progress indicator.
+- **`_SlidingGlassFilterBar`**: Sliding frosted glass capsule with continuous horizontal
+  interpolation and haptic feedback between "All Customers" and "Favorites" in `CustomerManagementScreen`.
+- **`_CryptographicVaultSealingDialog`**: Rotating emerald and gold vault seal modal
+  with real-time cryptographic fingerprint calculation during report and database exports.
+- **`Dashboard Scroll FAB Motion`**: Animated slide & scale hiding the Floating Action
+  Button during fast downward scrolling, restoring immediately upon upward deceleration.
+- **`Hero Profile Transitions & 3D Tilt`**: Smooth shared element flight on customer avatar
+  from Dashboard to `CustomerDetailScreen` with responsive interactive 3D perspective tilt.
 - **`DashboardStatCard`** / `DashboardStatSkeleton` — animated count-up
   stat with icon, accent colour and optional caption.
 - **`QuickActionCard`** — compact tappable shortcut tile; only wire it to

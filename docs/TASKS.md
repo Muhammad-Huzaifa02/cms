@@ -161,6 +161,12 @@
         - `SYSTEM MAINTENANCE` section with `Sync Search Index` (`Re-index legacy records for search`).
         - Pinned bottom user profile card with green online indicator dot (`●`), user details, and `⇅` selector opening profile maintenance sheet.
         - Dedicated glowing `Sign out` button and version branding `CMS v1.0.0 • Secured Banking Portal`.
+      - **Advanced Banking Micro-Interactions & Animation Suite**:
+        - `PrimaryButton`: Micro-haptic tactile spring compression (`0.96`) and smooth `AnimatedSwitcher` morphing to loader.
+        - `_SlidingGlassFilterBar`: Floating glass indicator capsule gliding smoothly between "All Customers" and "Favorites" in `CustomerManagementScreen`.
+        - `_CryptographicVaultSealingDialog`: Rotating emerald/gold dual-ring vault seal dialog verifying SHA-256 integrity on report and backup exports.
+        - Dashboard FAB Scroll Response: Directional slide-down and scale collapse on downward scroll, snapping back on upward scroll.
+        - Hero Transitions & Interactive Tilt: Shared element avatar animation paired with 3D touch tilt on `CustomerDetailScreen`.
 - [x] Cleaned up unused files (`floating_navigation_bar.dart`,
       `premium_3d_card.dart`, `dashboard_stats_model.dart`, `growth_chart.dart`, `animated_counter.dart`).
 

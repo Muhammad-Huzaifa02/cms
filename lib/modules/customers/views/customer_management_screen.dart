@@ -428,22 +428,10 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Wrap(spacing: 8, children: [
-              ChoiceChip(
-                label: const Text('All customers'),
-                selected: !_favoritesOnly,
-                onSelected: (_) => setState(() => _favoritesOnly = false),
-              ),
-              ChoiceChip(
-                avatar: const Icon(Icons.star, size: 18),
-                label: const Text('Favorites'),
-                selected: _favoritesOnly,
-                onSelected: (_) => setState(() => _favoritesOnly = true),
-              ),
-            ]),
+          padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
+          child: _SlidingGlassFilterBar(
+            isFavoritesOnly: _favoritesOnly,
+            onChanged: (fav) => setState(() => _favoritesOnly = fav),
           ),
         ),
         Expanded(
@@ -485,3 +473,132 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
     );
   }
 }
+
+class _SlidingGlassFilterBar extends StatelessWidget {
+  final bool isFavoritesOnly;
+  final ValueChanged<bool> onChanged;
+
+  const _SlidingGlassFilterBar({
+    required this.isFavoritesOnly,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.all(3.5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.95),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.brandDeep.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tabWidth = (constraints.maxWidth - 4) / 2;
+          return Stack(
+            children: [
+              // Sliding active glass stadium capsule
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOutCubic,
+                left: isFavoritesOnly ? tabWidth + 4 : 0,
+                top: 0,
+                bottom: 0,
+                width: tabWidth,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(11),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.brandLight,
+                        AppColors.brand,
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.brand.withValues(alpha: 0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Tab labels
+              Row(
+                children: [
+                  Expanded(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(11),
+                        onTap: () => onChanged(false),
+                        child: Center(
+                          child: AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 200),
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: !isFavoritesOnly ? FontWeight.w800 : FontWeight.w600,
+                              color: !isFavoritesOnly ? Colors.white : AppColors.muted,
+                            ),
+                            child: const Text('All Customers'),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(11),
+                        onTap: () => onChanged(true),
+                        child: Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.star_rounded,
+                                size: 16,
+                                color: isFavoritesOnly ? Colors.white : AppColors.gold,
+                              ),
+                              const SizedBox(width: 5),
+                              AnimatedDefaultTextStyle(
+                                duration: const Duration(milliseconds: 200),
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: isFavoritesOnly ? FontWeight.w800 : FontWeight.w600,
+                                  color: isFavoritesOnly ? Colors.white : AppColors.muted,
+                                ),
+                                child: const Text('Favorites'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/customer_model.dart';
@@ -36,13 +37,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _exportService = ExportService();
   final _authService = AuthService();
   final _updateService = AppUpdateService();
+  final ScrollController _scrollController = ScrollController();
   bool _exporting = false;
+  bool _showFab = true;
   late Stream<List<Customer>> _recentCustomersStream = _customerService.recentCustomers();
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkInAppUpdate());
+  }
+
+  void _onScroll() {
+    final hide = _scrollController.hasClients &&
+        _scrollController.offset > 80 &&
+        _scrollController.position.userScrollDirection == ScrollDirection.reverse;
+    final show = _scrollController.hasClients &&
+        (_scrollController.offset <= 80 ||
+            _scrollController.position.userScrollDirection == ScrollDirection.forward);
+    if (hide && _showFab) {
+      setState(() => _showFab = false);
+    } else if (show && !_showFab) {
+      setState(() => _showFab = true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkInAppUpdate() async {
@@ -341,6 +365,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _export(String format) async {
     setState(() => _exporting = true);
+
+    // Show Cryptographic Vault Sealing modal dialog
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const _CryptographicVaultSealingDialog(),
+    );
+
     try {
       final customers = await _customerService.recentCustomers(limit: 5000).first;
       final file = format == 'excel'
@@ -352,26 +384,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final shaDigest = await _exportService.calculateFileSha256(file);
       final shortSha = shaDigest.length >= 12 ? shaDigest.substring(0, 12) : shaDigest;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppColors.brandDeep,
-            duration: const Duration(seconds: 4),
-            content: Row(
-              children: [
-                const Icon(Icons.verified_outlined, color: Color(0xFFD4AF37), size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Export verified • SHA-256: $shortSha...',
-                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.white),
-                  ),
+      if (!mounted) return;
+      // Close sealing dialog
+      Navigator.of(context, rootNavigator: true).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.brandDeep,
+          duration: const Duration(seconds: 4),
+          content: Row(
+            children: [
+              const Icon(Icons.verified_outlined, color: Color(0xFFD4AF37), size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Export verified • SHA-256: $shortSha...',
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.white),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-      }
+        ),
+      );
 
       await _exportService.shareFile(
         file,
@@ -380,10 +414,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             : 'CMS Customer Export (SHA256: $shortSha)',
       );
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-      );
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop(); // close dialog if open
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -785,6 +821,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: Colors.white,
         onRefresh: _handleRefresh,
         child: CustomScrollView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           slivers: [
             SliverAppBar(
@@ -1293,18 +1330,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     ),
     floatingActionButton: user.can('add')
-          ? TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 240),
+          ? AnimatedSlide(
+              duration: const Duration(milliseconds: 260),
               curve: Curves.easeOutCubic,
-              builder: (context, value, child) {
-                return Transform.scale(scale: value, child: child);
-              },
-              child: FloatingActionButton(
-                elevation: 8,
-                backgroundColor: AppColors.gold,
-                onPressed: () => push3D(context, AddCustomerScreen(currentUser: user)),
-                child: const Icon(Icons.add, color: Colors.white, size: 28),
+              offset: _showFab ? Offset.zero : const Offset(0, 2),
+              child: AnimatedScale(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                scale: _showFab ? 1.0 : 0.0,
+                child: FloatingActionButton(
+                  elevation: 8,
+                  backgroundColor: AppColors.gold,
+                  onPressed: () => push3D(context, AddCustomerScreen(currentUser: user)),
+                  child: const Icon(Icons.add, color: Colors.white, size: 28),
+                ),
               ),
             )
           : null,
@@ -1988,3 +2027,116 @@ class _BreathingStatusDotState extends State<_BreathingStatusDot>
     );
   }
 }
+
+class _CryptographicVaultSealingDialog extends StatefulWidget {
+  const _CryptographicVaultSealingDialog();
+
+  @override
+  State<_CryptographicVaultSealingDialog> createState() => _CryptographicVaultSealingDialogState();
+}
+
+class _CryptographicVaultSealingDialogState extends State<_CryptographicVaultSealingDialog>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spinCtrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1600),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _spinCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Center(
+        child: Container(
+          width: 280,
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+          decoration: BoxDecoration(
+            color: const Color(0xF20F1F1A),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppColors.gold.withValues(alpha: 0.45),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 28,
+                offset: const Offset(0, 8),
+              ),
+              BoxShadow(
+                color: AppColors.brandDeep.withValues(alpha: 0.35),
+                blurRadius: 20,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Spinning cryptographic vault dial
+              RotationTransition(
+                turns: _spinCtrl,
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: SweepGradient(
+                      colors: [
+                        AppColors.brandLight,
+                        AppColors.gold,
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFF0F1F1A),
+                      ),
+                      child: const Icon(
+                        Icons.lock_clock_rounded,
+                        color: AppColors.gold,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Cryptographic Sealing',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Computing SHA-256 fingerprint & packaging branch records...',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.65),
+                  fontSize: 11.5,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
