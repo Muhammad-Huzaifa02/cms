@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/services/customer_service.dart';
+import '../../../data/services/favorite_service.dart';
 import '../../../data/services/notification_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
@@ -13,6 +14,8 @@ import '../../../core/widgets/section_card.dart';
 import '../../../core/widgets/account_field.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/feedback_text.dart';
+import '../../../core/widgets/golden_favorite_button.dart';
+import '../../../core/widgets/slide_to_authorize_slider.dart';
 
 /// Customer Details and Edit Screen.
 ///
@@ -119,6 +122,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
   final _formKey = GlobalKey<FormState>();
   final _service = CustomerService();
+  final _favoriteService = FavoriteService();
   static const _statusOptions = ['Active', 'Inactive', 'Dormant', 'Blocked'];
 
   late TextEditingController _accountTitleCtrl;
@@ -133,6 +137,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   late String _accountType;
   bool _saving = false;
   String? _error;
+  bool _isFavorite = false;
+  StreamSubscription? _favoriteSub;
 
   @override
   void initState() {
@@ -157,12 +163,20 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       }
     }
     _accountCategory = matchedCategory;
+
+    // Listen to favorite state for this customer
+    _favoriteSub = _favoriteService.watchIds(widget.currentUser.uid).listen((ids) {
+      if (mounted) {
+        setState(() => _isFavorite = ids.contains(widget.customer.accountNumber));
+      }
+    });
   }
 
   Timer? _clipboardTimer;
 
   @override
   void dispose() {
+    _favoriteSub?.cancel();
     _clipboardTimer?.cancel();
     _accountTitleCtrl.dispose();
     _accountNumberCtrl.dispose();
@@ -422,17 +436,42 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     }
                   },
                 ),
+                const SizedBox(height: 18),
+                if (canConfirm) ...[
+                  SlideToAuthorizeSlider(
+                    label: 'Slide to authorize deletion',
+                    confirmedLabel: 'Deleting record...',
+                    onConfirmed: () async {
+                      Navigator.pop(dialogCtx, true);
+                    },
+                  ),
+                ] else ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Type matching account number above to unlock slider',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.muted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Cancel')),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.danger,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: canConfirm ? () => Navigator.pop(dialogCtx, true) : null,
-                child: const Text('Confirm & Delete', style: TextStyle(fontWeight: FontWeight.bold)),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx, false),
+                child: const Text('Cancel', style: TextStyle(color: AppColors.muted)),
               ),
             ],
           ),
@@ -452,6 +491,23 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       appBar: AppBar(
         title: Text(widget.isEditable ? 'Edit Customer' : 'Customer Details'),
         actions: [
+          if (!widget.isEditable)
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: GoldenFavoriteButton(
+                isFavorite: _isFavorite,
+                tooltip: _isFavorite ? 'Remove from favorites' : 'Add to favorites',
+                onToggle: () async {
+                  final next = !_isFavorite;
+                  setState(() => _isFavorite = next);
+                  await _favoriteService.setFavorite(
+                    uid: widget.currentUser.uid,
+                    customerId: widget.customer.accountNumber,
+                    favorite: next,
+                  );
+                },
+              ),
+            ),
           if (!widget.isEditable && widget.allowEditAction && _canEdit)
             Padding(
               padding: const EdgeInsets.only(right: 8),

@@ -36,7 +36,8 @@ void main() {
     );
 
     // Pump to process post-frame callback
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     // Verify lock screen elements
     expect(find.text('CUSTOMER MANAGEMENT SYSTEM'), findsOneWidget);
@@ -66,7 +67,8 @@ void main() {
       ),
     );
 
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Session Timed Out'), findsOneWidget);
     expect(find.textContaining('inactivity'), findsOneWidget);
@@ -91,7 +93,8 @@ void main() {
       ),
     );
 
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(unlockedCalled, isTrue);
     expect(find.text('Unlocked Dashboard Content'), findsOneWidget);

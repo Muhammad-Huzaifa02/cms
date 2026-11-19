@@ -9,6 +9,7 @@ import '../../../data/models/customer_model.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/services/customer_service.dart';
 import '../../../data/services/favorite_service.dart';
+import '../../../core/widgets/golden_favorite_button.dart';
 import 'customer_detail_screen.dart';
 
 class CustomerManagementScreen extends StatefulWidget {
@@ -345,14 +346,10 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
                 allowEditAction: true,
               ),
             ),
-            trailing: IconButton(
+            trailing: GoldenFavoriteButton(
               tooltip: favorite ? 'Remove from favorites' : 'Add to favorites',
-              onPressed: () => _toggleFavorite(customer.accountNumber, favorite),
-              icon: Icon(
-                favorite ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: favorite ? AppColors.gold : AppColors.muted,
-                size: 24,
-              ),
+              isFavorite: favorite,
+              onToggle: () => _toggleFavorite(customer.accountNumber, favorite),
             ),
           ),
               ),

@@ -64,6 +64,25 @@ header and Login screen.
     - `SYSTEM MAINTENANCE`: `Sync Search Index` (gold shield).
   - **Bottom Profile & Sign-Out**: Circular avatar with green online badge dot (`●`), user full name, email/phone, role badge, dedicated frosted glowing `Sign out` button, and version branding `CMS v1.0.0 • Secured Banking Portal`.
 
+- **`Shared-Axis 3D Banking Page Route`** (`Perspective3DRoute`):
+  Elevates incoming screens along the Z-axis (scale from 0.94 -> 1.0, slide up
+  0.04 -> 0.0 with `Curves.fastLinearToSlowEaseIn`), while outgoing background
+  screens recess to 0.96 scale with frosted glass dimming.
+- **`Golden Star Micro-Burst`** (`GoldenFavoriteButton`):
+  Explosive micro-particle starburst with 7 radiating gold spark rays and an
+  elastic bounce (`Curves.elasticOut`) when favoriting a customer in detail and management views.
+- **`Holographic Fingerprint Scan Beam`** (`_HolographicFingerprintScanner`):
+  Biometric lock screen featuring vertical oscillating laser scan line, glowing
+  aura trails, expanding concentric radar ripples, and tactile touch scale.
+- **`Live Audit Ledger & Chronological Timeline Nodes`** (`ActivityLogScreen`):
+  Real-time chronological timeline stems, animated entrance cascade, action badges,
+  and pulsing live radar nodes (`_LiveLedgerPulseNode`) for real-time compliance events.
+- **`Animated Checkmark Draw & Form Progress Bar`** (`AnimatedCheckmark`):
+  Form inputs in `AddCustomerScreen` dynamically calculate progress (`0/7` -> `7/7`),
+  drawing crisp SVG green checkmarks into field suffixes as validation passes.
+- **`Slide-to-Authorize Vault Release Slider`** (`SlideToAuthorizeSlider`):
+  High-risk destructive actions (permanent customer deletion) use a tactile slide-to-authorize
+  track with expanding red progress gradient and auto-reset springs.
 - **`PrimaryButton` Micro-Haptic Spring & State Morph**: Features tactile
   spring scaling (`0.96` on touch-down) and smooth `AnimatedSwitcher` morphing
   between the button text and circular progress indicator.

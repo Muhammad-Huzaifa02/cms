@@ -10,6 +10,7 @@ import '../../../core/widgets/section_card.dart';
 import '../../../core/widgets/account_field.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/feedback_text.dart';
+import '../../../core/widgets/animated_checkmark.dart';
 
 /// Add Customer Screen.
 /// Formatted in the exact standardized sequence:
@@ -115,7 +116,43 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    _accountTitleCtrl.addListener(_onFieldChanged);
+    _accountCtrl.addListener(_onFieldChanged);
+    _ibnCtrl.addListener(_onFieldChanged);
+    _cnicCtrl.addListener(_onFieldChanged);
+    _phoneCtrl.addListener(_onFieldChanged);
+  }
+
+  void _onFieldChanged() {
+    if (mounted) setState(() {});
+  }
+
+  bool get _isTitleValid => Validators.accountTitle(_accountTitleCtrl.text) == null && _accountTitleCtrl.text.trim().isNotEmpty;
+  bool get _isAccountValid => Validators.accountNumber(_accountCtrl.text) == null && _accountCtrl.text.trim().isNotEmpty;
+  bool get _isIbnValid => Validators.ibnNo(_ibnCtrl.text) == null && _ibnCtrl.text.trim().isNotEmpty;
+  bool get _isCnicValid => Validators.cnic(_cnicCtrl.text) == null && _cnicCtrl.text.trim().isNotEmpty;
+  bool get _isPhoneValid => Validators.phone(_phoneCtrl.text) == null && _phoneCtrl.text.trim().isNotEmpty;
+
+  int get _validCount {
+    int count = 2; // Category and Status are pre-selected
+    if (_isTitleValid) count++;
+    if (_isAccountValid) count++;
+    if (_isIbnValid) count++;
+    if (_accountType.isNotEmpty) count++;
+    if (_isCnicValid) count++;
+    if (_isPhoneValid) count++;
+    return count;
+  }
+
+  @override
   void dispose() {
+    _accountTitleCtrl.removeListener(_onFieldChanged);
+    _accountCtrl.removeListener(_onFieldChanged);
+    _ibnCtrl.removeListener(_onFieldChanged);
+    _cnicCtrl.removeListener(_onFieldChanged);
+    _phoneCtrl.removeListener(_onFieldChanged);
     _accountTitleCtrl.dispose();
     _accountCtrl.dispose();
     _ibnCtrl.dispose();
@@ -252,9 +289,31 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final progress = (_validCount / 7.0).clamp(0.0, 1.0);
+
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Add Customer')),
+      appBar: AppBar(
+        title: const Text('Add Customer'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(4),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0.0, end: progress),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            builder: (context, val, _) {
+              return LinearProgressIndicator(
+                value: val,
+                backgroundColor: AppColors.brandSoft,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  val >= 1.0 ? AppColors.brand : AppColors.gold,
+                ),
+                minHeight: 4,
+              );
+            },
+          ),
+        ),
+      ),
       body: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -270,6 +329,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   controller: _accountTitleCtrl,
                   hintText: 'e.g. Ali Traders',
                   validator: Validators.accountTitle,
+                  suffixIcon: AnimatedCheckmark(isValid: _isTitleValid),
                 ),
                 const SizedBox(height: 16),
                 // 2. Account Number
@@ -280,6 +340,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   keyboardType: TextInputType.number,
                   validator: Validators.accountNumber,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(14)],
+                  suffixIcon: AnimatedCheckmark(isValid: _isAccountValid),
                 ),
                 const SizedBox(height: 16),
                 // 3. IBAN No
@@ -296,6 +357,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                         )),
                     LengthLimitingTextInputFormatter(24),
                   ],
+                  suffixIcon: AnimatedCheckmark(isValid: _isIbnValid),
                 ),
                 const SizedBox(height: 16),
                 // 4. Account Type (Category + Type)
@@ -342,6 +404,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   keyboardType: TextInputType.number,
                   validator: Validators.cnic,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(13)],
+                  suffixIcon: AnimatedCheckmark(isValid: _isCnicValid),
                 ),
                 const SizedBox(height: 16),
                 // 7. Phone Number
@@ -352,6 +415,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   keyboardType: TextInputType.phone,
                   validator: Validators.phone,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+                  suffixIcon: AnimatedCheckmark(isValid: _isPhoneValid),
                 ),
                 const SizedBox(height: 16),
                 // 8. Email
