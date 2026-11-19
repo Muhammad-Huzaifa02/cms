@@ -16,6 +16,7 @@ import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/feedback_text.dart';
 import '../../../core/widgets/golden_favorite_button.dart';
 import '../../../core/widgets/slide_to_authorize_slider.dart';
+import '../../../core/widgets/cryptographic_integrity_badge.dart';
 
 /// Customer Details and Edit Screen.
 ///
@@ -553,6 +554,16 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       children: [
+        // ── CRYPTOGRAPHIC HARDWARE INTEGRITY BADGE ──
+        const Padding(
+          padding: EdgeInsets.only(bottom: 12),
+          child: Center(
+            child: CryptographicIntegrityBadge(
+              label: '256-BIT ENCRYPTED • HARDWARE VERIFIED LEDGER',
+            ),
+          ),
+        ),
+
         // ── HERO PROFILE HEADER CARD WITH INTERACTIVE 3D TILT ──
         Padding(
           padding: const EdgeInsets.only(bottom: 16),

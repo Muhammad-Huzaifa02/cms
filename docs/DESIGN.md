@@ -95,6 +95,17 @@ header and Login screen.
 - **`Cryptographic Checksum Copy Ripple`**:
   Tapping account number, IBAN, or CNIC detail tiles flashes the tile with an emerald
   confirmation sheen and morphs the copy icon into an animated checkmark.
+- **`Executive Permission Shield Morph & Glow Pulse`** (`AnimatedPermissionChip`):
+  Permission chips in `StaffManagementScreen` trigger an interactive spring bounce
+  and expanding emerald confirmation ring upon authorization changes.
+- **`Floating Staggered Staff Roster Entrance`**:
+  Staff cards enter `StaffManagementScreen` with alternating directional fly-in
+  and 45ms progressive stagger delays.
+- **`Cryptographic Hardware Integrity Badge`** (`CryptographicIntegrityBadge`):
+  Floating 256-bit hardware verified ledger badge with gentle 3800ms sinusoidal
+  breathing emerald aura and rotating micro-lock on `CustomerDetailScreen`.
+- **`Glass Orbit Dual-Bead Spinner`** (`GlassOrbitSpinner`):
+  Dual orbiting gold and emerald beads rotating within a frosted glass pill.
 - **`PrimaryButton` Micro-Haptic Spring & State Morph**: Features tactile
   spring scaling (`0.96` on touch-down) and smooth `AnimatedSwitcher` morphing
   between the button text and circular progress indicator.

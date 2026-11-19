@@ -10,6 +10,7 @@ import '../../../data/models/user_model.dart';
 import '../../../data/services/customer_service.dart';
 import '../../../data/services/favorite_service.dart';
 import '../../../core/widgets/golden_favorite_button.dart';
+import '../../../core/widgets/shimmer_sheen_badge.dart';
 import 'customer_detail_screen.dart';
 
 class CustomerManagementScreen extends StatefulWidget {
@@ -280,34 +281,36 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen> {
                   ),
                 ),
                 const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: statusColor,
+                ShimmerSheenBadge(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: statusColor,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        statusText.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w800,
-                          color: statusColor,
-                          letterSpacing: 0.3,
+                        const SizedBox(width: 4),
+                        Text(
+                          statusText.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            color: statusColor,
+                            letterSpacing: 0.3,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],

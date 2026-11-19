@@ -5,6 +5,7 @@ import '../../../data/models/user_model.dart';
 import '../../../data/services/staff_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/perspective_page_route.dart';
+import '../../../core/widgets/animated_permission_chip.dart';
 import 'add_staff_screen.dart';
 import 'staff_profile_screen.dart';
 
@@ -212,26 +213,40 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                           final initials = s.name.trim().isEmpty
                               ? '?'
                               : s.name.trim().split(RegExp(r'\s+')).map((w) => w[0]).take(2).join().toUpperCase();
+                          final delayMs = (i * 45).clamp(0, 360);
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.brandDeep.withValues(alpha: 0.05),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
+                          return TweenAnimationBuilder<double>(
+                            tween: Tween<double>(begin: 0.0, end: 1.0),
+                            duration: Duration(milliseconds: 320 + delayMs),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, animVal, child) {
+                              return Opacity(
+                                opacity: animVal.clamp(0.0, 1.0),
+                                child: Transform.translate(
+                                  offset: Offset((1.0 - animVal) * (i.isEven ? -16.0 : 16.0), (1.0 - animVal) * 8.0),
+                                  child: child,
                                 ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(18),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
+                              );
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.brandDeep.withValues(alpha: 0.05),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(18),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: [
@@ -418,10 +433,26 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                           spacing: 6,
                                           runSpacing: 6,
                                           children: [
-                                            _permChip('View', s.permissions.view, (v) => _togglePermission(s, 'view', v)),
-                                            _permChip('Add', s.permissions.add, (v) => _togglePermission(s, 'add', v)),
-                                            _permChip('Edit', s.permissions.edit, (v) => _togglePermission(s, 'edit', v)),
-                                            _permChip('Delete', s.permissions.delete, (v) => _togglePermission(s, 'delete', v)),
+                                            AnimatedPermissionChip(
+                                              label: 'View',
+                                              isGranted: s.permissions.view,
+                                              onChanged: (v) => _togglePermission(s, 'view', v),
+                                            ),
+                                            AnimatedPermissionChip(
+                                              label: 'Add',
+                                              isGranted: s.permissions.add,
+                                              onChanged: (v) => _togglePermission(s, 'add', v),
+                                            ),
+                                            AnimatedPermissionChip(
+                                              label: 'Edit',
+                                              isGranted: s.permissions.edit,
+                                              onChanged: (v) => _togglePermission(s, 'edit', v),
+                                            ),
+                                            AnimatedPermissionChip(
+                                              label: 'Delete',
+                                              isGranted: s.permissions.delete,
+                                              onChanged: (v) => _togglePermission(s, 'delete', v),
+                                            ),
                                           ],
                                         ),
                                       ],
@@ -433,7 +464,8 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                   ),
                                 ),
                               ),
-                            );
+                            ),
+                          );
                         },
                       ),
               ),
@@ -462,20 +494,6 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
         fontWeight: FontWeight.w700,
         color: selected ? AppColors.brandDeep : AppColors.muted,
       ),
-    );
-  }
-
-  Widget _permChip(String label, bool value, ValueChanged<bool> onChanged) {
-    return FilterChip(
-      label: Text(label, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700)),
-      selected: value,
-      onSelected: onChanged,
-      selectedColor: AppColors.brandSoft,
-      checkmarkColor: AppColors.brand,
-      labelStyle: TextStyle(color: value ? AppColors.brand : AppColors.muted),
-      backgroundColor: const Color(0xFFF1F4F3),
-      visualDensity: VisualDensity.compact,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
     );
   }
 }
