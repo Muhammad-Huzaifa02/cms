@@ -1047,6 +1047,16 @@ class _DetailFieldTile extends StatefulWidget {
 
 class _DetailFieldTileState extends State<_DetailFieldTile> {
   bool _isPressed = false;
+  bool _justCopied = false;
+
+  void _handleCopy() {
+    if (widget.onCopy == null) return;
+    setState(() => _justCopied = true);
+    widget.onCopy!();
+    Future.delayed(const Duration(milliseconds: 1400), () {
+      if (mounted) setState(() => _justCopied = false);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1054,14 +1064,17 @@ class _DetailFieldTileState extends State<_DetailFieldTile> {
       scale: _isPressed ? 0.98 : 1.0,
       duration: const Duration(milliseconds: 140),
       curve: Curves.easeOutCubic,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: AppColors.brandDeep.withValues(alpha: 0.04),
-              blurRadius: 12,
+              color: _justCopied
+                  ? AppColors.brand.withValues(alpha: 0.18)
+                  : AppColors.brandDeep.withValues(alpha: 0.04),
+              blurRadius: _justCopied ? 16 : 12,
               offset: const Offset(0, 4),
             ),
           ],
@@ -1070,24 +1083,32 @@ class _DetailFieldTileState extends State<_DetailFieldTile> {
           borderRadius: BorderRadius.circular(18),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.90),
-                    Colors.white.withValues(alpha: 0.72),
-                  ],
+                  colors: _justCopied
+                      ? [
+                          AppColors.brandSoft.withValues(alpha: 0.95),
+                          AppColors.brandSoft.withValues(alpha: 0.80),
+                        ]
+                      : [
+                          Colors.white.withValues(alpha: 0.90),
+                          Colors.white.withValues(alpha: 0.72),
+                        ],
                 ),
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: _justCopied
+                      ? AppColors.brand.withValues(alpha: 0.5)
+                      : Colors.white.withValues(alpha: 0.95),
                   width: 1.3,
                 ),
               ),
               child: InkWell(
-                onTap: widget.onCopy,
+                onTap: widget.onCopy != null ? _handleCopy : null,
                 onHighlightChanged: (val) {
                   if (widget.onCopy != null && _isPressed != val) {
                     setState(() => _isPressed = val);
@@ -1183,9 +1204,24 @@ class _DetailFieldTileState extends State<_DetailFieldTile> {
                       if (widget.extraActions != null) ...widget.extraActions!,
                       if (widget.onCopy != null)
                         IconButton(
-                          icon: const Icon(Icons.copy_rounded, size: 19, color: AppColors.brand),
+                          icon: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: _justCopied
+                                ? const Icon(
+                                    Icons.check_circle_rounded,
+                                    key: ValueKey('check'),
+                                    size: 19,
+                                    color: AppColors.brand,
+                                  )
+                                : const Icon(
+                                    Icons.copy_rounded,
+                                    key: ValueKey('copy'),
+                                    size: 19,
+                                    color: AppColors.brand,
+                                  ),
+                          ),
                           tooltip: 'Copy ${widget.label}',
-                          onPressed: widget.onCopy,
+                          onPressed: _handleCopy,
                         ),
                     ],
                   ),

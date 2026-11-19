@@ -15,6 +15,8 @@ import '../../../core/widgets/tilt_tap_card.dart';
 import '../../../core/widgets/shimmer_loading.dart';
 import '../../../core/widgets/dashboard_stat_card.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/aurora_header_background.dart';
+import '../../../core/widgets/shimmer_sheen_badge.dart';
 import '../../customers/views/customer_detail_screen.dart';
 import '../../customers/views/add_customer_screen.dart';
 import '../../customers/views/search_customer_screen.dart';
@@ -882,46 +884,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
               flexibleSpace: FlexibleSpaceBar(
                 stretchModes: const [StretchMode.zoomBackground, StretchMode.blurBackground],
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF022B24),
-                        AppColors.brandDeep,
-                        AppColors.brand,
-                      ],
-                      stops: [0.0, 0.45, 1.0],
+                background: AuroraHeaderBackground(
+                  height: 200,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      MediaQuery.of(context).padding.top + kToolbarHeight - 2,
+                      20,
+                      0,
                     ),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Soft ambient light
-                      Positioned(
-                        left: -35,
-                        top: -35,
-                        child: Container(
-                          width: 130,
-                          height: 130,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.04),
-                          ),
-                        ),
-                      ),
-                      // Executive Profile Header Row
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          20,
-                          MediaQuery.of(context).padding.top + kToolbarHeight - 2,
-                          20,
-                          0,
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // User Initials Avatar
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // User Initials Avatar
                             Container(
                               width: 48,
                               height: 48,
@@ -1033,11 +1008,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
           SliverToBoxAdapter(
             child: Stack(
               clipBehavior: Clip.none,
@@ -1902,27 +1875,29 @@ class _CustomerTile extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(7),
-                                  border: Border.all(color: statusColor.withValues(alpha: 0.25), width: 0.8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _BreathingStatusDot(color: statusColor),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      statusText,
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w800,
-                                        color: statusColor,
+                              ShimmerSheenBadge(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(7),
+                                    border: Border.all(color: statusColor.withValues(alpha: 0.25), width: 0.8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _BreathingStatusDot(color: statusColor),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        statusText,
+                                        style: TextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: statusColor,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],

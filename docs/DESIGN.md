@@ -83,6 +83,18 @@ header and Login screen.
 - **`Slide-to-Authorize Vault Release Slider`** (`SlideToAuthorizeSlider`):
   High-risk destructive actions (permanent customer deletion) use a tactile slide-to-authorize
   track with expanding red progress gradient and auto-reset springs.
+- **`Aurora Mesh Ambient Glow Header`** (`AuroraHeaderBackground`):
+  Dashboard app bar features gently oscillating emerald and gold radial aura spheres
+  with sinusoidal curves, giving the top banking header a living specular ambient depth.
+- **`Dynamic Status Badge Shimmer Sheen`** (`ShimmerSheenBadge`):
+  Customer cards across the dashboard feature a periodic diagonal frosted light sheen
+  gliding over active status pills every 4 seconds.
+- **`Tactical Spring-Stagger on Search Fields`**:
+  Search field selector cards in `SearchCustomerScreen` cascade into view with a 60ms
+  progressive vertical fly-in and tactile press scaling.
+- **`Cryptographic Checksum Copy Ripple`**:
+  Tapping account number, IBAN, or CNIC detail tiles flashes the tile with an emerald
+  confirmation sheen and morphs the copy icon into an animated checkmark.
 - **`PrimaryButton` Micro-Haptic Spring & State Morph**: Features tactile
   spring scaling (`0.96` on touch-down) and smooth `AnimatedSwitcher` morphing
   between the button text and circular progress indicator.

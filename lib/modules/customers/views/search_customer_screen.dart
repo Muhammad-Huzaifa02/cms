@@ -83,10 +83,30 @@ class _SearchCustomerScreenState extends State<SearchCustomerScreen> {
                 style: TextStyle(fontSize: 12.5, color: AppColors.muted, height: 1.4),
               ),
               const SizedBox(height: 16),
-              ...CustomerSearchField.values.map((f) => _FieldOption(
+              ...CustomerSearchField.values.asMap().entries.map((entry) {
+                final index = entry.key;
+                final f = entry.value;
+                final delayMs = (index * 60).clamp(0, 360);
+
+                return TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.0, end: 1.0),
+                  duration: Duration(milliseconds: 320 + delayMs),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, val, child) {
+                    return Opacity(
+                      opacity: val.clamp(0.0, 1.0),
+                      child: Transform.translate(
+                        offset: Offset(0, (1.0 - val) * 20.0),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: _FieldOption(
                     field: f,
                     onTap: () => _selectField(f),
-                  )),
+                  ),
+                );
+              }),
             ] else ...[
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
