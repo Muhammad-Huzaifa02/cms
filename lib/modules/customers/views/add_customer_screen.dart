@@ -376,7 +376,21 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                 ),
               ],
             ),
-            if (_error != null) FeedbackText(_error!, isError: true),
+            if (_error != null)
+              TweenAnimationBuilder<double>(
+                key: ValueKey(_error),
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 320),
+                curve: Curves.elasticOut,
+                builder: (context, t, child) {
+                  final offset = (1 - t) * 8 * ((t * 8).floor().isEven ? 1 : -1);
+                  return Transform.translate(
+                    offset: Offset(offset, 0),
+                    child: child,
+                  );
+                },
+                child: FeedbackText(_error!, isError: true),
+              ),
             const SizedBox(height: 18),
             PrimaryButton(label: 'Save Customer', loading: _saving, onPressed: _save),
           ],

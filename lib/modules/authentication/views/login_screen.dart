@@ -490,46 +490,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 const SizedBox(height: 12),
                                 Center(
-                                  child: Tooltip(
-                                    message: 'Log in with Biometrics',
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: (_loading || _loggingInWithBiometric || _lockoutSecondsLeft > 0)
-                                            ? null
-                                            : _loginWithBiometrics,
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: Container(
-                                          width: 58,
-                                          height: 58,
-                                          decoration: BoxDecoration(
-                                            color: AppColors.brand.withValues(alpha: 0.10),
-                                            borderRadius: BorderRadius.circular(16),
-                                            border: Border.all(color: AppColors.brand.withValues(alpha: 0.8), width: 1.5),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: AppColors.brand.withValues(alpha: 0.15),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, 4),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Center(
-                                            child: _loggingInWithBiometric
-                                                ? const SizedBox(
-                                                    height: 26,
-                                                    width: 26,
-                                                    child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.brand),
-                                                  )
-                                                : const Icon(
-                                                    Icons.fingerprint_rounded,
-                                                    size: 38,
-                                                    color: AppColors.brand,
-                                                  ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
+                                  child: _BiometricPulseButton(
+                                    isLoading: _loggingInWithBiometric,
+                                    isDisabled: _loading || _loggingInWithBiometric || _lockoutSecondsLeft > 0,
+                                    onTap: _loginWithBiometrics,
                                   ),
                                 ),
                               ],
@@ -564,6 +528,114 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BiometricPulseButton extends StatefulWidget {
+  final bool isLoading;
+  final bool isDisabled;
+  final VoidCallback onTap;
+
+  const _BiometricPulseButton({
+    required this.isLoading,
+    required this.isDisabled,
+    required this.onTap,
+  });
+
+  @override
+  State<_BiometricPulseButton> createState() => _BiometricPulseButtonState();
+}
+
+class _BiometricPulseButtonState extends State<_BiometricPulseButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _radarCtrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1800),
+  )..repeat();
+
+  bool _isDown = false;
+
+  @override
+  void dispose() {
+    _radarCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Log in with Biometrics',
+      child: AnimatedScale(
+        scale: _isDown ? 0.92 : 1.0,
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOutCubic,
+        child: AnimatedBuilder(
+          animation: _radarCtrl,
+          builder: (context, _) {
+            final t = _radarCtrl.value;
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                if (!widget.isDisabled && !widget.isLoading)
+                  Container(
+                    width: 58 + (18 * t),
+                    height: 58 + (18 * t),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.brand.withValues(alpha: (1 - t) * 0.4),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: widget.isDisabled ? null : widget.onTap,
+                    onTapDown: (_) => setState(() => _isDown = true),
+                    onTapUp: (_) => setState(() => _isDown = false),
+                    onTapCancel: () => setState(() => _isDown = false),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: AppColors.brand.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.brand.withValues(alpha: 0.8),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.brand.withValues(alpha: 0.18 + (0.15 * (1 - t))),
+                            blurRadius: 10 + (4 * t),
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: widget.isLoading
+                            ? const SizedBox(
+                                height: 26,
+                                width: 26,
+                                child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.brand),
+                              )
+                            : const Icon(
+                                Icons.fingerprint_rounded,
+                                size: 38,
+                                color: AppColors.brand,
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

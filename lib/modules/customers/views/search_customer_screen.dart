@@ -151,12 +151,19 @@ class _SearchCustomerScreenState extends State<SearchCustomerScreen> {
   }
 }
 
-class _FieldOption extends StatelessWidget {
+class _FieldOption extends StatefulWidget {
   final CustomerSearchField field;
   final VoidCallback onTap;
   const _FieldOption({required this.field, required this.onTap});
 
-  IconData get _icon => switch (field) {
+  @override
+  State<_FieldOption> createState() => _FieldOptionState();
+}
+
+class _FieldOptionState extends State<_FieldOption> {
+  bool _isDown = false;
+
+  IconData get _icon => switch (widget.field) {
         CustomerSearchField.accountTitle => Icons.badge_outlined,
         CustomerSearchField.accountNumber => Icons.numbers,
         CustomerSearchField.phone => Icons.phone_outlined,
@@ -165,46 +172,68 @@ class _FieldOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.brandDeep.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withValues(alpha: 0.90),
-                Colors.white.withValues(alpha: 0.72),
-              ],
+    return AnimatedScale(
+      scale: _isDown ? 0.97 : 1.0,
+      duration: const Duration(milliseconds: 140),
+      curve: Curves.easeOutCubic,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.brandDeep.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.95), width: 1.2),
-          ),
-          child: ListTile(
-            onTap: onTap,
-            leading: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: AppColors.brand.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: 0.90),
+                  Colors.white.withValues(alpha: 0.72),
+                ],
               ),
-              child: Icon(_icon, color: AppColors.brand, size: 20),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.95), width: 1.2),
             ),
-            title: Text(field.label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppColors.ink)),
-            trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: widget.onTap,
+              onHighlightChanged: (val) {
+                if (_isDown != val) setState(() => _isDown = val);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: AppColors.brand.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(_icon, color: AppColors.brand, size: 20),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        widget.field.label,
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: AppColors.ink),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),

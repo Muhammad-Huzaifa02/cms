@@ -8,6 +8,7 @@ import '../../../data/services/customer_service.dart';
 import '../../../data/services/notification_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/widgets/tilt_tap_card.dart';
 import '../../../core/widgets/section_card.dart';
 import '../../../core/widgets/account_field.dart';
 import '../../../core/widgets/primary_button.dart';
@@ -496,39 +497,31 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       children: [
-        // ── HERO PROFILE HEADER CARD ──
-        Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
+        // ── HERO PROFILE HEADER CARD WITH INTERACTIVE 3D TILT ──
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: TiltTapCard(
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.brandDeep.withValues(alpha: 0.05),
-                blurRadius: 16,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withValues(alpha: 0.90),
-                      Colors.white.withValues(alpha: 0.72),
-                    ],
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.90),
+                        Colors.white.withValues(alpha: 0.72),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.95),
+                      width: 1.4,
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.95),
-                    width: 1.4,
-                  ),
-                ),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -639,6 +632,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
         ),
       ),
     ),
+  ),
 
         // ── 9 STANDARDIZED FIELDS (EXACT SEQUENCE) ──
         Padding(
@@ -726,13 +720,16 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           value: c.phone,
           isMonospace: true,
           extraActions: [
-            IconButton(
-              icon: const Icon(Icons.phone_forwarded_rounded, size: 19, color: Color(0xFF16A34A)),
+            _AnimatedActionButton(
+              icon: Icons.phone_forwarded_rounded,
+              color: const Color(0xFF16A34A),
               tooltip: 'Call Customer',
               onPressed: () => _callPhoneNumber(c.phone),
             ),
-            IconButton(
-              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 19, color: Color(0xFF25D366)),
+            const SizedBox(width: 4),
+            _AnimatedActionButton(
+              icon: Icons.chat_bubble_outline_rounded,
+              color: const Color(0xFF25D366),
               tooltip: 'WhatsApp Message',
               onPressed: () => _openWhatsApp(c.phone, c.accountTitle.isNotEmpty ? c.accountTitle : c.name),
             ),
@@ -962,8 +959,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   }
 }
 
-/// Crystal-clear, high-contrast, tap-to-copy customer data tile.
-class _DetailFieldTile extends StatelessWidget {
+/// Crystal-clear, high-contrast, tap-to-copy customer data tile with
+/// smooth spring press animation and digit reveal transitions.
+class _DetailFieldTile extends StatefulWidget {
   final IconData icon;
   final String label;
   final String value;
@@ -985,125 +983,208 @@ class _DetailFieldTile extends StatelessWidget {
   });
 
   @override
+  State<_DetailFieldTile> createState() => _DetailFieldTileState();
+}
+
+class _DetailFieldTileState extends State<_DetailFieldTile> {
+  bool _isPressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.brandDeep.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withValues(alpha: 0.90),
-                  Colors.white.withValues(alpha: 0.72),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.95),
-                width: 1.3,
-              ),
+    return AnimatedScale(
+      scale: _isPressed ? 0.98 : 1.0,
+      duration: const Duration(milliseconds: 140),
+      curve: Curves.easeOutCubic,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.brandDeep.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-            child: InkWell(
-              onTap: onCopy,
-              borderRadius: BorderRadius.circular(18),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: (statusColor ?? AppColors.brand).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: (statusColor ?? AppColors.brand).withValues(alpha: 0.22),
-                          width: 1.0,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(icon, size: 22, color: statusColor ?? AppColors.brand),
-                    ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label.toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
-                        color: AppColors.muted,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    if (statusColor != null)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: statusColor,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            value.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w800,
-                              color: statusColor,
-                              letterSpacing: 0.4,
-                            ),
-                          ),
-                        ],
-                      )
-                    else
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontSize: isMonospace ? 16 : 15.5,
-                          fontWeight: FontWeight.w700,
-                          color: isMutedIfEmpty ? AppColors.muted : AppColors.ink,
-                          fontStyle: isMutedIfEmpty ? FontStyle.italic : FontStyle.normal,
-                          letterSpacing: isMonospace ? 0.9 : 0.1,
-                          height: 1.25,
-                        ),
-                      ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.90),
+                    Colors.white.withValues(alpha: 0.72),
                   ],
                 ),
-              ),
-              if (extraActions != null) ...extraActions!,
-              if (onCopy != null)
-                IconButton(
-                  icon: const Icon(Icons.copy_rounded, size: 19, color: AppColors.brand),
-                  tooltip: 'Copy $label',
-                  onPressed: onCopy,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  width: 1.3,
                 ),
-            ],
+              ),
+              child: InkWell(
+                onTap: widget.onCopy,
+                onHighlightChanged: (val) {
+                  if (widget.onCopy != null && _isPressed != val) {
+                    setState(() => _isPressed = val);
+                  }
+                },
+                borderRadius: BorderRadius.circular(18),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: (widget.statusColor ?? AppColors.brand).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: (widget.statusColor ?? AppColors.brand).withValues(alpha: 0.22),
+                            width: 1.0,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(widget.icon, size: 22, color: widget.statusColor ?? AppColors.brand),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.label.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                                color: AppColors.muted,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            if (widget.statusColor != null)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: widget.statusColor,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: widget.statusColor!.withValues(alpha: 0.5),
+                                          blurRadius: 4,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    widget.value.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 15.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: widget.statusColor,
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 250),
+                                transitionBuilder: (child, anim) => FadeTransition(
+                                  opacity: anim,
+                                  child: child,
+                                ),
+                                child: Text(
+                                  widget.value,
+                                  key: ValueKey(widget.value),
+                                  style: TextStyle(
+                                    fontSize: widget.isMonospace ? 16 : 15.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: widget.isMutedIfEmpty ? AppColors.muted : AppColors.ink,
+                                    fontStyle: widget.isMutedIfEmpty ? FontStyle.italic : FontStyle.normal,
+                                    letterSpacing: widget.isMonospace ? 0.9 : 0.1,
+                                    height: 1.25,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (widget.extraActions != null) ...widget.extraActions!,
+                      if (widget.onCopy != null)
+                        IconButton(
+                          icon: const Icon(Icons.copy_rounded, size: 19, color: AppColors.brand),
+                          tooltip: 'Copy ${widget.label}',
+                          onPressed: widget.onCopy,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AnimatedActionButton extends StatefulWidget {
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _AnimatedActionButton({
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  State<_AnimatedActionButton> createState() => _AnimatedActionButtonState();
+}
+
+class _AnimatedActionButtonState extends State<_AnimatedActionButton> {
+  bool _isDown = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: _isDown ? 0.88 : 1.0,
+      duration: const Duration(milliseconds: 140),
+      curve: Curves.easeOutCubic,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: widget.onPressed,
+          onTapDown: (_) => setState(() => _isDown = true),
+          onTapUp: (_) => setState(() => _isDown = false),
+          onTapCancel: () => setState(() => _isDown = false),
+          child: Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: widget.color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: widget.color.withValues(alpha: 0.28),
+                width: 1.0,
+              ),
+            ),
+            child: Icon(widget.icon, size: 19, color: widget.color),
           ),
         ),
       ),

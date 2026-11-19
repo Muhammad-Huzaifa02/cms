@@ -154,7 +154,7 @@
       - **Modern Glassy Brand Sidebar Navigation (Vertix-Inspired with Real Options & Numbering)**: Built an ultra-premium floating frosted acrylic drawer (`BackdropFilter` 28px blur, obsidian-emerald acrylic tint matching the app's brand palette, radiant atmospheric brand mesh glow orbs, and specular light border with outer drop shadow). Features the complete Vertix workspace design hierarchy paired with the real operational options, names, and version numbering:
         - Floating rounded card with 30px corner radius and generous outer margins.
         - Top Workspace Header with banking shield emblem, `CUSTOMER MANAGEMENT SYSTEM`, `CMS • Branch Workspace`, and circular white glass close button (`<`).
-        - Frosted Search Pill with `Search customer...` and keyboard shortcut badge (`⌘K`).
+        - Frosted Search Pill with `Search customer...` and forward affordance (keyboard shortcut badge `⌘K` removed).
         - `OVERVIEW` section with active stadium pill (`borderRadius: 20`) for Dashboard, and `Customer Management` (`Search & view records`).
         - `ADMINISTRATION` section with `Staff Management` (`Roles, accounts & permissions`) and `Activity Audit Log` (`Security & compliance trail`).
         - `DATA & EXPORT` section with `Export to Excel (.xlsx)`, `Export to PDF Document`, and `Backup Database (.json)`.

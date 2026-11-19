@@ -614,20 +614,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       ),
                                     ),
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      '⌘K',
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.65),
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                                  Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 13,
+                                    color: Colors.white.withValues(alpha: 0.40),
                                   ),
                                 ],
                               ),
@@ -1273,9 +1263,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       }
                       final c = customers[index - 1];
-                      return _CustomerTile(
-                        customer: c,
-                        onTap: () => push3D(context, CustomerDetailScreen(customer: c, currentUser: user)),
+                      final delay = (index * 40).clamp(0, 360);
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: Duration(milliseconds: 320 + delay),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, t, child) {
+                          return Opacity(
+                            opacity: t.clamp(0.0, 1.0),
+                            child: Transform.translate(
+                              offset: Offset(0, (1 - t) * 16),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: _CustomerTile(
+                          customer: c,
+                          onTap: () => push3D(context, CustomerDetailScreen(customer: c, currentUser: user)),
+                        ),
                       );
                     },
                     childCount: customers.length + 1,
@@ -1868,14 +1873,7 @@ class _CustomerTile extends StatelessWidget {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Container(
-                                      width: 5.5,
-                                      height: 5.5,
-                                      decoration: BoxDecoration(
-                                        color: statusColor,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
+                                    _BreathingStatusDot(color: statusColor),
                                     const SizedBox(width: 4),
                                     Text(
                                       statusText,
@@ -1940,6 +1938,53 @@ class _CustomerTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _BreathingStatusDot extends StatefulWidget {
+  final Color color;
+  const _BreathingStatusDot({required this.color});
+
+  @override
+  State<_BreathingStatusDot> createState() => _BreathingStatusDotState();
+}
+
+class _BreathingStatusDotState extends State<_BreathingStatusDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseCtrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulseCtrl,
+      builder: (context, _) {
+        final t = _pulseCtrl.value;
+        return Container(
+          width: 5.5,
+          height: 5.5,
+          decoration: BoxDecoration(
+            color: widget.color,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withValues(alpha: 0.2 + (0.5 * t)),
+                blurRadius: 2.0 + (3.0 * t),
+                spreadRadius: 0.5 * t,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -56,7 +56,7 @@ header and Login screen.
   brand glow orbs, and specular light border). Recreates the modern floating workspace aesthetic
   while retaining 100% of the actual CMS operational options, names, and version numbering:
   - **Top Workspace Header**: Circular brand emblem with banking shield icon + full title `CUSTOMER MANAGEMENT SYSTEM` and `CMS • Branch Workspace` + circular white floating close button (`<`).
-  - **Quick Search Pill**: Frosted glass capsule text field (`Search customer...`) with search icon and keyboard shortcut badge (`⌘K`) linking directly to `SearchCustomerScreen`.
+  - **Quick Search Pill**: Frosted glass capsule text field (`Search customer...`) with search icon and clean chevron linking directly to `SearchCustomerScreen`.
   - **Categorized Sections & Real Options**:
     - `OVERVIEW`: Glowing stadium highlight pill (`borderRadius: 20`) for active `Dashboard`, and `Customer Management` (`Search & view records`).
     - `ADMINISTRATION`: `Staff Management` (`Roles, accounts & permissions`) and `Activity Audit Log` (`Security & compliance trail`).
